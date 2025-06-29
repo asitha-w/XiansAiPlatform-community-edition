@@ -76,25 +76,25 @@ fi
 
 # Pull latest images
 echo "📦 Pulling latest Docker images..."
-docker-compose -f "$COMPOSE_FILE" pull
+docker compose -p xians-community-edition -f "$COMPOSE_FILE" pull
 
 # Start the services
 if [ "$DETACHED" = true ]; then
     echo "🚀 Starting XiansAi platform in detached mode..."
-    docker-compose -f "$COMPOSE_FILE" up -d
+    docker compose -p xians-community-edition -f "$COMPOSE_FILE" up -d
     echo ""
     echo "✅ XiansAi platform started successfully!"
     echo "📱 Access the applications:"
-    echo "   - XiansAi UI: http://localhost:3000"
-    echo "   - XiansAi Server API: http://localhost:5000"
+    echo "   - XiansAi UI: http://localhost:3001"
+    echo "   - XiansAi Server API: http://localhost:5001"
     echo ""
     echo "📋 Manage the platform:"
-    echo "   - View logs: docker-compose -f $COMPOSE_FILE logs -f"
-    echo "   - Stop services: docker-compose -f $COMPOSE_FILE down"
-    echo "   - Check status: docker-compose -f $COMPOSE_FILE ps"
+    echo "   - View logs: docker compose -p xians-community-edition -f $COMPOSE_FILE logs -f"
+    echo "   - Stop services: docker compose -p xians-community-edition -f $COMPOSE_FILE down"
+    echo "   - Check status: docker compose -p xians-community-edition -f $COMPOSE_FILE ps"
 else
     echo "🚀 Starting XiansAi platform..."
     echo "   Press Ctrl+C to stop"
     echo ""
-    docker-compose -f "$COMPOSE_FILE" up
+    docker compose -p xians-community-edition -f "$COMPOSE_FILE" up
 fi 

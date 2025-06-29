@@ -24,21 +24,28 @@ Welcome to the XiansAi Platform Community Edition! This repository provides a si
    ```bash
    # For development, the .env.development files are already included
    # For production, create production environment files:
-   cp server/.env.development server/.env.production
-   cp ui/.env.development ui/.env.production
-   # Then edit the .env.production files with your production configuration
+   cp server/.env.sample server/.env.production
+   cp server/.env.sample server/.env.development
+   cp ui/.env.sample ui/.env.production
+   cp ui/.env.sample ui/.env.development
+   # Then edit the .env.production and .env.development files with your configuration
    ```
 
 3. **Start the platform:**
 
    ```bash
-   docker-compose up -d
+   # Set the project name to avoid conflicts
+   export COMPOSE_PROJECT_NAME=xians-community-edition
+   docker compose up -d
+   
+   # Or alternatively, use the -p flag
+   docker compose -p xians-community-edition up -d
    ```
 
 4. **Access the applications:**
 
-   - **XiansAi UI**: [http://localhost:3000](http://localhost:3000)
-   - **XiansAi Server API**: [http://localhost:5000](http://localhost:5000)
+   - **XiansAi UI**: [http://localhost:3001](http://localhost:3001)
+   - **XiansAi Server API**: [http://localhost:5001](http://localhost:5001)
 
 ## 📋 Configuration
 
@@ -96,56 +103,80 @@ The platform consists of two main services:
 ### XiansAi Server
 
 - **Image**: `xiansai/server:latest`
-- **Port**: 5000 (mapped to container port 8080)
+- **Port**: 5001 (mapped to container port 8080)
 - **Technology**: .NET 9.0
 - **Purpose**: Backend API and workflow engine
 
 ### XiansAi UI
 
 - **Image**: `xiansai/ui:latest`
-- **Port**: 3000 (mapped to container port 80)
+- **Port**: 3001 (mapped to container port 80)
 - **Technology**: React
 - **Purpose**: Web-based user interface
 
-Both services are connected via the `xians-network` Docker network and grouped under the `xians` namespace.
+Both services are connected via the `xians-community-edition-network` Docker network and grouped under the `xians-community-edition` namespace.
 
 ## 🔧 Management Commands
 
 ### Start the platform
 
 ```bash
-docker-compose up -d
+# Set project name and start
+export COMPOSE_PROJECT_NAME=xians-community-edition
+docker compose up -d
+
+# Or use the project name flag
+docker compose -p xians-community-edition up -d
 ```
 
 ### Stop the platform
 
 ```bash
-docker-compose down
+# Using environment variable
+export COMPOSE_PROJECT_NAME=xians-community-edition
+docker compose down
+
+# Or using project name flag
+docker compose -p xians-community-edition down
 ```
 
 ### View logs
 
 ```bash
-# All services
-docker-compose logs -f
+# All services (with project name)
+export COMPOSE_PROJECT_NAME=xians-community-edition
+docker compose logs -f
+
+# Or with project flag
+docker compose -p xians-community-edition logs -f
 
 # Specific service
-docker-compose logs -f xiansai-server
-docker-compose logs -f xiansai-ui
+docker compose -p xians-community-edition logs -f xiansai-server
+docker compose -p xians-community-edition logs -f xiansai-ui
 ```
 
 ### Update to latest versions
 
 ```bash
-docker-compose pull
-docker-compose up -d
+export COMPOSE_PROJECT_NAME=xians-community-edition
+docker compose pull
+docker compose up -d
+
+# Or with project flag
+docker compose -p xians-community-edition pull
+docker compose -p xians-community-edition up -d
 ```
 
 ### Restart a specific service
 
 ```bash
-docker-compose restart xiansai-server
-docker-compose restart xiansai-ui
+export COMPOSE_PROJECT_NAME=xians-community-edition
+docker compose restart xiansai-server
+docker compose restart xiansai-ui
+
+# Or with project flag
+docker compose -p xians-community-edition restart xiansai-server
+docker compose -p xians-community-edition restart xiansai-ui
 ```
 
 ## 🔍 Troubleshooting
@@ -154,12 +185,12 @@ docker-compose restart xiansai-ui
 
 Both services include health checks:
 
-- Server health check: `http://localhost:5000/health`
-- UI health check: `http://localhost:3000`
+- Server health check: `http://localhost:5001/health`
+- UI health check: `http://localhost:3001`
 
 ### Common Issues
 
-1. **Services won't start**: Check that ports 3000 and 5000 are not in use
+1. **Services won't start**: Check that ports 3001 and 5001 are not in use
 2. **Database connection issues**: Verify MongoDB connection string
 3. **Authentication errors**: Check Auth0 configuration
 4. **CORS errors**: Verify allowed origins in configuration
@@ -170,13 +201,13 @@ View detailed logs for troubleshooting:
 
 ```bash
 # View server logs
-docker-compose logs xiansai-server
+docker compose -p xians-community-edition logs xiansai-server
 
 # View UI logs
-docker-compose logs xiansai-ui
+docker compose -p xians-community-edition logs xiansai-ui
 
 # Follow logs in real-time
-docker-compose logs -f
+docker compose -p xians-community-edition logs -f
 ```
 
 ## 🔒 Security Considerations

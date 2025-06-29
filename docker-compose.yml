@@ -1,33 +1,34 @@
-version: '3.8'
+# This is the docker-compose.yml file for the Xians Community Edition.
+# V1.0.1
 
 services:
   xiansai-server:
-    image: xiansai/server:latest
+    image: 99xio/xiansai-server:latest
     container_name: xians-server
     restart: unless-stopped
     ports:
-      - "5000:8080"
+      - "5001:80"
     env_file:
       - server/.env.development
     networks:
-      - xians
+      - xians-community-edition
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 60s
 
   xiansai-ui:
-    image: xiansai/ui:latest
+    image: 99xio/xiansai-ui:latest
     container_name: xians-ui
     restart: unless-stopped
     ports:
-      - "3000:80"
+      - "3001:80"
     env_file:
       - ui/.env.development
     networks:
-      - xians
+      - xians-community-edition
     depends_on:
       xiansai-server:
         condition: service_healthy
@@ -39,10 +40,10 @@ services:
       start_period: 30s
 
 networks:
-  xians:
+  xians-community-edition:
     driver: bridge
-    name: xians-network
+    name: xians-community-edition-network
 
 volumes:
   xiansai-data:
-    name: xians-data 
+    name: xians-community-edition-data 
