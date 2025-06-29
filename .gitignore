@@ -1,0 +1,36 @@
+# Environment files (keep the actual ones, ignore copies)
+.env
+.env.local
+.env.test
+
+# Server and UI production environment files (keep development files in repo)
+server/.env.production
+ui/.env.production
+
+# Docker
+docker-compose.override.yml
+.docker/
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log* 

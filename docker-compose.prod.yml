@@ -1,0 +1,75 @@
+version: '3.8'
+
+services:
+  xiansai-server:
+    image: xiansai/server:latest
+    container_name: xians-server-prod
+    restart: unless-stopped
+    ports:
+      - "5000:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+    env_file:
+      - server/.env.production
+    networks:
+      - xians
+    volumes:
+      - xiansai-data:/app/data
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  xiansai-ui:
+    image: xiansai/ui:latest
+    container_name: xians-ui-prod
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    env_file:
+      - ui/.env.production
+    networks:
+      - xians
+    depends_on:
+      xiansai-server:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  xians:
+    driver: bridge
+    name: xians-network-prod
+
+volumes:
+  xiansai-data:
+    name: xians-data-prod
+    driver: local 
