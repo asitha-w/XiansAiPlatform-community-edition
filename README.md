@@ -21,36 +21,32 @@ Welcome to the XiansAi Platform Community Edition! This repository provides a si
 
 2. **Configure your environment:**
 
-   ```bash
-   # For development, create the required environment files:
-   cp server/.env.example server/.env.development
-   cp ui/.env.example ui/.env.development
+   The platform is pre-configured for local development with:
+   - `.env.local` (Docker Compose configuration)
+   - `server/.env.local` (Server configuration)  
+   - `ui/.env.local` (UI configuration)
    
-   # For production, also create production environment files:
-   cp server/.env.example server/.env.production
-   cp ui/.env.example ui/.env.production
-   # Then edit the .env.production files with your production configuration
-   ```
+   For other environments (production, staging, etc.), you can create additional `.env.*` files by copying and customizing the local ones.
 
 3. **Start the platform:**
 
    ```bash
-   # For development (recommended)
+   # Start with default local environment
    ./start.sh
    
-   # For production
-   ./start.sh --production
+   # Or specify a different environment
+   ./start.sh -e production
    
-   # For production in background
-   ./start.sh --production --detached
-   
-   # Or use Docker Compose directly:
-   # Development:
-   docker compose --env-file .env.development up -d
-   
-   # Production:
-   docker compose --env-file .env.production up -d
+   # Run in background
+   ./start.sh --detached
    ```
+   
+   **Management scripts:**
+   - `./start.sh` - Start the platform
+   - `./stop.sh` - Stop the platform  
+   - `./reset.sh` - Complete reset (removes all data)
+   
+   Each script supports `-e environment` and `--help` options.
 
 4. **Access the applications:**
 
@@ -63,55 +59,40 @@ Welcome to the XiansAi Platform Community Edition! This repository provides a si
 
 The platform uses a **unified Docker Compose configuration** with environment-specific settings:
 
-**Docker Compose Configuration:**
+**Main Configuration Files:**
+- `.env.local` - Docker Compose configuration (default)
+- `server/.env.local` - Server configuration
+- `ui/.env.local` - UI configuration
 
-- `.env.development` - Docker configuration for development mode
-- `.env.production` - Docker configuration for production mode
-
-**Service Configuration:**
-
-- `server/.env.development` - Server configuration for development
-- `server/.env.production` - Server configuration for production  
-- `ui/.env.development` - UI configuration for development
-- `ui/.env.production` - UI configuration for production
-
-This unified approach eliminates duplication while maintaining clear separation between environments.
-
-#### Required Configuration
-
-Before running in production, you **must** configure:
-
-1. **Create production files**: Copy development files and customize them
-2. **Database**: Update MongoDB connection in `server/.env.production`
-3. **Authentication**: Configure Auth0 settings in both server and UI production files
-4. **LLM Provider**: Set up your AI/LLM provider in `server/.env.production`
-5. **Email**: Configure email provider in `server/.env.production`
+**Custom Environments:**
+You can create additional environments by copying the `.local` files:
+```bash
+cp .env.local .env.production
+cp server/.env.local server/.env.production  
+cp ui/.env.local ui/.env.production
+```
 
 #### Key Configuration Sections
 
 - **Database**: MongoDB connection and database name
-- **Authentication**: Auth0 or Azure B2C configuration
+- **Authentication**: Auth0 or Azure B2C configuration  
 - **AI/LLM**: OpenAI or other LLM provider settings
 - **Email**: Email service configuration
 - **Caching**: Redis or memory cache settings
 - **Workflow Engine**: Temporal workflow configuration
 - **CORS**: Allowed origins for cross-origin requests
 
-### Development vs Production
+### Local Development Configuration
 
-The default `.env` file is configured for development with:
+The default `.env.local` file is configured for local development with:
 
 - Memory cache instead of Redis
-- Console email provider
+- Console email provider  
 - Mock LLM provider
 - Development CORS settings
+- Local resource limits
 
-For production, update the following:
-
-- Use Redis for caching (`CACHE_PROVIDER=redis`)
-- Configure real email provider (`EMAIL_PROVIDER=azure`)
-- Configure real LLM provider (`LLM_PROVIDER=openai`)
-- Set production CORS origins
+For production deployments, you'll want to configure real services (Redis, email providers, LLM APIs, etc.) in your production environment files.
 
 ## 🏗️ Architecture
 
@@ -125,16 +106,14 @@ The platform consists of three main services:
 
 ### XiansAi Server
 
-- **Development Image**: `99xio/xiansai-server:latest`
-- **Production Image**: `xiansai/server:latest`
+- **Image**: `99xio/xiansai-server:latest` (configurable via environment)
 - **Port**: 5001 (mapped to container port 80)
 - **Technology**: .NET 9.0
 - **Purpose**: Backend API and workflow engine
 
 ### XiansAi UI
 
-- **Development Image**: `99xio/xiansai-ui:latest`
-- **Production Image**: `xiansai/ui:latest`
+- **Image**: `99xio/xiansai-ui:latest` (configurable via environment)
 - **Port**: 3001 (mapped to container port 80)
 - **Technology**: React
 - **Purpose**: Web-based user interface
@@ -146,90 +125,102 @@ All services are connected via environment-specific Docker networks and use sepa
 ### Start the platform
 
 ```bash
-# Development (recommended)
+# Default local environment
 ./start.sh
 
-# Production
-./start.sh --production
+# Different environment  
+./start.sh -e production
 
-# Production in background
-./start.sh --production --detached
+# Background mode
+./start.sh --detached
 
-# Direct Docker Compose usage:
-# Development
-docker compose --env-file .env.development up -d
-
-# Production
-docker compose --env-file .env.production up -d
+# Show help for more options
+./start.sh --help
 ```
 
 ### Stop the platform
 
 ```bash
-# Development
-docker compose --env-file .env.development down
+# Stop services (keeps data)
+./stop.sh
 
-# Production
-docker compose --env-file .env.production down
+# Stop specific environment
+./stop.sh -e production
+
+# Stop and remove volumes (DELETE ALL DATA)
+./stop.sh --volumes
+
+# Show help for more options
+./stop.sh --help
+```
+
+### Complete reset (will lose all data)
+
+```bash
+# Complete reset with confirmation prompt
+./reset.sh
+
+# Reset specific environment
+./reset.sh -e production
+
+# Force reset without confirmation (DANGEROUS)
+./reset.sh --force
+
+# Show help for more options
+./reset.sh --help
 ```
 
 ### View logs
 
 ```bash
-# Development - all services
-docker compose --env-file .env.development logs -f
+# All services
+docker compose --env-file .env.local logs -f
 
-# Production - all services
+# Specific service
+docker compose --env-file .env.local logs -f xiansai-server
+docker compose --env-file .env.local logs -f xiansai-ui
+
+# For other environments, replace .env.local with your environment file
 docker compose --env-file .env.production logs -f
-
-# Specific service (development)
-docker compose --env-file .env.development logs -f xiansai-server
-docker compose --env-file .env.development logs -f xiansai-ui
-
-# Specific service (production)
-docker compose --env-file .env.production logs -f xiansai-server
-docker compose --env-file .env.production logs -f xiansai-ui
 ```
 
 ### Update to latest versions
 
 ```bash
-# Development
-docker compose --env-file .env.development pull
-docker compose --env-file .env.development up -d
+# Stop, pull latest images, and restart
+./stop.sh
+docker compose --env-file .env.local pull
+./start.sh
 
-# Production
-docker compose --env-file .env.production pull
-docker compose --env-file .env.production up -d
+# Or use Docker Compose directly
+docker compose --env-file .env.local pull
+docker compose --env-file .env.local up -d
 ```
 
 ### Restart a specific service
 
 ```bash
-# Development
-docker compose --env-file .env.development restart xiansai-server
-docker compose --env-file .env.development restart xiansai-ui
+docker compose --env-file .env.local restart xiansai-server
+docker compose --env-file .env.local restart xiansai-ui
 
-# Production
+# For other environments, replace .env.local with your environment file
 docker compose --env-file .env.production restart xiansai-server
-docker compose --env-file .env.production restart xiansai-ui
 ```
 
-## Complete reset (will lose all data)
+### Direct Docker Compose usage
+
+For advanced users, you can also use Docker Compose directly:
 
 ```bash
-# Development
-docker compose --env-file .env.development down
-docker volume rm xians-mongodb-data
-docker compose --env-file .env.development up -d
+# Start services
+docker compose --env-file .env.local up -d
 
-# Production  
-docker compose --env-file .env.production down
-docker volume rm xians-mongodb-data-prod
-docker compose --env-file .env.production up -d
+# Stop services
+docker compose --env-file .env.local down
+
+# Stop and remove volumes
+docker compose --env-file .env.local down -v
 ```
-
-MongoDB will be automatically initialized with a fresh database
 
 ## 🔍 Troubleshooting
 
@@ -246,29 +237,21 @@ Both services include health checks:
 2. **Database connection issues**: Verify MongoDB connection string
 3. **Authentication errors**: Check Auth0 configuration
 4. **CORS errors**: Verify allowed origins in configuration
+5. **Environment file not found**: Use `./start.sh -h` to see available options and check existing `.env.*` files
 
 ### Logs and Debugging
 
 View detailed logs for troubleshooting:
 
 ```bash
-# Development - view server logs
-docker compose --env-file .env.development logs xiansai-server
+# View server logs
+docker compose --env-file .env.local logs xiansai-server
 
-# Development - view UI logs
-docker compose --env-file .env.development logs xiansai-ui
+# View UI logs
+docker compose --env-file .env.local logs xiansai-ui
 
-# Development - follow logs in real-time
-docker compose --env-file .env.development logs -f
-
-# Production - view server logs
-docker compose --env-file .env.production logs xiansai-server
-
-# Production - view UI logs  
-docker compose --env-file .env.production logs xiansai-ui
-
-# Production - follow logs in real-time
-docker compose --env-file .env.production logs -f
+# Follow logs in real-time
+docker compose --env-file .env.local logs -f
 ```
 
 ## 🔒 Security Considerations
@@ -323,8 +306,12 @@ For support and questions:
 
 1. Check the troubleshooting section above
 2. Review the logs for error messages
-3. Consult the documentation files above for detailed setup information
-4. Consult the individual component documentation:
+3. Use the management scripts with `--help` for usage information:
+   - `./start.sh --help`
+   - `./stop.sh --help` 
+   - `./reset.sh --help`
+4. Consult the documentation files above for detailed setup information
+5. Consult the individual component documentation:
    - [XiansAi Server Documentation](https://github.com/xiansai/server)
    - [XiansAi UI Documentation](https://github.com/xiansai/ui)
 
