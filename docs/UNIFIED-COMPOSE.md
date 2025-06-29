@@ -43,13 +43,13 @@ Options:
 ### `.env.development`
 - Uses `99xio/xiansai-server:latest` and `99xio/xiansai-ui:latest` images
 - Lighter resource limits for development
-- Uses `mongo-healthcheck.js` for MongoDB health checking
+- Uses `db/mongo-healthcheck.js` for MongoDB health checking
 - Local logging driver
 
 ### `.env.production`
 - Uses `xiansai/server:latest` and `xiansai/ui:latest` images  
 - Production-grade resource limits and logging
-- Uses `mongo-init.js` for MongoDB initialization
+- Uses `db/mongo-healthcheck.js` for MongoDB health checking (replica set initialization handled by startup script)
 - JSON file logging with rotation
 
 ## 🔧 Key Variables
@@ -71,8 +71,9 @@ The environment files control these aspects:
 ├── docker-compose.yml          # Unified compose file
 ├── .env.development           # Development configuration
 ├── .env.production           # Production configuration  
-├── mongo-healthcheck.js      # Development MongoDB health check
-├── mongo-init.js            # Production MongoDB initialization
+├── db/
+│   ├── mongo-healthcheck.js # MongoDB health check script
+│   └── mongo-startup.sh    # MongoDB startup script with replica set initialization
 └── start.sh                # Startup script
 ```
 

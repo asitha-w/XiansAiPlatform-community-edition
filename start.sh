@@ -15,14 +15,14 @@ if ! docker info > /dev/null 2>&1; then
 fi
 
 # Parse command line arguments
-ENVIRONMENT="development"
+ENVIRONMENT="local"
 DETACHED=false
 
 while [[ $# -gt 0 ]]; do
     case $1 in
-        -p|--prod|--production)
-            ENVIRONMENT="production"
-            shift
+        -e|--env|--environment)
+            ENVIRONMENT="$2"
+            shift 2
             ;;
         -d|--detached)
             DETACHED=true
@@ -31,9 +31,14 @@ while [[ $# -gt 0 ]]; do
         -h|--help)
             echo "Usage: $0 [options]"
             echo "Options:"
-            echo "  -p, --prod, --production  Run in production mode"
+            echo "  -e, --env, --environment  Specify environment name (default: local)"
             echo "  -d, --detached           Run in detached mode"
             echo "  -h, --help               Show this help message"
+            echo ""
+            echo "Examples:"
+            echo "  $0                       # Run with default local environment"
+            echo "  $0 -e production         # Run with production environment"
+            echo "  $0 -e staging -d         # Run with staging environment in detached mode"
             exit 0
             ;;
         *)
@@ -44,44 +49,32 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Check if environment files exist
-if [ ! -f "server/.env.$ENVIRONMENT" ]; then
-    echo "❌ server/.env.$ENVIRONMENT file not found. This file is required."
-    echo "   Please ensure the server environment file exists."
-    if [ "$ENVIRONMENT" = "production" ]; then
-        echo "   You can copy from development and customize:"
-        echo "   cp server/.env.development server/.env.production"
-    fi
-    exit 1
-fi
-
-if [ ! -f "ui/.env.$ENVIRONMENT" ]; then
-    echo "❌ ui/.env.$ENVIRONMENT file not found. This file is required."
-    echo "   Please ensure the UI environment file exists."
-    if [ "$ENVIRONMENT" = "production" ]; then
-        echo "   You can copy from development and customize:"
-        echo "   cp ui/.env.development ui/.env.production"
-    fi
-    exit 1
-fi
-
 # Check if environment-specific .env file exists
 ENV_FILE=".env.$ENVIRONMENT"
 if [ ! -f "$ENV_FILE" ]; then
     echo "❌ $ENV_FILE file not found. This file is required."
     echo "   This file controls the Docker Compose configuration."
+    echo "   Available environment files:"
+    ls -1 .env.* 2>/dev/null | sed 's/^/     /' || echo "     No .env.* files found"
     exit 1
+fi
+
+# Check if environment files exist (optional check for server and ui)
+if [ -d "server" ] && [ ! -f "server/.env.$ENVIRONMENT" ]; then
+    echo "⚠️  server/.env.$ENVIRONMENT file not found."
+    echo "   This may be required depending on your configuration."
+fi
+
+if [ -d "ui" ] && [ ! -f "ui/.env.$ENVIRONMENT" ]; then
+    echo "⚠️  ui/.env.$ENVIRONMENT file not found."
+    echo "   This may be required depending on your configuration."
 fi
 
 # Set the environment configuration
 echo "📋 Using environment: $ENVIRONMENT"
 echo "📋 Environment file: $ENV_FILE"
 
-if [ "$ENVIRONMENT" = "production" ]; then
-    echo "🏭 Starting in PRODUCTION mode..."
-else
-    echo "🛠️  Starting in DEVELOPMENT mode..."
-fi
+echo "🔧 Starting in $ENVIRONMENT mode..."
 
 # Pull latest images
 echo "📦 Pulling latest Docker images..."

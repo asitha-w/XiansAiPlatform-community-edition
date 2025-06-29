@@ -32,13 +32,13 @@ The platform uses two pre-built Docker images from DockerHub:
 - Uses `99xio/xiansai-server:latest` and `99xio/xiansai-ui:latest` images
 - Lighter resource limits for development workstations
 - Local logging driver for easier debugging
-- Uses `mongo-healthcheck.js` for MongoDB health checking
+- Uses `db/mongo-healthcheck.js` for MongoDB health checking
 
 **Production (`.env.production`):**
 - Uses `xiansai/server:latest` and `xiansai/ui:latest` images
 - Production-grade resource limits and logging
 - JSON file logging with rotation (10MB max, 3 files)
-- Uses `mongo-init.js` for MongoDB initialization
+- Uses `db/mongo-healthcheck.js` for MongoDB health checking (replica set initialization handled by startup script)
 - Enhanced health check configurations
 
 ## 🌐 Networking

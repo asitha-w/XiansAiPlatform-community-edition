@@ -12,8 +12,8 @@ services:
       - "27017:27017"
     volumes:
       - mongodb_data:/data/db
-      - ${MONGO_SCRIPT_PATH:-./mongo-healthcheck.js}:${MONGO_SCRIPT_MOUNT:-/mongo-healthcheck.js}:ro
-      - ./mongo-startup.sh:/mongo-startup.sh:ro
+      - ${MONGO_SCRIPT_PATH:-./db/mongo-healthcheck.js}:${MONGO_SCRIPT_MOUNT:-/mongo-healthcheck.js}:ro
+      - ./db/mongo-startup.sh:/mongo-startup.sh:ro
     networks:
       - xians-community-edition
     healthcheck:

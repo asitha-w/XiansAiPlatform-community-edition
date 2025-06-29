@@ -29,8 +29,8 @@ Make sure you have these files:
 - ✅ `docker-compose.yml` (updated unified version)
 - ✅ `.env.development` (Docker Compose config for dev)
 - ✅ `.env.production` (Docker Compose config for prod)
-- ✅ `mongo-healthcheck.js` (for development)
-- ✅ `mongo-init.js` (for production)
+- ✅ `db/mongo-healthcheck.js` (health check script)
+- ✅ `db/mongo-startup.sh` (startup script with replica set initialization)
 
 ### 3. Update Your Commands
 
