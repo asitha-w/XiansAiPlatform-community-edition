@@ -22,24 +22,34 @@ Welcome to the XiansAi Platform Community Edition! This repository provides a si
 2. **Configure your environment:**
 
    ```bash
-   # For development, the .env.development files are already included
-   # For production, create production environment files:
-   cp server/.env.sample server/.env.production
-   cp server/.env.sample server/.env.development
-   cp ui/.env.sample ui/.env.production
-   cp ui/.env.sample ui/.env.development
-   # Then edit the .env.production and .env.development files with your configuration
+   # For development, create the required environment files:
+   cp server/.env.example server/.env.development
+   cp ui/.env.example ui/.env.development
+   
+   # For production, also create production environment files:
+   cp server/.env.example server/.env.production
+   cp ui/.env.example ui/.env.production
+   # Then edit the .env.production files with your production configuration
    ```
 
 3. **Start the platform:**
 
    ```bash
-   # Set the project name to avoid conflicts
-   export COMPOSE_PROJECT_NAME=xians-community-edition
-   docker compose up -d
+   # For development (recommended)
+   ./start.sh
    
-   # Or alternatively, use the -p flag
-   docker compose -p xians-community-edition up -d
+   # For production
+   ./start.sh --production
+   
+   # For production in background
+   ./start.sh --production --detached
+   
+   # Or use Docker Compose directly:
+   # Development:
+   docker compose --env-file .env.development up -d
+   
+   # Production:
+   docker compose --env-file .env.production up -d
    ```
 
 4. **Access the applications:**
@@ -49,16 +59,23 @@ Welcome to the XiansAi Platform Community Edition! This repository provides a si
 
 ## 📋 Configuration
 
-### Environment Variables
+### Environment Files
 
-The platform uses individual environment files for each service:
+The platform uses a **unified Docker Compose configuration** with environment-specific settings:
+
+**Docker Compose Configuration:**
+
+- `.env.development` - Docker configuration for development mode
+- `.env.production` - Docker configuration for production mode
+
+**Service Configuration:**
 
 - `server/.env.development` - Server configuration for development
 - `server/.env.production` - Server configuration for production  
 - `ui/.env.development` - UI configuration for development
 - `ui/.env.production` - UI configuration for production
 
-This approach eliminates duplication and keeps configurations close to their respective services.
+This unified approach eliminates duplication while maintaining clear separation between environments.
 
 #### Required Configuration
 
@@ -98,86 +115,121 @@ For production, update the following:
 
 ## 🏗️ Architecture
 
-The platform consists of two main services:
+The platform consists of three main services:
+
+### MongoDB Database
+
+- **Image**: `mongo:latest`
+- **Port**: 27017
+- **Purpose**: Document database with replica set configuration
 
 ### XiansAi Server
 
-- **Image**: `xiansai/server:latest`
-- **Port**: 5001 (mapped to container port 8080)
+- **Development Image**: `99xio/xiansai-server:latest`
+- **Production Image**: `xiansai/server:latest`
+- **Port**: 5001 (mapped to container port 80)
 - **Technology**: .NET 9.0
 - **Purpose**: Backend API and workflow engine
 
 ### XiansAi UI
 
-- **Image**: `xiansai/ui:latest`
+- **Development Image**: `99xio/xiansai-ui:latest`
+- **Production Image**: `xiansai/ui:latest`
 - **Port**: 3001 (mapped to container port 80)
 - **Technology**: React
 - **Purpose**: Web-based user interface
 
-Both services are connected via the `xians-community-edition-network` Docker network and grouped under the `xians-community-edition` namespace.
+All services are connected via environment-specific Docker networks and use separate volumes for data persistence.
 
 ## 🔧 Management Commands
 
 ### Start the platform
 
 ```bash
-# Set project name and start
-export COMPOSE_PROJECT_NAME=xians-community-edition
-docker compose up -d
+# Development (recommended)
+./start.sh
 
-# Or use the project name flag
-docker compose -p xians-community-edition up -d
+# Production
+./start.sh --production
+
+# Production in background
+./start.sh --production --detached
+
+# Direct Docker Compose usage:
+# Development
+docker compose --env-file .env.development up -d
+
+# Production
+docker compose --env-file .env.production up -d
 ```
 
 ### Stop the platform
 
 ```bash
-# Using environment variable
-export COMPOSE_PROJECT_NAME=xians-community-edition
-docker compose down
+# Development
+docker compose --env-file .env.development down
 
-# Or using project name flag
-docker compose -p xians-community-edition down
+# Production
+docker compose --env-file .env.production down
 ```
 
 ### View logs
 
 ```bash
-# All services (with project name)
-export COMPOSE_PROJECT_NAME=xians-community-edition
-docker compose logs -f
+# Development - all services
+docker compose --env-file .env.development logs -f
 
-# Or with project flag
-docker compose -p xians-community-edition logs -f
+# Production - all services
+docker compose --env-file .env.production logs -f
 
-# Specific service
-docker compose -p xians-community-edition logs -f xiansai-server
-docker compose -p xians-community-edition logs -f xiansai-ui
+# Specific service (development)
+docker compose --env-file .env.development logs -f xiansai-server
+docker compose --env-file .env.development logs -f xiansai-ui
+
+# Specific service (production)
+docker compose --env-file .env.production logs -f xiansai-server
+docker compose --env-file .env.production logs -f xiansai-ui
 ```
 
 ### Update to latest versions
 
 ```bash
-export COMPOSE_PROJECT_NAME=xians-community-edition
-docker compose pull
-docker compose up -d
+# Development
+docker compose --env-file .env.development pull
+docker compose --env-file .env.development up -d
 
-# Or with project flag
-docker compose -p xians-community-edition pull
-docker compose -p xians-community-edition up -d
+# Production
+docker compose --env-file .env.production pull
+docker compose --env-file .env.production up -d
 ```
 
 ### Restart a specific service
 
 ```bash
-export COMPOSE_PROJECT_NAME=xians-community-edition
-docker compose restart xiansai-server
-docker compose restart xiansai-ui
+# Development
+docker compose --env-file .env.development restart xiansai-server
+docker compose --env-file .env.development restart xiansai-ui
 
-# Or with project flag
-docker compose -p xians-community-edition restart xiansai-server
-docker compose -p xians-community-edition restart xiansai-ui
+# Production
+docker compose --env-file .env.production restart xiansai-server
+docker compose --env-file .env.production restart xiansai-ui
 ```
+
+## Complete reset (will lose all data)
+
+```bash
+# Development
+docker compose --env-file .env.development down
+docker volume rm xians-mongodb-data
+docker compose --env-file .env.development up -d
+
+# Production  
+docker compose --env-file .env.production down
+docker volume rm xians-mongodb-data-prod
+docker compose --env-file .env.production up -d
+```
+
+MongoDB will be automatically initialized with a fresh database
 
 ## 🔍 Troubleshooting
 
@@ -200,14 +252,23 @@ Both services include health checks:
 View detailed logs for troubleshooting:
 
 ```bash
-# View server logs
-docker compose -p xians-community-edition logs xiansai-server
+# Development - view server logs
+docker compose --env-file .env.development logs xiansai-server
 
-# View UI logs
-docker compose -p xians-community-edition logs xiansai-ui
+# Development - view UI logs
+docker compose --env-file .env.development logs xiansai-ui
 
-# Follow logs in real-time
-docker compose -p xians-community-edition logs -f
+# Development - follow logs in real-time
+docker compose --env-file .env.development logs -f
+
+# Production - view server logs
+docker compose --env-file .env.production logs xiansai-server
+
+# Production - view UI logs  
+docker compose --env-file .env.production logs xiansai-ui
+
+# Production - follow logs in real-time
+docker compose --env-file .env.production logs -f
 ```
 
 ## 🔒 Security Considerations
@@ -247,13 +308,23 @@ LLM_API_KEY=sk-your-openai-api-key
 LLM_MODEL=gpt-4o-mini
 ```
 
+## 📚 Documentation
+
+For detailed documentation, see the **[docs/](./docs/)** folder:
+
+- **[Setup Guide](./docs/SETUP.md)** - Environment setup and configuration
+- **[Docker Guide](./docs/UNIFIED-COMPOSE.md)** - Unified Docker Compose setup
+- **[Technical Details](./docs/DOCKER.md)** - Docker configuration reference
+- **[Migration Guide](./docs/MIGRATION.md)** - Upgrade from dual-file setup
+
 ## 🆘 Support
 
 For support and questions:
 
 1. Check the troubleshooting section above
 2. Review the logs for error messages
-3. Consult the individual component documentation:
+3. Consult the documentation files above for detailed setup information
+4. Consult the individual component documentation:
    - [XiansAi Server Documentation](https://github.com/xiansai/server)
    - [XiansAi UI Documentation](https://github.com/xiansai/ui)
 

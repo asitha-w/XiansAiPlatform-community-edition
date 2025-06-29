@@ -8,6 +8,7 @@ The XiansAi Platform requires environment configuration files that are not inclu
 
 1. **Copy the example files:**
    ```bash
+   # Service environment files
    # For development
    cp server/.env.example server/.env.development
    cp ui/.env.example ui/.env.development
@@ -17,7 +18,13 @@ The XiansAi Platform requires environment configuration files that are not inclu
    cp ui/.env.example ui/.env.production
    ```
 
-2. **Edit the files with your actual values:**
+2. **Docker Compose configuration (if missing):**
+   The repository should already include `.env.development` and `.env.production` files for Docker Compose configuration. If they're missing, they control:
+   - Docker image selection (development vs production images)
+   - Resource limits and logging configuration
+   - Container naming and network configuration
+
+3. **Edit the files with your actual values:**
    - Replace all placeholder values (e.g., `your-api-key-here`) with your real credentials
    - Configure database connections, API keys, and authentication settings
 
@@ -75,9 +82,37 @@ The XiansAi Platform requires environment configuration files that are not inclu
 - Always use the `.env.example` files as templates
 - Rotate any exposed credentials immediately
 
+## 🐳 Docker Compose Environment Files
+
+The platform now uses a **unified Docker Compose configuration** with environment-specific files:
+
+### Docker Configuration Files
+- **`.env.development`**: Controls development Docker setup
+- **`.env.production`**: Controls production Docker setup
+
+### Key Settings Controlled
+- **Images**: Development uses `99xio/*` images, production uses `xiansai/*` images
+- **Resource limits**: Development optimized for local development, production for server deployment
+- **Logging**: Development uses local driver, production uses JSON with rotation
+- **Container naming**: Environment suffixes prevent conflicts
+
+### Starting the Platform
+```bash
+# Development (uses .env.development)
+./start.sh
+
+# Production (uses .env.production)  
+./start.sh --production
+
+# Direct Docker Compose usage
+docker compose --env-file .env.development up -d
+docker compose --env-file .env.production up -d
+```
+
 ### Support
 
 If you need help with configuration:
 1. Check the example files for expected formats
 2. Refer to the main README.md for service-specific configuration
-3. Review the troubleshooting section for common issues 
+3. Review docs/UNIFIED-COMPOSE.md for Docker Compose details
+4. Review the troubleshooting section for common issues 
