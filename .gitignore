@@ -3,8 +3,10 @@
 .env.local
 .env.test
 
-# Server and UI production environment files (keep development files in repo)
+# All environment files with sensitive data
+server/.env.development
 server/.env.production
+ui/.env.development
 ui/.env.production
 
 # Docker
