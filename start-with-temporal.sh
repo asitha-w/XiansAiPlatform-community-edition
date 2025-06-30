@@ -25,14 +25,23 @@ docker compose --env-file .env.local up -d
 # Wait a moment for the network to be created
 sleep 2
 
+# Start PostgreSQL service first
+echo "🗄️  Starting PostgreSQL service..."
+# Set environment variables
+export POSTGRESQL_VERSION=16
+export ENVIRONMENT_SUFFIX=""
+docker compose -p xians-community-edition -f postgresql/docker-compose.yml up -d
+
+# Wait for PostgreSQL to be ready
+echo "⏳ Waiting for PostgreSQL to be ready..."
+sleep 10
+
 # Start Temporal services with environment configuration
 echo "⚡ Starting Temporal services..."
 # Set environment variables for Temporal versions
-export POSTGRESQL_VERSION=16
 export TEMPORAL_VERSION=1.28.0
 export TEMPORAL_UI_VERSION=2.34.0
 export TEMPORAL_ADMINTOOLS_VERSION=1.28.0-tctl-1.18.2-cli-1.3.0
-export ENVIRONMENT_SUFFIX=""
 docker compose -p xians-community-edition -f temporal/docker-compose.yml up -d
 
 # Setup Temporal search attributes
@@ -51,7 +60,7 @@ echo "  • MongoDB:                localhost:27017"
 echo "  • Temporal PostgreSQL:    localhost:5432"
 echo ""
 echo "🔧 Useful commands:"
-echo "  • Check status:           docker compose --env-file .env.local ps && docker compose -p xians-community-edition -f temporal/docker-compose.yml ps"
+echo "  • Check status:           docker compose --env-file .env.local ps && docker compose -p xians-community-edition -f postgresql/docker-compose.yml ps && docker compose -p xians-community-edition -f temporal/docker-compose.yml ps"
 echo "  • View logs:              docker compose logs -f [service-name]"
 echo "  • Temporal CLI alias:     alias tctl=\"docker exec temporal-admin-tools tctl\""
 echo "  • Verify search attrs:    ./temporal/verify-search-attributes.sh"

@@ -1,0 +1,24 @@
+services:
+  postgresql:
+    container_name: postgresql${ENVIRONMENT_SUFFIX:-}
+    environment:
+      POSTGRES_PASSWORD: temporal
+      POSTGRES_USER: temporal
+    image: postgres:${POSTGRESQL_VERSION}
+    networks:
+      - xians-community-edition
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgresql_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+networks:
+  xians-community-edition:
+    external: true
+    name: xians-community-edition-network${ENVIRONMENT_SUFFIX:-}
+
+volumes:
+  postgresql_data:
+    name: postgresql-data${ENVIRONMENT_SUFFIX:-}
+    driver: local 

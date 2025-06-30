@@ -1,20 +1,8 @@
 services:
-  postgresql:
-    container_name: temporal-postgresql${ENVIRONMENT_SUFFIX:-}
-    environment:
-      POSTGRES_PASSWORD: temporal
-      POSTGRES_USER: temporal
-    image: postgres:${POSTGRESQL_VERSION}
-    networks:
-      - xians-community-edition
-    ports:
-      - "5432:5432"
-    volumes:
-      - temporal_postgresql_data:/var/lib/postgresql/data
   temporal:
     container_name: temporal${ENVIRONMENT_SUFFIX:-}
-    depends_on:
-      - postgresql
+    external_links:
+      - postgresql${ENVIRONMENT_SUFFIX:-}:postgresql
     environment:
       - DB=postgres12
       - DB_PORT=5432
@@ -60,8 +48,3 @@ networks:
   xians-community-edition:
     external: true
     name: xians-community-edition-network${ENVIRONMENT_SUFFIX:-}
-
-volumes:
-  temporal_postgresql_data:
-    external: true
-    name: temporal-postgresql-data${ENVIRONMENT_SUFFIX:-}
