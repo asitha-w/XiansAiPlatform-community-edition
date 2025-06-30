@@ -63,6 +63,7 @@ The platform uses a **unified Docker Compose configuration** with environment-sp
 - `.env.local` - Docker Compose configuration (default)
 - `server/.env.local` - Server configuration
 - `ui/.env.local` - UI configuration
+- `temporal/.env.local` - Temporal configuration
 
 **Custom Environments:**
 You can create additional environments by copying the `.local` files:
