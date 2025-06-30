@@ -173,6 +173,25 @@ Production setup includes:
 ## 🔄 Updates and Maintenance
 
 ### Updating Images
+
+**Method 1: Using pull.sh script (Recommended)**
+```bash
+# Pull latest server and UI images
+./pull.sh
+
+# Pull for specific environment
+./pull.sh -e production
+
+# Pull only specific components
+./pull.sh --server    # Server image only
+./pull.sh --ui        # UI image only
+./pull.sh --all       # All images including MongoDB
+
+# Restart services after pulling
+./stop.sh && ./start.sh
+```
+
+**Method 2: Direct Docker Compose**
 ```bash
 # Development - pull latest versions
 docker compose --env-file .env.development pull

@@ -77,12 +77,9 @@ fi
 echo "📋 Using environment: $ENVIRONMENT"
 echo "📋 Environment file: $ENV_FILE"
 
-# Load environment variables to get image names
-source "$ENV_FILE"
-
-# Set default image names if not specified in environment
-SERVER_IMAGE=${SERVER_IMAGE:-99xio/xiansai-server:latest}
-UI_IMAGE=${UI_IMAGE:-99xio/xiansai-ui:latest}
+# Extract image names from environment file (avoiding source due to JSON syntax)
+SERVER_IMAGE=$(grep "^SERVER_IMAGE=" "$ENV_FILE" 2>/dev/null | cut -d'=' -f2- | tr -d '"' || echo "99xio/xiansai-server:latest")
+UI_IMAGE=$(grep "^UI_IMAGE=" "$ENV_FILE" 2>/dev/null | cut -d'=' -f2- | tr -d '"' || echo "99xio/xiansai-ui:latest")
 
 # Determine what to pull
 if [ "$PULL_ALL" = true ]; then

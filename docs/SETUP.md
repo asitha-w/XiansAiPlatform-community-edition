@@ -104,10 +104,36 @@ The platform now uses a **unified Docker Compose configuration** with environmen
 # Production (uses .env.production)  
 ./start.sh --production
 
+# Pull latest images before starting
+./pull.sh -e development
+./pull.sh -e production
+
 # Direct Docker Compose usage
 docker compose --env-file .env.development up -d
 docker compose --env-file .env.production up -d
 ```
+
+### Updating Images
+
+To pull the latest Docker images:
+
+```bash
+# Pull latest server and UI images
+./pull.sh
+
+# Pull for specific environment
+./pull.sh -e production
+
+# Pull only specific components
+./pull.sh --server    # Server only
+./pull.sh --ui        # UI only
+./pull.sh --all       # All images including dependencies
+
+# Then restart the platform
+./stop.sh && ./start.sh
+```
+
+The `pull.sh` script safely extracts image names from your environment files and pulls the appropriate versions for your configuration.
 
 ### Support
 

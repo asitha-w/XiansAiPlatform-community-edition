@@ -28,14 +28,27 @@ docker compose --env-file .env.development up -d
 docker compose --env-file .env.production up -d
 ```
 
-### Available Options
+### Available Scripts
 ```bash
+# Start the platform
 ./start.sh [options]
-
-Options:
   -p, --prod, --production  Run in production mode
   -d, --detached           Run in detached mode (background)
   -h, --help               Show help
+
+# Pull latest images
+./pull.sh [options]
+  -e, --environment        Specify environment (default: local)
+  -s, --server            Pull only server image
+  -u, --ui                Pull only UI image
+  -a, --all               Pull all images including dependencies
+  -h, --help              Show help
+
+# Stop the platform
+./stop.sh [options]
+  -e, --environment        Specify environment (default: local)
+  -v, --volumes           Also remove volumes
+  -h, --help              Show help
 ```
 
 ## ⚙️ Configuration Files
@@ -103,6 +116,37 @@ If you were using the old `docker-compose.prod.yml` approach:
 - ✅ **Clear separation**: Environment-specific settings in separate files
 - ✅ **Flexible**: Easy to add new environments (staging, testing, etc.)
 - ✅ **Backward compatible**: Same functionality as before
+
+## 🔄 Updating Images
+
+### Using pull.sh script (Recommended)
+```bash
+# Pull latest for current environment
+./pull.sh
+
+# Pull for specific environment
+./pull.sh -e production
+
+# Pull only specific components
+./pull.sh --server
+./pull.sh --ui
+./pull.sh --all
+
+# Update workflow: pull, stop, start
+./pull.sh
+./stop.sh && ./start.sh
+```
+
+### Direct Docker Compose
+```bash
+# Development
+docker compose --env-file .env.development pull
+docker compose --env-file .env.development up -d
+
+# Production
+docker compose --env-file .env.production pull
+docker compose --env-file .env.production up -d
+```
 
 ## 🛠️ Advanced Usage
 

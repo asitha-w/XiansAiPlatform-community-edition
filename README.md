@@ -44,6 +44,7 @@ Welcome to the XiansAi Platform Community Edition! This repository provides a si
    **Management scripts:**
    - `./start.sh` - Start the platform
    - `./stop.sh` - Stop the platform  
+   - `./pull.sh` - Pull latest images
    - `./reset.sh` - Complete reset (removes all data)
    
    Each script supports `-e environment` and `--help` options.
@@ -155,6 +156,28 @@ All services are connected via environment-specific Docker networks and use sepa
 ./stop.sh --help
 ```
 
+### Pull latest images
+
+```bash
+# Pull latest server and UI images (default)
+./pull.sh
+
+# Pull for specific environment
+./pull.sh -e production
+
+# Pull only server image
+./pull.sh --server
+
+# Pull only UI image
+./pull.sh --ui
+
+# Pull all images including dependencies
+./pull.sh --all
+
+# Show help for more options
+./pull.sh --help
+```
+
 ### Complete reset (will lose all data)
 
 ```bash
@@ -188,14 +211,22 @@ docker compose --env-file .env.production logs -f
 ### Update to latest versions
 
 ```bash
-# Stop, pull latest images, and restart
+# Method 1: Using the pull script (recommended)
+./pull.sh                    # Pull latest server and UI images
+./stop.sh && ./start.sh      # Restart with new images
+
+# Method 2: Pull all images including dependencies
+./pull.sh --all
+./stop.sh && ./start.sh
+
+# Method 3: Manual Docker Compose approach
 ./stop.sh
 docker compose --env-file .env.local pull
 ./start.sh
 
-# Or use Docker Compose directly
-docker compose --env-file .env.local pull
-docker compose --env-file .env.local up -d
+# For specific environments
+./pull.sh -e production
+./stop.sh -e production && ./start.sh -e production
 ```
 
 ### Restart a specific service
