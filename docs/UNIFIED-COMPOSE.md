@@ -11,6 +11,7 @@ This repository now uses a **single `docker-compose.yml`** file that supports bo
 ## 🚀 Usage
 
 ### Development (Default)
+
 ```bash
 # Using the start script (recommended)
 ./start.sh
@@ -20,6 +21,7 @@ docker compose --env-file .env.development up -d
 ```
 
 ### Production
+
 ```bash
 # Using the start script (recommended)
 ./start.sh --production
@@ -29,6 +31,7 @@ docker compose --env-file .env.production up -d
 ```
 
 ### Available Scripts
+
 ```bash
 # Start the platform
 ./start.sh [options]
@@ -54,12 +57,14 @@ docker compose --env-file .env.production up -d
 ## ⚙️ Configuration Files
 
 ### `.env.development`
+
 - Uses `99xio/xiansai-server:latest` and `99xio/xiansai-ui:latest` images
 - Lighter resource limits for development
 - Uses `db/mongo-healthcheck.js` for MongoDB health checking
 - Local logging driver
 
 ### `.env.production`
+
 - Uses `xiansai/server:latest` and `xiansai/ui:latest` images  
 - Production-grade resource limits and logging
 - Uses `db/mongo-healthcheck.js` for MongoDB health checking (replica set initialization handled by startup script)
@@ -95,11 +100,13 @@ The environment files control these aspects:
 If you were using the old `docker-compose.prod.yml` approach:
 
 1. **Stop existing containers**:
+
    ```bash
    docker compose -f docker-compose.prod.yml down
    ```
 
 2. **Use new approach**:
+
    ```bash
    ./start.sh --production
    ```
@@ -120,6 +127,7 @@ If you were using the old `docker-compose.prod.yml` approach:
 ## 🔄 Updating Images
 
 ### Using pull.sh script (Recommended)
+
 ```bash
 # Pull latest for current environment
 ./pull.sh
@@ -138,6 +146,7 @@ If you were using the old `docker-compose.prod.yml` approach:
 ```
 
 ### Direct Docker Compose
+
 ```bash
 # Development
 docker compose --env-file .env.development pull
@@ -151,29 +160,37 @@ docker compose --env-file .env.production up -d
 ## 🛠️ Advanced Usage
 
 ### Custom Environment
+
 Create your own `.env.custom` file and use:
+
 ```bash
 docker compose --env-file .env.custom up -d
 ```
 
 ### Override Specific Variables
+
 ```bash
 SERVER_IMAGE=my-custom-server:latest docker compose up -d
 ```
 
 ### Multiple Environments
+
 You can run both dev and prod simultaneously since they use different container names and networks.
 
 ## 🆘 Troubleshooting
 
 ### "Environment file not found"
+
 Make sure you have `.env.development` and `.env.production` files in the root directory.
 
 ### "Container name conflicts"  
+
 The new setup uses environment suffixes to avoid conflicts. Stop old containers first:
+
 ```bash
 docker ps -a | grep xians- | awk '{print $1}' | xargs docker rm -f
 ```
 
 ### Resource Issues
+
 Adjust memory limits in the environment files based on your system capacity. 

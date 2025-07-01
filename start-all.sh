@@ -34,7 +34,29 @@ docker compose -p xians-community-edition -f postgresql/docker-compose.yml up -d
 
 # Wait for PostgreSQL to be ready
 echo "⏳ Waiting for PostgreSQL to be ready..."
-sleep 10
+sleep 15
+
+# Initialize Keycloak database
+echo "🔧 Initializing Keycloak database..."
+if [ -f "keycloak/init-keycloak-db.sh" ]; then
+    if ./keycloak/init-keycloak-db.sh; then
+        echo "✅ Keycloak database initialization completed successfully"
+    else
+        echo "⚠️  Keycloak database initialization encountered issues, but continuing..."
+        echo "   (Keycloak may still work if database already exists)"
+    fi
+else
+    echo "⚠️  keycloak/init-keycloak-db.sh not found, skipping manual initialization"
+    echo "   (Relying on PostgreSQL init script)"
+fi
+
+# Start Keycloak service
+echo "🔐 Starting Keycloak service..."
+docker compose -p xians-community-edition -f keycloak/docker-compose.yml --env-file keycloak/.env.local up -d
+
+# Wait for Keycloak to be ready
+echo "⏳ Waiting for Keycloak to initialize..."
+sleep 20
 
 # Start Temporal services with environment configuration
 echo "⚡ Starting Temporal services..."
@@ -54,13 +76,14 @@ echo ""
 echo "📊 Access Points:"
 echo "  • Your Application UI:    http://localhost:3001"
 echo "  • Your Application API:   http://localhost:5001"
+echo "  • Keycloak Admin Console: http://localhost:18080/admin"
 echo "  • Temporal Web UI:        http://localhost:8080"
 echo "  • Temporal gRPC API:      localhost:7233"
 echo "  • MongoDB:                localhost:27017"
 echo "  • Temporal PostgreSQL:    localhost:5432"
 echo ""
 echo "🔧 Useful commands:"
-echo "  • Check status:           docker compose --env-file .env.local ps && docker compose -p xians-community-edition -f postgresql/docker-compose.yml ps && docker compose -p xians-community-edition -f temporal/docker-compose.yml ps"
+echo "  • Check status:           docker compose --env-file .env.local ps && docker compose -p xians-community-edition -f postgresql/docker-compose.yml ps && docker compose -p xians-community-edition -f keycloak/docker-compose.yml ps && docker compose -p xians-community-edition -f temporal/docker-compose.yml ps"
 echo "  • View logs:              docker compose logs -f [service-name]"
 echo "  • Temporal CLI alias:     alias tctl=\"docker exec temporal-admin-tools tctl\""
 echo "  • Verify search attrs:    ./temporal/verify-search-attributes.sh"

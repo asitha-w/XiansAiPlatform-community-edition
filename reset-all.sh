@@ -92,16 +92,31 @@ echo "💥 Starting complete reset..."
 
 # Step 1: Stop and remove containers and volumes
 echo "🛑 Stopping services and removing volumes..."
+
+# Stop main application services
+echo "   • Stopping main application services..."
 docker compose --env-file "$ENV_FILE" down -v --remove-orphans
 
+# Stop Temporal services (if running)
+echo "   • Stopping Temporal services..."
+docker compose -p xians-community-edition -f temporal/docker-compose.yml down -v --remove-orphans 2>/dev/null || echo "     (Temporal services not running)"
+
+# Stop Keycloak services (if running)
+echo "   • Stopping Keycloak services..."
+docker compose -p xians-community-edition -f keycloak/docker-compose.yml down -v --remove-orphans 2>/dev/null || echo "     (Keycloak services not running)"
+
+# Stop PostgreSQL services (if running)
+echo "   • Stopping PostgreSQL services..."
+docker compose -p xians-community-edition -f postgresql/docker-compose.yml down -v --remove-orphans 2>/dev/null || echo "     (PostgreSQL services not running)"
+
 # Step 2: Remove XiansAi Docker images
-echo "🗑️  Removing XiansAi Docker images..."
-docker images --format "table {{.Repository}}:{{.Tag}}" | grep -E "(xiansai|99xio)" | while read image; do
-    if [ "$image" != "REPOSITORY:TAG" ]; then
-        echo "   Removing: $image"
-        docker rmi "$image" 2>/dev/null || echo "   (Image not found or in use: $image)"
-    fi
-done
+# echo "🗑️  Removing XiansAi Docker images..."
+# docker images --format "table {{.Repository}}:{{.Tag}}" | grep -E "(xiansai|99xio)" | while read image; do
+#     if [ "$image" != "REPOSITORY:TAG" ]; then
+#         echo "   Removing: $image"
+#         docker rmi "$image" 2>/dev/null || echo "   (Image not found or in use: $image)"
+#     fi
+# done
 
 # Step 3: Clean up Docker system
 echo "🧹 Cleaning up Docker system..."
@@ -109,10 +124,19 @@ docker system prune -f
 
 # Step 4: Remove any remaining volumes
 echo "🗑️  Removing any remaining XiansAi volumes..."
-docker volume ls --format "table {{.Name}}" | grep -E "(xians|xiansai)" | while read volume; do
+docker volume ls --format "table {{.Name}}" | grep -E "(xians|xiansai|community-edition|temporal|keycloak|postgres)" | while read volume; do
     if [ "$volume" != "VOLUME" ]; then
         echo "   Removing volume: $volume"
         docker volume rm "$volume" 2>/dev/null || echo "   (Volume not found: $volume)"
+    fi
+done
+
+# Step 5: Remove anonymous volumes (created by containers but not used)
+echo "🗑️  Removing unused anonymous volumes..."
+docker volume ls -q --filter "dangling=true" | while read volume; do
+    if [ -n "$volume" ]; then
+        echo "   Removing anonymous volume: $volume"
+        docker volume rm "$volume" 2>/dev/null || echo "   (Volume in use: $volume)"
     fi
 done
 

@@ -12,6 +12,7 @@ services:
       - "27017:27017"
     volumes:
       - mongodb_data:/data/db
+      - mongodb_configdb:/data/configdb
       - ${MONGO_SCRIPT_PATH:-./db/mongo-healthcheck.js}:${MONGO_SCRIPT_MOUNT:-/mongo-healthcheck.js}:ro
       - ./db/mongo-startup.sh:/mongo-startup.sh:ro
     networks:
@@ -113,4 +114,7 @@ volumes:
     driver: local
   mongodb_data:
     name: xians-mongodb-data${ENVIRONMENT_SUFFIX:-}
+    driver: local
+  mongodb_configdb:
+    name: xians-mongodb-configdb${ENVIRONMENT_SUFFIX:-}
     driver: local
