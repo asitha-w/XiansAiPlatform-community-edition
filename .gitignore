@@ -7,6 +7,9 @@
 !.env.example
 !.env.local
 
+.version.*
+!.version.latest
+!.version.v*
 
 # Docker
 docker-compose.override.yml

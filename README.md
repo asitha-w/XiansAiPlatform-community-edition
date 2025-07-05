@@ -46,6 +46,11 @@ Welcome to the XiansAi Platform Community Edition! This repository provides a si
 
    For other environments (production, staging, etc.), you can create additional `.env.*` files by copying and customizing the local ones.
 
+   **********
+   ***Llm__ApiKey must be set in server/.env.local***
+   Llm__ApiKey=your-openai-api-key
+   **********
+
 3. **Start the platform:**
 
    ```bash
