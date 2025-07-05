@@ -1,8 +1,0 @@
-# Development Environment Configuration
-COMPOSE_PROJECT_NAME=xians-community-edition
-
-# Images (development versions)
-SERVER_IMAGE=99xio/xiansai-server:latest
-UI_IMAGE=99xio/xiansai-ui:latest
-
-ENV_POSTFIX=local

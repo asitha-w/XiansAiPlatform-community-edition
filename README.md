@@ -40,11 +40,14 @@ Welcome to the XiansAi Platform Community Edition! This repository provides a si
 
 2. **Configure your environment:**
 
-   The platform is pre-configured for local development with:
-   - `server/.env.local` (Server configuration)  
-   - `ui/.env.local` (UI configuration)
+   The platform uses version files (`.config.*`) to manage environment configuration and Docker image versions. These files contain:
+   - Docker image versions for server and UI
+   - Environment postfix settings
+   - Compose project name
 
-   For other environments (production, staging, etc.), you can create additional `.env.*` files by copying and customizing the local ones.
+   Example config files:
+   - `.config.v2.1.0-beta` (default)
+   - `.config.my.v2.1.0-beta` (custom environment)
 
    **********
    ***Llm__ApiKey must be set in server/.env.local***
@@ -54,14 +57,12 @@ Welcome to the XiansAi Platform Community Edition! This repository provides a si
 3. **Start the platform:**
 
    ```bash
-   # Start with default local environment with latest version
+   # Start with default version (.config.v2.1.0-beta)
    ./start-all.sh
    
-   # Or specify a different version
-   ./start-all.sh -v v2.1.0-beta
-   
-   # Or specify a different environment (ui/.env.production and server/.env.production files will be used)
-   ./start-all.sh --env-postfix production
+   # Or specify a different version file
+   ./start-all.sh -v my.v2.1.0-beta  # Uses .config.my.v2.1.0-beta
+   ./start-all.sh -v v2.0.0          # Uses .config.v2.0.0
 
    # Show help for more options
    ./start-all.sh --help
@@ -75,7 +76,7 @@ Welcome to the XiansAi Platform Community Edition! This repository provides a si
 4. **Access the applications:**
 
    - **XiansAi UI**: [http://localhost:3001](http://localhost:3001)
-   - **XiansAi Server API**: [http://localhost:5001](http://localhost:5001)
+   - **XiansAi Server API**: [http://localhost:5001/api-docs](http://localhost:5001/api-docs)
    - **Keycloak Admin Console**: [http://localhost:18080/admin](http://localhost:18080/admin)
    - **Temporal Web UI**: [http://localhost:8080](http://localhost:8080)
 
@@ -92,14 +93,11 @@ Welcome to the XiansAi Platform Community Edition! This repository provides a si
 
 ```bash
 # All services
-docker compose --env-file .env.local logs -f
+docker compose logs -f
 
 # Specific service
-docker compose --env-file .env.local logs -f xiansai-server
-docker compose --env-file .env.local logs -f xiansai-ui
-
-# For other environments, replace .env.local with your environment file
-docker compose --env-file .env.production logs -f
+docker compose logs -f xiansai-server
+docker compose logs -f xiansai-ui
 ```
 
 ## 📄 License
