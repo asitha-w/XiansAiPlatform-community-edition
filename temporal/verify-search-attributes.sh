@@ -7,9 +7,9 @@ set -e
 
 echo "🔍 Verifying Temporal search attributes..."
 
-# Check if Temporal admin tools are available
-if ! docker ps | grep -q "temporal-admin-tools"; then
-    echo "❌ Temporal admin tools container is not running"
+# Check if Temporal container is available
+if ! docker ps | grep -q "temporal"; then
+    echo "❌ Temporal container is not running"
     echo "Please start Temporal services first: ./start-with-temporal.sh"
     exit 1
 fi
@@ -18,7 +18,7 @@ echo "📋 Current search attributes in Temporal cluster:"
 echo ""
 
 # Get search attributes using the correct command
-search_attrs=$(docker exec temporal-admin-tools${ENVIRONMENT_SUFFIX:-} tctl admin cluster get-search-attributes 2>/dev/null || echo "Failed to get search attributes")
+search_attrs=$(docker exec temporal tctl admin cluster get-search-attributes 2>/dev/null || echo "Failed to get search attributes")
 
 echo "$search_attrs"
 

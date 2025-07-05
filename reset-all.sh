@@ -15,15 +15,11 @@ if ! docker info > /dev/null 2>&1; then
 fi
 
 # Parse command line arguments
-ENVIRONMENT="local"
 FORCE=false
+PROJECT_NAME="xians-community-edition"
 
 while [[ $# -gt 0 ]]; do
     case $1 in
-        -e|--env|--environment)
-            ENVIRONMENT="$2"
-            shift 2
-            ;;
         -f|--force)
             FORCE=true
             shift
@@ -31,7 +27,6 @@ while [[ $# -gt 0 ]]; do
         -h|--help)
             echo "Usage: $0 [options]"
             echo "Options:"
-            echo "  -e, --env, --environment  Specify environment name (default: local)"
             echo "  -f, --force              Skip confirmation prompts"
             echo "  -h, --help               Show this help message"
             echo ""
@@ -42,9 +37,8 @@ while [[ $# -gt 0 ]]; do
             echo "     - Clean up Docker system"
             echo ""
             echo "Examples:"
-            echo "  $0                       # Reset with default local environment"
-            echo "  $0 -e production         # Reset with production environment"
-            echo "  $0 -e staging -f         # Reset with staging environment (no prompts)"
+            echo "  $0                       # Reset with confirmation prompt"
+            echo "  $0 -f                    # Reset without prompts"
             exit 0
             ;;
         *)
@@ -54,20 +48,6 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
-
-# Check if environment-specific .env file exists
-ENV_FILE=".env.$ENVIRONMENT"
-if [ ! -f "$ENV_FILE" ]; then
-    echo "❌ $ENV_FILE file not found. This file is required."
-    echo "   This file controls the Docker Compose configuration."
-    echo "   Available environment files:"
-    ls -1 .env.* 2>/dev/null | sed 's/^/     /' || echo "     No .env.* files found"
-    exit 1
-fi
-
-# Set the environment configuration
-echo "📋 Using environment: $ENVIRONMENT"
-echo "📋 Environment file: $ENV_FILE"
 
 # Confirmation prompt (unless forced)
 if [ "$FORCE" = false ]; then
@@ -95,19 +75,19 @@ echo "🛑 Stopping services and removing volumes..."
 
 # Stop main application services
 echo "   • Stopping main application services..."
-docker compose --env-file "$ENV_FILE" down -v --remove-orphans
+docker compose -p $PROJECT_NAME down -v --remove-orphans
 
 # Stop Temporal services (if running)
 echo "   • Stopping Temporal services..."
-docker compose -p xians-community-edition -f temporal/docker-compose.yml down -v --remove-orphans 2>/dev/null || echo "     (Temporal services not running)"
+docker compose -p $PROJECT_NAME -f temporal/docker-compose.yml down -v --remove-orphans 2>/dev/null || echo "     (Temporal services not running)"
 
 # Stop Keycloak services (if running)
 echo "   • Stopping Keycloak services..."
-docker compose -p xians-community-edition -f keycloak/docker-compose.yml down -v --remove-orphans 2>/dev/null || echo "     (Keycloak services not running)"
+docker compose -p $PROJECT_NAME -f keycloak/docker-compose.yml down -v --remove-orphans 2>/dev/null || echo "     (Keycloak services not running)"
 
 # Stop PostgreSQL services (if running)
 echo "   • Stopping PostgreSQL services..."
-docker compose -p xians-community-edition -f postgresql/docker-compose.yml down -v --remove-orphans 2>/dev/null || echo "     (PostgreSQL services not running)"
+docker compose -p $PROJECT_NAME -f postgresql/docker-compose.yml down -v --remove-orphans 2>/dev/null || echo "     (PostgreSQL services not running)"
 
 # Step 2: Remove XiansAi Docker images
 # echo "🗑️  Removing XiansAi Docker images..."
@@ -124,28 +104,67 @@ docker system prune -f
 
 # Step 4: Remove any remaining volumes
 echo "🗑️  Removing any remaining XiansAi volumes..."
-docker volume ls --format "table {{.Name}}" | grep -E "(xians|xiansai|community-edition|temporal|keycloak|postgres)" | while read volume; do
-    if [ "$volume" != "VOLUME" ]; then
-        echo "   Removing volume: $volume"
-        docker volume rm "$volume" 2>/dev/null || echo "   (Volume not found: $volume)"
+
+# Show all volumes for debugging
+echo "   • Current volumes:"
+docker volume ls --format "table {{.Name}}\t{{.Driver}}\t{{.CreatedAt}}" | head -20
+
+# Get all volumes and filter for XiansAi-related ones
+echo "   • Scanning for XiansAi-related volumes..."
+docker volume ls --format "{{.Name}}" | grep -E "(xians|xiansai|community-edition|temporal|keycloak|postgres)" | while read -r volume; do
+    if [ -n "$volume" ]; then
+        echo "   • Removing volume: $volume"
+        docker volume rm "$volume" 2>/dev/null || echo "     (Volume in use or not found: $volume)"
+    fi
+done
+
+# Also check for volumes with project name prefixes that might be missed
+echo "   • Scanning for project-specific volumes..."
+docker volume ls --format "{{.Name}}" | grep -E "^(xians-community-edition|community-edition)" | while read -r volume; do
+    if [ -n "$volume" ]; then
+        echo "   • Removing project volume: $volume"
+        docker volume rm "$volume" 2>/dev/null || echo "     (Volume in use or not found: $volume)"
+    fi
+done
+
+# Remove specific volumes that commonly cause project name conflicts
+echo "   • Removing specific known volumes..."
+specific_volumes=(
+    "xians-mongodb-configdb"
+    "xians-community-edition-data" 
+    "xians-mongodb-data"
+    "xians-mongodb-configdb-v210beta"
+    "xians-community-edition-data-v210beta"
+    "xians-mongodb-data-v210beta"
+)
+
+for volume in "${specific_volumes[@]}"; do
+    if docker volume ls --format "{{.Name}}" | grep -q "^${volume}$"; then
+        echo "   • Removing specific volume: $volume"
+        docker volume rm "$volume" 2>/dev/null || echo "     (Volume in use: $volume)"
     fi
 done
 
 # Step 5: Remove anonymous volumes (created by containers but not used)
 echo "🗑️  Removing unused anonymous volumes..."
-docker volume ls -q --filter "dangling=true" | while read volume; do
-    if [ -n "$volume" ]; then
-        echo "   Removing anonymous volume: $volume"
-        docker volume rm "$volume" 2>/dev/null || echo "   (Volume in use: $volume)"
-    fi
-done
+unused_volumes=$(docker volume ls -q --filter "dangling=true")
+if [ -n "$unused_volumes" ]; then
+    echo "$unused_volumes" | while read -r volume; do
+        if [ -n "$volume" ]; then
+            echo "   • Removing anonymous volume: $volume"
+            docker volume rm "$volume" 2>/dev/null || echo "     (Volume in use: $volume)"
+        fi
+    done
+else
+    echo "   • No unused anonymous volumes found"
+fi
 
 echo ""
 echo "✅ XiansAi platform reset completed successfully!"
 echo ""
 echo "📋 Next steps:"
-echo "   - Start fresh: ./start.sh -e $ENVIRONMENT"
-echo "   - Configure: Edit .env.$ENVIRONMENT and related files"
+echo "   - Start fresh: ./start-all.sh"
+echo "   - Configure: Edit environment files as needed"
 echo ""
 echo "ℹ️  Note: You may need to reconfigure your environment files"
 echo "   if this was your first time running the platform." 

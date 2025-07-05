@@ -1,8 +1,8 @@
 services:
   temporal:
-    container_name: temporal${ENVIRONMENT_SUFFIX:-}
+    container_name: temporal
     external_links:
-      - postgresql${ENVIRONMENT_SUFFIX:-}:postgresql
+      - postgresql:postgresql
     environment:
       - DB=postgres12
       - DB_PORT=5432
@@ -13,6 +13,7 @@ services:
       - ENABLE_ES=false
       - TEMPORAL_ADDRESS=temporal:7233
       - TEMPORAL_CLI_ADDRESS=temporal:7233
+    # This image runs ALL temporal services (frontend, matching, history, worker) in single process
     image: temporalio/auto-setup:${TEMPORAL_VERSION}
     networks:
       - xians-community-edition
@@ -20,20 +21,10 @@ services:
       - 7233:7233
     volumes:
       - ./dynamicconfig:/etc/temporal/config/dynamicconfig
-  temporal-admin-tools:
-    container_name: temporal-admin-tools${ENVIRONMENT_SUFFIX:-}
-    depends_on:
-      - temporal
-    environment:
-      - TEMPORAL_ADDRESS=temporal:7233
-      - TEMPORAL_CLI_ADDRESS=temporal:7233
-    image: temporalio/admin-tools:${TEMPORAL_ADMINTOOLS_VERSION}
-    networks:
-      - xians-community-edition
-    stdin_open: true
-    tty: true
+  # Removed temporal-admin-tools - not needed with auto-setup image
+  # You can access admin tools by running: docker exec -it temporal tctl cluster health
   temporal-ui:
-    container_name: temporal-ui${ENVIRONMENT_SUFFIX:-}
+    container_name: temporal-ui
     depends_on:
       - temporal
     environment:
@@ -47,4 +38,4 @@ services:
 networks:
   xians-community-edition:
     external: true
-    name: xians-community-edition-network${ENVIRONMENT_SUFFIX:-}
+    name: xians-community-edition-network

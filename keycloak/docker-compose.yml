@@ -1,7 +1,7 @@
 services:
   keycloak:
     image: quay.io/keycloak/keycloak:${KEYCLOAK_VERSION:-26.0.4}
-    container_name: keycloak${ENVIRONMENT_SUFFIX:-}
+    container_name: keycloak
     restart: unless-stopped
     command: start-dev --import-realm
     environment:
@@ -55,9 +55,9 @@ services:
 networks:
   xians-community-edition:
     external: true
-    name: xians-community-edition-network${ENVIRONMENT_SUFFIX:-}
+    name: xians-community-edition-network
 
 volumes:
   keycloak_data:
-    name: keycloak-data${ENVIRONMENT_SUFFIX:-}
+    name: keycloak-data
     driver: local 

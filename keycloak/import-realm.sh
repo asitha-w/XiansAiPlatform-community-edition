@@ -9,7 +9,7 @@ set -e
 KEYCLOAK_URL=${KEYCLOAK_URL:-http://localhost:18080}
 KEYCLOAK_ADMIN_USER=${KEYCLOAK_ADMIN_USER:-admin}
 KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD:-admin}
-REALM_FILE=${1:-realms/xianAI-realm.json}
+REALM_FILE=${1:-realms/xiansai-realm.json}
 
 # Colors for output
 RED='\033[0;31m'

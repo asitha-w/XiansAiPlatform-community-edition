@@ -14,7 +14,7 @@ wait_for_temporal() {
     local attempt=1
     
     while [ $attempt -le $max_attempts ]; do
-        if docker exec temporal-admin-tools${ENVIRONMENT_SUFFIX:-} tctl cluster health 2>/dev/null | grep -q "temporal.api.workflowservice.v1.WorkflowService: SERVING"; then
+        if docker exec temporal tctl cluster health 2>/dev/null | grep -q "temporal.api.workflowservice.v1.WorkflowService: SERVING"; then
             echo "✅ Temporal server is ready!"
             return 0
         fi
@@ -34,7 +34,7 @@ setup_search_attributes() {
     
     # Check if search attributes already exist
     echo "  Checking existing search attributes..."
-    existing_attrs=$(docker exec temporal-admin-tools${ENVIRONMENT_SUFFIX:-} tctl admin cluster describe 2>/dev/null | grep -A 20 "search_attributes" || echo "")
+    existing_attrs=$(docker exec temporal tctl admin cluster describe 2>/dev/null | grep -A 20 "search_attributes" || echo "")
     
     # Collect missing attributes
     missing_names=()
@@ -69,7 +69,7 @@ setup_search_attributes() {
         echo "  + Adding ${#missing_names[@]} search attribute(s) non-interactively..."
         
         # Build command with all missing attributes
-        cmd="docker exec temporal-admin-tools${ENVIRONMENT_SUFFIX:-} tctl admin cluster add-search-attributes"
+        cmd="docker exec temporal tctl admin cluster add-search-attributes"
         for name in "${missing_names[@]}"; do
             cmd="$cmd --name $name"
         done
@@ -78,7 +78,7 @@ setup_search_attributes() {
         done
         
         # Execute with automatic yes response using echo and -i flag  
-        echo "Y" | docker exec -i temporal-admin-tools${ENVIRONMENT_SUFFIX:-} tctl admin cluster add-search-attributes \
+        echo "Y" | docker exec -i temporal tctl admin cluster add-search-attributes \
             $(printf -- "--name %s " "${missing_names[@]}") \
             $(printf -- "--type %s " "${missing_types[@]}")
     fi

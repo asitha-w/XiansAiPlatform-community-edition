@@ -146,12 +146,9 @@
       "email": "admin@xiansai.local",
       "credentials": [
         {
-          "id": "admin-password",
           "type": "password",
-          "userLabel": "admin password",
-          "createdDate": 1640995200000,
-          "secretData": "{\"value\":\"admin\",\"salt\":\"salt123\"}",
-          "credentialData": "{\"hashIterations\":27500,\"algorithm\":\"pbkdf2-sha256\"}"
+          "value": "admin",
+          "temporary": false
         }
       ],
       "disableableCredentialTypes": [],

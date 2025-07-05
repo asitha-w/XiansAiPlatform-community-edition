@@ -21,6 +21,7 @@ docker-compose down
 ## Configuration
 
 The PostgreSQL service is configured with:
+
 - **Database User**: `temporal`
 - **Database Password**: `temporal`
 - **Port**: `5432`
@@ -34,6 +35,7 @@ The service connects to the `xians-community-edition-network${ENVIRONMENT_SUFFIX
 ## Dependencies
 
 Other services can connect to this PostgreSQL instance by:
+
 1. Ensuring they're on the same network (`xians-community-edition`)
 2. Using `postgresql` as the hostname
 3. Using port `5432`
@@ -42,5 +44,6 @@ Other services can connect to this PostgreSQL instance by:
 ## Environment Variables
 
 The following environment variables are supported:
+
 - `ENVIRONMENT_SUFFIX`: Optional suffix for container and volume names
 - `POSTGRESQL_VERSION`: PostgreSQL Docker image version tag 

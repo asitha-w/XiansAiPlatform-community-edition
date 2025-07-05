@@ -5,22 +5,86 @@
 
 set -e
 
-echo "🚀 Starting XiansAi Community Edition with Temporal Workflow Engine..."
+echo "🚀 Starting XiansAi Community Edition with Temporal and Keycloak..."
+
+# Parse command line arguments
+VERSION="latest"
+ENV_POSTFIX="local"
+DETACHED=true
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -v|--version)
+            VERSION="$2"
+            shift 2
+            ;;
+        --env-postfix)
+            ENV_POSTFIX="$2"
+            shift 2
+            ;;
+        -d|--detached)
+            DETACHED=true
+            shift
+            ;;
+        -h|--help)
+            echo "Usage: $0 [options]"
+            echo "Options:"
+            echo "  -v, --version            Specify version to use .version.[version] file (default: latest)"
+            echo "  --env-postfix            Specify environment postfix to use .version.[postfix] file"
+            echo "  -d, --detached           Run in detached mode"
+            echo "  -h, --help               Show this help message"
+            echo ""
+            echo "Examples:"
+            echo "  $0                       # Start with latest version"
+            echo "  $0 -v v2.0.0             # Start with version v2.0.0"
+            echo "  $0 --env-postfix local   # Start with local environment (.version.local)"
+            echo "  $0 -v latest -d          # Start with latest version in detached mode"
+            exit 0
+            ;;
+        *)
+            echo "Unknown option: $1"
+            echo "Use -h or --help for usage information"
+            exit 1
+            ;;
+    esac
+done
+
+# Determine which environment file to use
+VERSION_FILE=".version.$VERSION"
+
+
+# Check if environment-specific .env file exists
+if [ ! -f "$VERSION_FILE" ]; then
+    echo "❌ $VERSION_FILE file not found. This file is required."
+    echo "   Available environment files:"
+    ls -1 .version.* 2>/dev/null | sed 's/^/     /' || echo "     No .version.* files found"
+    exit 1
+fi
+
+echo "📋 Using environment: $ENV_POSTFIX"
+echo "📋 version file: $VERSION_FILE"
 
 # Load environment variables
-if [ -f ".env.local" ]; then
-    echo "📁 Loading environment from .env.local"
+if [ -f "$VERSION_FILE" ]; then
+    echo "📁 Loading version from $VERSION_FILE"
     # Export variables one by one, skipping comments and problematic lines
     while IFS= read -r line; do
         if [[ $line =~ ^[A-Za-z_][A-Za-z0-9_]*=[^[].*$ ]]; then
             export "$line"
         fi
-    done < <(grep -v '^#' .env.local | grep -v '^\s*$')
+    done < <(grep -v '^#' "$VERSION_FILE" | grep -v '^\s*$')
 fi
+
+# Export ENV_POSTFIX for docker-compose
+export ENV_POSTFIX="${ENV_POSTFIX:-local}"
 
 # Start the main application services first
 echo "🔧 Starting main application services..."
-docker compose --env-file .env.local up -d
+if [ "$DETACHED" = true ]; then
+    docker compose --env-file "$VERSION_FILE" up -d
+else
+    docker compose --env-file "$VERSION_FILE" up
+fi
 
 # Wait a moment for the network to be created
 sleep 2
@@ -29,7 +93,6 @@ sleep 2
 echo "🗄️  Starting PostgreSQL service..."
 # Set environment variables
 export POSTGRESQL_VERSION=16
-export ENVIRONMENT_SUFFIX=""
 docker compose -p xians-community-edition -f postgresql/docker-compose.yml up -d
 
 # Wait for PostgreSQL to be ready
@@ -83,10 +146,10 @@ echo "  • MongoDB:                localhost:27017"
 echo "  • Temporal PostgreSQL:    localhost:5432"
 echo ""
 echo "🔧 Useful commands:"
-echo "  • Check status:           docker compose --env-file .env.local ps && docker compose -p xians-community-edition -f postgresql/docker-compose.yml ps && docker compose -p xians-community-edition -f keycloak/docker-compose.yml ps && docker compose -p xians-community-edition -f temporal/docker-compose.yml ps"
-echo "  • View logs:              docker compose logs -f [service-name]"
+echo "  • Check status:           docker compose --env-file $VERSION_FILE ps && docker compose -p xians-community-edition -f postgresql/docker-compose.yml ps && docker compose -p xians-community-edition -f keycloak/docker-compose.yml ps && docker compose -p xians-community-edition -f temporal/docker-compose.yml ps"
+echo "  • View logs:              docker compose --env-file $VERSION_FILE logs -f [service-name]"
 echo "  • Temporal CLI alias:     alias tctl=\"docker exec temporal-admin-tools tctl\""
 echo "  • Verify search attrs:    ./temporal/verify-search-attributes.sh"
 echo "  • Setup search attrs:     ./temporal/setup-search-attributes.sh"
-echo "  • Stop all:               ./stop-with-temporal.sh"
+echo "  • Stop all:               ./stop-all.sh $([ -n "$ENV_POSTFIX" ] && echo "--env-postfix $ENV_POSTFIX" || echo "-v $VERSION")"
 echo "" 

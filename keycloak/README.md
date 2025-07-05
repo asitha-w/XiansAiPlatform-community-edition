@@ -13,7 +13,7 @@ To start the Keycloak service:
 
 ```bash
 cd keycloak
-docker-compose --env-file .env.local up -d
+docker-compose --env-file .env.latest up -d
 ```
 
 To stop the Keycloak service:
@@ -82,7 +82,7 @@ This script:
 
 ## Environment Variables
 
-You can customize the setup by modifying `.env.local`:
+You can customize the setup by modifying `.env.latest`:
 
 - `KEYCLOAK_VERSION`: Keycloak Docker image version
 - `KEYCLOAK_ADMIN`: Admin username
@@ -140,13 +140,15 @@ To use your own realm:
 2. Place the exported JSON file in `keycloak/realms/` directory
 
 3. Restart the Keycloak service:
+
    ```bash
-   docker-compose --env-file .env.local down
-   docker-compose --env-file .env.local up -d
+   docker-compose --env-file .env.latest down
+   docker-compose --env-file .env.latest up -d
    ```
 
 ### Notes
 - Realms are imported only once during first startup
+
 - Existing realms with the same name won't be overwritten
 - For updates, delete the realm via admin console first, then restart
 
@@ -174,6 +176,7 @@ KEYCLOAK_URL=http://keycloak:8080 ./import-realm.sh
 ## Integration
 
 Other services can integrate with Keycloak by:
+
 1. Configuring OAuth2/OIDC settings to point to `http://keycloak:8080` (internal network)
 2. Using `http://localhost:18080` for external access  
 3. Using the imported realm (e.g., `xianAI`) for authentication
@@ -182,5 +185,5 @@ Other services can integrate with Keycloak by:
 ## Troubleshooting
 
 1. **Database connection issues**: Ensure PostgreSQL service is running first
-2. **Port conflicts**: Change `KEYCLOAK_PORT` in `.env.local` if port 18080 is in use
-3. **Memory issues**: Adjust `KEYCLOAK_MEMORY_LIMIT` and `KEYCLOAK_MEMORY_RESERVATION` in `.env.local` 
+2. **Port conflicts**: Change `KEYCLOAK_PORT` in `.env.latest` if port 18080 is in use
+3. **Memory issues**: Adjust `KEYCLOAK_MEMORY_LIMIT` and `KEYCLOAK_MEMORY_RESERVATION` in `.env.latest`

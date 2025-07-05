@@ -1,11 +1,10 @@
 # XiansAi Community Edition - Unified Docker Compose
-# Supports both development and production environments
-# Set ENVIRONMENT=production for production mode
+# Version-based configuration via .env files
 
 services:
   mongodb:
     image: mongo:latest
-    container_name: xians-mongodb${ENVIRONMENT_SUFFIX:-}
+    container_name: xians-mongodb
     restart: unless-stopped
     command: bash /mongo-startup.sh
     ports:
@@ -13,7 +12,7 @@ services:
     volumes:
       - mongodb_data:/data/db
       - mongodb_configdb:/data/configdb
-      - ${MONGO_SCRIPT_PATH:-./db/mongo-healthcheck.js}:${MONGO_SCRIPT_MOUNT:-/mongo-healthcheck.js}:ro
+      - ./db/mongo-healthcheck.js:/mongo-healthcheck.js:ro
       - ./db/mongo-startup.sh:/mongo-startup.sh:ro
     networks:
       - xians-community-edition
@@ -37,14 +36,14 @@ services:
 
   xiansai-server:
     image: ${SERVER_IMAGE:-99xio/xiansai-server:latest}
-    container_name: xians-server${ENVIRONMENT_SUFFIX:-}
+    container_name: xians-server
     restart: unless-stopped
     ports:
-      - "5001:80"
+      - "5001:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENV:-Development}
     env_file:
-      - server/.env.${ENVIRONMENT:-local}
+      - server/.env.${ENV_POSTFIX:-local}
     networks:
       - xians-community-edition
     volumes:
@@ -53,7 +52,7 @@ services:
       mongodb:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:80/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -72,19 +71,19 @@ services:
 
   xiansai-ui:
     image: ${UI_IMAGE:-99xio/xiansai-ui:latest}
-    container_name: xians-ui${ENVIRONMENT_SUFFIX:-}
+    container_name: xians-ui
     restart: unless-stopped
     ports:
-      - "3001:80"
+      - "3001:8080"
     env_file:
-      - ui/.env.${ENVIRONMENT:-development}
+      - ui/.env.${ENV_POSTFIX:-local}
     networks:
       - xians-community-edition
     depends_on:
       xiansai-server:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -106,15 +105,15 @@ services:
 networks:
   xians-community-edition:
     driver: bridge
-    name: xians-community-edition-network${ENVIRONMENT_SUFFIX:-}
+    name: xians-community-edition-network
 
 volumes:
   xiansai-data:
-    name: xians-community-edition-data${ENVIRONMENT_SUFFIX:-}
+    name: xians-community-edition-data
     driver: local
   mongodb_data:
-    name: xians-mongodb-data${ENVIRONMENT_SUFFIX:-}
+    name: xians-mongodb-data
     driver: local
   mongodb_configdb:
-    name: xians-mongodb-configdb${ENVIRONMENT_SUFFIX:-}
+    name: xians-mongodb-configdb
     driver: local

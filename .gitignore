@@ -3,10 +3,10 @@
 # Note: .env.development and .env.production are needed for Docker Compose configuration
 
 # All environment files with sensitive data
-server/.env.local
-server/.env.production
-ui/.env.local
-ui/.env.production
+.env.*
+!.env.example
+!.env.local
+
 
 # Docker
 docker-compose.override.yml
