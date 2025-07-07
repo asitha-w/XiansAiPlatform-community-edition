@@ -8,7 +8,7 @@ set -e
 echo "🚀 Starting XiansAi Community Edition with Temporal and Keycloak..."
 
 # Parse command line arguments
-VERSION="v2.1.0-beta"
+VERSION="v2.0.2"
 DETACHED=true
 
 while [[ $# -gt 0 ]]; do
@@ -58,10 +58,12 @@ echo "📋 version file: $VERSION_FILE"
 # Load environment variables
 if [ -f "$VERSION_FILE" ]; then
     echo "📁 Loading version from $VERSION_FILE"
+
     # Export variables one by one, skipping comments and problematic lines
     while IFS= read -r line; do
         if [[ $line =~ ^[A-Za-z_][A-Za-z0-9_]*=[^[].*$ ]]; then
             export "$line"
+            echo "  • $line"
         fi
     done < <(grep -v '^#' "$VERSION_FILE" | grep -v '^\s*$')
 fi
