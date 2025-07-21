@@ -5,16 +5,24 @@
 
 set -e
 
+# Default Configuration (can be overridden via command line)
+VERSION="latest"
+ENV_POSTFIX="local"
+COMPOSE_PROJECT_NAME="xians-community-edition"
+
 echo "🚀 Starting XiansAi Community Edition with Temporal and Keycloak..."
 
 # Parse command line arguments
-VERSION="v2.0.2"
 DETACHED=true
 
 while [[ $# -gt 0 ]]; do
     case $1 in
         -v|--version)
             VERSION="$2"
+            shift 2
+            ;;
+        -e|--env)
+            ENV_POSTFIX="$2"
             shift 2
             ;;
         -d|--detached)
@@ -24,13 +32,16 @@ while [[ $# -gt 0 ]]; do
         -h|--help)
             echo "Usage: $0 [options]"
             echo "Options:"
-            echo "  -v, --version            Specify version to use .config.[version] file"
-            echo "  -d, --detached           Run in detached mode"
+            echo "  -v, --version VERSION    Docker image version (default: latest)"
+            echo "  -e, --env ENV_POSTFIX    Environment postfix (default: local)"
+            echo "  -d, --detached           Run in detached mode (default)"
             echo "  -h, --help               Show this help message"
             echo ""
             echo "Examples:"
-            echo "  $0                       # Start with latest version (.config.v2.1.0-beta)"
-            echo "  $0 -v v2.0.0             # Start with version file .config.v2.0.0"
+            echo "  $0                       # Start with defaults (latest, local)"
+            echo "  $0 -v v2.0.2             # Start with specific version"
+            echo "  $0 -e production         # Start with production environment"
+            echo "  $0 -v v2.0.2 -e staging # Start with version v2.0.2 and staging env"
             exit 0
             ;;
         *)
@@ -41,32 +52,18 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# Determine which environment file to use
-VERSION_FILE=".config.$VERSION"
+# Set final configuration based on arguments
+export COMPOSE_PROJECT_NAME="$COMPOSE_PROJECT_NAME"
+export SERVER_IMAGE="99xio/xiansai-server:$VERSION"
+export UI_IMAGE="99xio/xiansai-ui:$VERSION"
+export ENV_POSTFIX="$ENV_POSTFIX"
 
-
-# Check if environment-specific .env file exists
-if [ ! -f "$VERSION_FILE" ]; then
-    echo "❌ $VERSION_FILE file not found. This file is required."
-    echo "   Available environment files:"
-    ls -1 .config.* 2>/dev/null | sed 's/^/     /' || echo "     No .config.* files found"
-    exit 1
-fi
-
-echo "📋 version file: $VERSION_FILE"
-
-# Load environment variables
-if [ -f "$VERSION_FILE" ]; then
-    echo "📁 Loading version from $VERSION_FILE"
-
-    # Export variables one by one, skipping comments and problematic lines
-    while IFS= read -r line; do
-        if [[ $line =~ ^[A-Za-z_][A-Za-z0-9_]*=[^[].*$ ]]; then
-            export "$line"
-            echo "  • $line"
-        fi
-    done < <(grep -v '^#' "$VERSION_FILE" | grep -v '^\s*$')
-fi
+echo "📋 Configuration:"
+echo "   Project: $COMPOSE_PROJECT_NAME"
+echo "   Server Image: $SERVER_IMAGE"
+echo "   UI Image: $UI_IMAGE"
+echo "   Environment: $ENV_POSTFIX"
+echo ""
 
 # Start the main application services first
 echo "🔧 Starting main application services..."
@@ -83,7 +80,7 @@ sleep 2
 echo "🗄️  Starting PostgreSQL service..."
 # Set environment variables
 export POSTGRESQL_VERSION=16
-docker compose -p xians-community-edition -f postgresql/docker-compose.yml up -d
+docker compose -p $COMPOSE_PROJECT_NAME -f postgresql/docker-compose.yml up -d
 
 # Wait for PostgreSQL to be ready
 echo "⏳ Waiting for PostgreSQL to be ready..."
@@ -105,7 +102,7 @@ fi
 
 # Start Keycloak service
 echo "🔐 Starting Keycloak service..."
-docker compose -p xians-community-edition -f keycloak/docker-compose.yml --env-file keycloak/.env.local up -d
+docker compose -p $COMPOSE_PROJECT_NAME -f keycloak/docker-compose.yml --env-file keycloak/.env.local up -d
 
 # Wait for Keycloak to be ready
 echo "⏳ Waiting for Keycloak to initialize..."
@@ -113,7 +110,7 @@ sleep 20
 
 # Start Temporal services with environment configuration
 echo "⚡ Starting Temporal services..."
-docker compose -p xians-community-edition -f temporal/docker-compose.yml --env-file temporal/.env.local up -d
+docker compose -p $COMPOSE_PROJECT_NAME -f temporal/docker-compose.yml --env-file temporal/.env.local up -d
 
 # Setup Temporal search attributes
 echo "🔧 Setting up Temporal search attributes..."
@@ -131,7 +128,7 @@ echo "  • Temporal gRPC API:      localhost:7233"
 echo "  • MongoDB:                localhost:27017"
 echo "  • Temporal PostgreSQL:    localhost:5432"
 echo ""
-echo "🔧 Useful commands:"
+echo "�� Useful commands:"
 echo "  • View logs:              docker compose logs -f [service-name]"
 echo "  • Stop all:               ./stop-all.sh"
 echo "" 

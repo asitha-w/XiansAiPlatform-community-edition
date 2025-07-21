@@ -5,6 +5,9 @@
 
 set -e
 
+# Project configuration
+COMPOSE_PROJECT_NAME="xians-community-edition"
+
 echo "💥 XiansAi Platform Reset Script"
 echo "================================"
 
@@ -16,7 +19,6 @@ fi
 
 # Parse command line arguments
 FORCE=false
-PROJECT_NAME="xians-community-edition"
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -36,6 +38,8 @@ while [[ $# -gt 0 ]]; do
             echo "     - Remove XiansAi Docker images"
             echo "     - Clean up Docker system"
             echo ""
+            echo "This script resets all XiansAi services regardless of version or environment."
+            echo ""
             echo "Examples:"
             echo "  $0                       # Reset with confirmation prompt"
             echo "  $0 -f                    # Reset without prompts"
@@ -48,6 +52,11 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
+
+PROJECT_NAME="$COMPOSE_PROJECT_NAME"
+
+echo "📋 Project: $COMPOSE_PROJECT_NAME"
+echo ""
 
 # Confirmation prompt (unless forced)
 if [ "$FORCE" = false ]; then

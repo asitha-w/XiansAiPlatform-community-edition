@@ -40,15 +40,6 @@ Welcome to the XiansAi Platform Community Edition! This repository provides a si
 
 2. **Configure your environment:**
 
-   The platform uses version files (`.config.*`) to manage environment configuration and Docker image versions. These files contain:
-   - Docker image versions for server and UI
-   - Environment postfix settings
-   - Compose project name
-
-   Example config files:
-   - `.config.v2.1.0-beta` (default)
-   - `.config.my.v2.1.0-beta` (custom environment)
-
    **********
    ***Llm__ApiKey must be set in server/.env.local***
    Llm__ApiKey=your-openai-api-key
@@ -57,21 +48,26 @@ Welcome to the XiansAi Platform Community Edition! This repository provides a si
 3. **Start the platform:**
 
    ```bash
-   # Start with default version (.config.v2.1.0-beta)
+   # Start with defaults (latest version, local environment)
    ./start-all.sh
    
-   # Or specify a different version file
-   ./start-all.sh -v my.v2.1.0-beta  # Uses .config.my.v2.1.0-beta
-   ./start-all.sh -v v2.0.0          # Uses .config.v2.0.0
+   # Start with specific version
+   ./start-all.sh -v v2.0.2
+   
+   # Start with specific environment
+   ./start-all.sh -e production
+   
+   # Start with specific version and environment
+   ./start-all.sh -v v2.0.2 -e staging
 
-   # Show help for more options
+   # Show help for all options
    ./start-all.sh --help
    ```
 
    **Management scripts:**
-   - `./start-all.sh` - Start the platform
-   - `./stop-all.sh` - Stop the platform  
-   - `./reset-all.sh` - Complete reset (removes all data)
+   - `./start-all.sh [options]` - Start the platform with optional version/environment
+   - `./stop-all.sh` - Stop all services (version-independent)  
+   - `./reset-all.sh [options]` - Complete reset and cleanup (removes all data)
 
 4. **Access the applications:**
 
@@ -82,14 +78,50 @@ Welcome to the XiansAi Platform Community Edition! This repository provides a si
 
 ## 📋 Configuration
 
-### View logs
+### Script Options
+
+**start-all.sh** supports the following options:
 
 ```bash
-# All services
-./logs-all.sh
+-v, --version VERSION    Docker image version (default: latest)
+-e, --env ENV_POSTFIX    Environment postfix (default: local)
+-d, --detached           Run in detached mode (default)
+-h, --help               Show help message
+```
 
-# Specific service
-./logs-all.sh xiansai-server
+**reset-all.sh** supports the following options:
+
+```bash
+-f, --force              Skip confirmation prompts
+-h, --help               Show help message
+```
+
+**stop-all.sh** supports:
+
+```bash
+-h, --help               Show help message
+```
+
+### Examples
+
+```bash
+# Development setup (default)
+./start-all.sh
+
+# Staging environment with specific version
+./start-all.sh -v v2.0.2 -e staging
+
+# Production environment
+./start-all.sh -v v2.1.0 -e production
+
+# Stop services (works for any running configuration)
+./stop-all.sh
+
+# Complete reset without confirmation prompts
+./reset-all.sh -f
+```
+
+### View logs
 
 ```bash
 # All services
@@ -100,10 +132,68 @@ docker compose logs -f xiansai-server
 docker compose logs -f xiansai-ui
 ```
 
+## 🚢 Release Management
+
+This repository includes comprehensive release management tools for maintainers.
+
+### For Contributors
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
+
+### For Maintainers
+
+#### Complete Release Workflow
+
+1. **Publish All Artifacts**:
+   ```bash
+   # Create release notes first
+   ./scripts/create-release-notes.sh v2.1.0
+   
+   # Edit release notes in ./releases/v2.1.0.md
+   
+   # Publish all artifacts across repositories
+   ./scripts/publish.sh v2.1.0
+   ```
+
+2. **Monitor Workflows** (optional):
+   ```bash
+   # Monitor GitHub Actions across all repositories
+   ./scripts/workflow-monitor.sh v2.1.0
+   ```
+
+3. **Create Community Edition Release**:
+   ```bash
+   # After all artifacts are published
+   ./release.sh v2.1.0
+   ```
+
+#### Available Scripts
+
+- **`./scripts/publish.sh`** - Publishes artifacts across all repositories
+- **`./scripts/workflow-monitor.sh`** - Monitors GitHub Actions workflows  
+- **`./release.sh`** - Creates community edition GitHub release
+- **`./scripts/create-release-notes.sh`** - Generates release notes templates
+
+#### Repository Structure
+
+The XiansAi Platform consists of multiple repositories:
+
+- **XiansAi.Server** → Docker Hub (`99xio/xiansai-server`)
+- **XiansAi.UI** → Docker Hub (`99xio/xiansai-ui`)
+- **XiansAi.Lib** → NuGet (`XiansAi.Lib`)
+- **sdk-web-typescript** → npm (`@99xio/xians-sdk-typescript`)
+- **community-edition** → GitHub Release (this repository)
+
+## 📚 Documentation
+
+- **[Contributing Guide](CONTRIBUTING.md)** - How to contribute to the project
+- **[Release Guide](docs/RELEASE_GUIDE.md)** - Complete release process for maintainers
+- **[Documentation Index](docs/README.md)** - Complete documentation overview
+
 ## 📄 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request. 
+Contributions are welcome! Please feel free to submit a Pull Request. See our [Contributing Guide](CONTRIBUTING.md) for detailed instructions. 
