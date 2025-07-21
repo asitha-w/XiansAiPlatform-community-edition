@@ -132,6 +132,25 @@ docker compose logs -f xiansai-server
 docker compose logs -f xiansai-ui
 ```
 
+#### Primary Platform Repositories
+
+The XiansAi Platform consists of multiple repositories:
+
+- **XiansAi.Server**
+  - Docker Hub [99xio/xiansai-server](https://hub.docker.com/repository/docker/99xio/xiansai-server/general)
+  - Repository: [XiansAi.Server](https://github.com/XiansAiPlatform/XiansAi.Server)
+- **XiansAi.UI**
+  - Docker Hub [99xio/xiansai-ui](https://hub.docker.com/repository/docker/99xio/xiansai-ui/general)
+  - Repository: [XiansAi.UI](https://github.com/XiansAiPlatform/XiansAi.UI)
+- **XiansAi.Lib**
+  - NuGet [XiansAi.Lib](https://www.nuget.org/packages/XiansAi.Lib)
+  - Repository: [XiansAi.Lib](https://github.com/XiansAiPlatform/XiansAi.Lib)
+- **sdk-web-typescript**
+  - npm [@99xio/xians-sdk-typescript](https://www.npmjs.com/package/@99xio/xians-sdk-typescript)
+  - Repository: [sdk-web-typescript](https://github.com/XiansAiPlatform/sdk-web-typescript)
+- **community-edition**
+  - Release in this repository [XiansAi Platform Community Edition](https://github.com/XiansAiPlatform/community-edition/releases)
+
 ## 🚢 Release Management
 
 This repository includes comprehensive release management tools for maintainers.
@@ -145,6 +164,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
 #### Complete Release Workflow
 
 1. **Publish All Artifacts**:
+
    ```bash
    # Create release notes first
    ./scripts/create-release-notes.sh v2.1.0
@@ -156,12 +176,14 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
    ```
 
 2. **Monitor Workflows** (optional):
+
    ```bash
    # Monitor GitHub Actions across all repositories
    ./scripts/workflow-monitor.sh v2.1.0
    ```
 
 3. **Create Community Edition Release**:
+
    ```bash
    # After all artifacts are published
    ./release.sh v2.1.0
@@ -173,16 +195,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
 - **`./scripts/workflow-monitor.sh`** - Monitors GitHub Actions workflows  
 - **`./release.sh`** - Creates community edition GitHub release
 - **`./scripts/create-release-notes.sh`** - Generates release notes templates
-
-#### Repository Structure
-
-The XiansAi Platform consists of multiple repositories:
-
-- **XiansAi.Server** → Docker Hub (`99xio/xiansai-server`)
-- **XiansAi.UI** → Docker Hub (`99xio/xiansai-ui`)
-- **XiansAi.Lib** → NuGet (`XiansAi.Lib`)
-- **sdk-web-typescript** → npm (`@99xio/xians-sdk-typescript`)
-- **community-edition** → GitHub Release (this repository)
 
 ## 📚 Documentation
 
