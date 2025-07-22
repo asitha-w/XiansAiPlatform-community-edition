@@ -21,10 +21,15 @@ Our release process includes:
 #### 1. **Prepare Release Notes**
 
 ```bash
-# Create release notes template
-./scripts/create-release-notes.sh v2.1.0
+# Create a new release branch
+VERSION=v2.1.0
+```
 
-# Edit the generated file: ./releases/v2.1.0.md
+```bash
+# Create release notes template
+./scripts/create-release-notes.sh $VERSION
+
+# Edit the generated file: ./releases/$VERSION.md
 # Add actual changes, features, and migration guides
 ```
 
@@ -32,27 +37,27 @@ Our release process includes:
 
 ```bash
 # Test the publishing process
-./scripts/publish.sh v2.1.0 --dry-run
+./scripts/publish.sh $VERSION --dry-run
 
 # Publish artifacts across all repositories
-./scripts/publish.sh v2.1.0
+./scripts/publish.sh $VERSION
 ```
 
 #### 3. **Monitor Workflows** (Recommended)
 
 ```bash
 # Monitor GitHub Actions workflows
-./scripts/workflow-monitor.sh v2.1.0
+./scripts/workflow-monitor.sh $VERSION
 
 # Or monitor with custom timeout
-./scripts/workflow-monitor.sh v2.1.0 --timeout 45
+./scripts/workflow-monitor.sh $VERSION --timeout 45
 ```
 
 #### 4. **Create Community Edition Release**
 
 ```bash
 # After all artifacts are published successfully
-./release.sh v2.1.0
+./release.sh $VERSION
 ```
 
 ### Quick Release Process
@@ -61,28 +66,28 @@ For experienced maintainers:
 
 ```bash
 # 1. Create and edit release notes
-./scripts/create-release-notes.sh v2.1.0
-# Edit ./releases/v2.1.0.md
+./scripts/create-release-notes.sh $VERSION
+# Edit ./releases/$VERSION.md
 
 # 2. Publish all artifacts and monitor
-./scripts/publish.sh v2.1.0 && ./scripts/workflow-monitor.sh v2.1.0
+./scripts/publish.sh $VERSION && ./scripts/workflow-monitor.sh $VERSION
 
 # 3. Create community release
-./release.sh v2.1.0
+./release.sh $VERSION
 ```
 
 ### For Pre-releases
 
 ```bash
 # Beta release
-./scripts/create-release-notes.sh v2.1.0-beta.1
-./scripts/publish.sh v2.1.0-beta.1
-./scripts/workflow-monitor.sh v2.1.0-beta.1
-./release.sh v2.1.0-beta.1 --prerelease
+./scripts/create-release-notes.sh $VERSION-beta.1
+./scripts/publish.sh $VERSION-beta.1
+./scripts/workflow-monitor.sh $VERSION-beta.1
+./release.sh $VERSION-beta.1 --prerelease
 
 # Release candidate
-./scripts/publish.sh v2.1.0-rc.1
-./release.sh v2.1.0-rc.1 --prerelease
+./scripts/publish.sh $VERSION-rc.1
+./release.sh $VERSION-rc.1 --prerelease
 ```
 
 ## 📅 Release Schedule
