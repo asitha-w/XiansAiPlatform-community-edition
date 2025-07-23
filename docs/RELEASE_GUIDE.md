@@ -2,6 +2,42 @@
 
 This guide covers the complete release process for maintainers of the XiansAi Platform Community Edition.
 
+## 📚 Documentation Overview
+
+### Quick Navigation
+- **[Main README](../README.md)** - Getting started and quick setup
+- **[Contributing Guide](../CONTRIBUTING.md)** - How to contribute to the project
+
+### For Users
+- [Quick Start Guide](../README.md#-quick-start)
+- [Configuration Options](../README.md#-configuration)
+- [Access URLs](../README.md#access-the-applications)
+
+### For Contributors
+- [Development Setup](../CONTRIBUTING.md#development-setup)
+- [Pull Request Guidelines](../CONTRIBUTING.md#pull-request-guidelines)
+- [Issue Guidelines](../CONTRIBUTING.md#issue-guidelines)
+
+### For Maintainers
+- [Release Process](#-quick-release-process) - Quick release workflow
+- [Version Strategy](#-versioning-strategy) - Semantic versioning approach
+- [Testing Checklist](#-testing-before-release) - Pre-release validation
+
+## 📖 Release Documentation Structure
+
+### Release Files Structure
+```
+releases/
+├── v2.1.0.md          # Release notes for v2.1.0 (example)
+└── TEMPLATE.md        # Template for new release notes
+
+scripts/
+└── create-release-notes.sh  # Helper script for release notes
+
+.github/workflows/
+└── release.yml        # Automated release workflow
+```
+
 ## 📋 Overview
 
 Our release process includes:
@@ -198,6 +234,17 @@ graph TD
 5. **Links**: Reference related PRs, issues, and docs
 
 ## 🔧 Release Scripts
+
+### Platform Management Scripts
+- `./start-all.sh` - Start the platform
+- `./stop-all.sh` - Stop all services
+- `./reset-all.sh` - Reset and cleanup
+
+### Release Management Scripts
+- `./release.sh v2.1.0` - Create a release
+- `./scripts/create-release-notes.sh v2.1.0` - Generate release notes template
+- `./scripts/publish.sh v2.1.0` - Publish artifacts across all repositories
+- `./scripts/workflow-monitor.sh v2.1.0` - Monitor GitHub Actions workflows
 
 ### Main Scripts
 
@@ -484,6 +531,13 @@ If repositories are not in expected locations:
    ```bash
    ./scripts/publish.sh v2.1.0 --skip-validation
    ```
+
+## 📋 Support
+
+For questions and support:
+- **Issues**: [GitHub Issues](https://github.com/flowmaxer-ai/community-edition/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/flowmaxer-ai/community-edition/discussions)
+- **Documentation**: This release guide and repository documentation
 
 ## 📚 Additional Resources
 
