@@ -14,9 +14,28 @@ wait_for_temporal() {
     local attempt=1
     
     while [ $attempt -le $max_attempts ]; do
+        # First check if the service is serving
         if docker exec temporal tctl cluster health 2>/dev/null | grep -q "temporal.api.workflowservice.v1.WorkflowService: SERVING"; then
             echo "✅ Temporal server is ready!"
-            return 0
+            
+            # Now check if the default namespace exists
+            echo "⏳ Waiting for default namespace to be available..."
+            local namespace_attempts=15
+            local namespace_attempt=1
+            
+            while [ $namespace_attempt -le $namespace_attempts ]; do
+                if docker exec temporal tctl namespace describe default >/dev/null 2>&1; then
+                    echo "✅ Default namespace is available!"
+                    return 0
+                fi
+                
+                echo "  Namespace attempt $namespace_attempt/$namespace_attempts - Default namespace not ready yet..."
+                sleep 3
+                ((namespace_attempt++))
+            done
+            
+            echo "❌ Default namespace failed to become available after $namespace_attempts attempts"
+            return 1
         fi
         
         echo "  Attempt $attempt/$max_attempts - Temporal not ready yet..."
