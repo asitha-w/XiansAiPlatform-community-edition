@@ -5,6 +5,45 @@ All notable changes to the XiansAi Platform Community Edition will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v2.1.2] - 2025-07-28
+
+# Release Notes v2.1.2
+
+## 🔧 Improvements
+
+- **Features**
+  - Added the capability to generate Agent API Keys without revoking old keys.
+  - Implemented RouterOptions in FlowBase to allow for more control over the router.
+  - Added TTL for collections conversation_messages (180 days), activity_history (90 days) and logs (30 days).
+  - Bot2Bot Message Forward Implementation which allows creating super bot that acts as a router.
+
+- **UI/UX**
+  - Portal UI Settings -> User Management features a reorganization of the UI
+
+- **Stability**
+  - Fixed issue with overall connection handling in the Server and in the Lib.
+  - Improved the indexes on server DB to improve performance.
+
+## 🐛 Bug Fixes
+
+- Fixed issue with server DB connections causing connection Exhausted error in Cosmos
+
+## ⚠️ Breaking Changes
+
+- None
+
+## 🎯 What's Next
+
+- Planned features for next release
+- Roadmap items in progress
+- Community feature requests being considered
+
+---
+
+**Full Changelog**: https://github.com/flowmaxer-ai/community-edition/compare/vPREVIOUS...v2.1.2
+**Docker Images**: Available with tag `v2.1.2`
+**Documentation**: See updated documentation in repository
+
 ## [v2.1.1] - 2025-07-23
 
 ### 🚀 New Features
