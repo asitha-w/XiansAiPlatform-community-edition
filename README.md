@@ -153,8 +153,10 @@ The XiansAi Platform consists of multiple repositories:
 
 ## 📚 Documentation
 
+- **[Agent Development Guide](https://xiansaiplatform.github.io/XiansAi.PublicDocs/)** - Agent development guide
 - **[Contributing Guide](CONTRIBUTING.md)** - How to contribute to the project
 - **[Release Guide](docs/RELEASE_GUIDE.md)** - Complete release process and documentation for maintainers
+- **[XiansAi Website](https://xians.ai)** - XiansAi Website
 
 ## 📄 License
 
@@ -162,4 +164,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request. See our [Contributing Guide](CONTRIBUTING.md) for detailed instructions. 
+Contributions are welcome! Please feel free to submit a Pull Request. See our [Contributing Guide](CONTRIBUTING.md) for detailed instructions.
