@@ -1,0 +1,200 @@
+{
+  "contractId": "CONTRACT-2024-001",
+  "status": "active",
+  "scope": {
+    "title": "Service Agreement",
+    "createdDate": "2024-01-15",
+    "effectiveDate": "2024-02-01",
+    "expirationDate": "2025-02-01",
+    "description": "Provision of consulting services for business process optimization",
+    "scopeOfWork": "Monthly consulting sessions and strategic planning",
+    "deliverables": [
+      "Monthly consultation reports",
+      "Strategic recommendations",
+      "Implementation guidance"
+    ],
+    "duration": "12 months",
+    "renewalTerms": "Automatic renewal unless terminated with 30 days notice"
+  },
+  "parties": [
+    {
+      "role": "client",
+      "name": "ABC Corporation",
+      "address": {
+        "street": "123 Business Ave",
+        "city": "New York",
+        "state": "NY",
+        "zipCode": "10001",
+        "country": "USA"
+      },
+      "contact": {
+        "email": "legal@abccorp.com",
+        "phone": "+1-555-0123"
+      },
+      "representative": {
+        "name": "John Smith",
+        "title": "CEO"
+      }
+    },
+    {
+      "role": "provider",
+      "name": "XYZ Services LLC",
+      "address": {
+        "street": "456 Service St",
+        "city": "Los Angeles",
+        "state": "CA",
+        "zipCode": "90210",
+        "country": "USA"
+      },
+      "contact": {
+        "email": "contracts@xyzservices.com",
+        "phone": "+1-555-0456"
+      },
+      "representative": {
+        "name": "Jane Doe",
+        "title": "Managing Director"
+      }
+    }
+  ],
+  "terms": [
+    {
+      "id": "FIN-001",
+      "type": "totalAmount",
+      "category": "financial",
+      "label": "Total Contract Amount",
+      "value": 120000,
+      "dataType": "number",
+      "required": true
+    },
+    {
+      "id": "FIN-002",
+      "type": "currency",
+      "category": "financial",
+      "label": "Currency",
+      "value": "USD",
+      "dataType": "text",
+      "required": true
+    },
+    {
+      "id": "FIN-003",
+      "type": "paymentSchedule",
+      "category": "financial",
+      "label": "Payment Schedule",
+      "value": "monthly",
+      "dataType": "text",
+      "required": true
+    },
+    {
+      "id": "FIN-004",
+      "type": "paymentAmount",
+      "category": "financial",
+      "label": "Payment Amount per Period",
+      "value": 10000,
+      "dataType": "number",
+      "required": true
+    },
+    {
+      "id": "FIN-005",
+      "type": "paymentDue",
+      "category": "financial",
+      "label": "Payment Due Date",
+      "value": "1st of each month",
+      "dataType": "text",
+      "required": true
+    },
+    {
+      "id": "FIN-006",
+      "type": "lateFeePercent",
+      "category": "financial",
+      "label": "Late Fee Percentage",
+      "value": 1.5,
+      "dataType": "number",
+      "required": false
+    },
+    {
+      "id": "OBL-001",
+      "type": "client",
+      "category": "obligation",
+      "label": "Client Obligations",
+      "value": [
+        "Provide necessary documentation and access",
+        "Make timely payments",
+        "Participate in scheduled meetings"
+      ],
+      "dataType": "array",
+      "required": true
+    },
+    {
+      "id": "OBL-002",
+      "type": "provider",
+      "category": "obligation",
+      "label": "Provider Obligations",
+      "value": [
+        "Deliver services as specified",
+        "Maintain confidentiality",
+        "Provide regular progress reports"
+      ],
+      "dataType": "array",
+      "required": true
+    },
+    {
+      "id": "LEG-001",
+      "type": "governingLaw",
+      "category": "legal",
+      "label": "Governing Law",
+      "value": "State of New York",
+      "dataType": "text",
+      "required": true
+    },
+    {
+      "id": "LEG-002",
+      "type": "jurisdiction",
+      "category": "legal",
+      "label": "Jurisdiction",
+      "value": "New York County, NY",
+      "dataType": "text",
+      "required": true
+    },
+    {
+      "id": "LEG-003",
+      "type": "disputeResolution",
+      "category": "legal",
+      "label": "Dispute Resolution",
+      "value": "binding arbitration",
+      "dataType": "text",
+      "required": true
+    },
+    {
+      "id": "LEG-004",
+      "type": "confidentialityClause",
+      "category": "legal",
+      "label": "Confidentiality Clause",
+      "value": true,
+      "dataType": "boolean",
+      "required": false
+    },
+    {
+      "id": "LEG-005",
+      "type": "terminationClause",
+      "category": "legal",
+      "label": "Termination Clause",
+      "value": "Either party may terminate with 30 days written notice",
+      "dataType": "text",
+      "required": true
+    }
+  ],
+  "signatures": [
+    {
+      "party": "client",
+      "signedBy": "John Smith",
+      "signedDate": "2024-01-15",
+      "signatureType": "electronic"
+    },
+    {
+      "party": "provider",
+      "signedBy": "Jane Doe",
+      "signedDate": "2024-01-15",
+      "signatureType": "electronic"
+    }
+  ]
+}

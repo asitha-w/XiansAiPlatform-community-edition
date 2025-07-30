@@ -305,14 +305,13 @@ const BusinessEntityPanel: React.FC<BusinessEntityPanelProps> = ({
         <Divider sx={{ mx: 3, borderColor: 'grey.50' }} />
 
         {/* AI Insights - Unified Component Container */}
-        <Box sx={{ px: 3, py: 2 }}>
+        <Box sx={{ py: 2 }}>
           {/* Unified AI Insights Component */}
           <Box sx={{
-            borderRadius: 2,
             backgroundColor: '#FFFFFF',
-            border: '0.5px solid #E8EAED',
-            overflow: 'hidden',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)'
+            borderTop: '0.5px solid #E8EAED',
+            borderBottom: '0.5px solid #E8EAED',
+            overflow: 'hidden'
           }}>
             {/* Combined AI Insights Title and Summary in One Row */}
             <Box 
