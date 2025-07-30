@@ -68,6 +68,7 @@ Welcome to the XiansAi Platform Community Edition! This repository provides a si
    - `./start-all.sh [options]` - Start the platform with optional version/environment
    - `./stop-all.sh` - Stop all services (version-independent)  
    - `./reset-all.sh [options]` - Complete reset and cleanup (removes all data)
+   - `./pull-latest.sh [options]` - Pull latest Docker images from DockerHub
 
 4. **Access the applications:**
 
@@ -96,6 +97,13 @@ Welcome to the XiansAi Platform Community Edition! This repository provides a si
 -h, --help               Show help message
 ```
 
+**pull-latest.sh** supports:
+
+```bash
+-v, --version VERSION    Docker image version to pull (default: latest)
+-h, --help               Show help message
+```
+
 **stop-all.sh** supports:
 
 ```bash
@@ -113,6 +121,12 @@ Welcome to the XiansAi Platform Community Edition! This repository provides a si
 
 # Production environment
 ./start-all.sh -v v2.1.0 -e production
+
+# Pull latest images
+./pull-latest.sh
+
+# Pull specific version images
+./pull-latest.sh -v v2.1.0
 
 # Stop services (works for any running configuration)
 ./stop-all.sh
@@ -132,7 +146,37 @@ docker compose logs -f xiansai-server
 docker compose logs -f xiansai-ui
 ```
 
-#### Primary Platform Repositories
+## 🔧 Management Commands
+
+### Available Scripts
+
+| Script | Purpose | Key Options |
+|--------|---------|-------------|
+| `./start-all.sh` | Start all services | `-v` (version), `-e` (environment) |
+| `./stop-all.sh` | Stop all services | None |
+| `./pull-latest.sh` | Pull latest images | `-v` (version) |
+| `./reset-all.sh` | Complete platform reset | `-f` (force) |
+
+### Common Workflows
+
+```bash
+# Fresh setup
+./pull-latest.sh          # Pull latest images
+./start-all.sh            # Start services
+
+# Update to new version
+./stop-all.sh             # Stop current services
+./pull-latest.sh -v v2.1.0 # Pull new version
+./start-all.sh -v v2.1.0   # Start with new version
+
+# Complete reset and restart
+./reset-all.sh -f         # Reset everything
+./start-all.sh            # Start fresh
+```
+
+## 🏗️ Platform Architecture
+
+### Primary Platform Repositories
 
 The XiansAi Platform consists of multiple repositories:
 
