@@ -35,7 +35,7 @@ By participating in this project, you agree to abide by our Code of Conduct. We 
    ```
 3. **Add upstream remote**:
    ```bash
-   git remote add upstream https://github.com/flowmaxer-ai/community-edition.git
+   git remote add upstream https://github.com/XiansAiPlatform/community-edition.git
    ```
 4. **Start the platform**:
    ```bash

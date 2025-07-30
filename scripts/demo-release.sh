@@ -123,7 +123,7 @@ main() {
     echo "   npm install @99xio/xians-sdk-typescript@$clean_version"
     echo
     echo "🐙 GitHub Release:"
-    echo "   https://github.com/flowmaxer-ai/community-edition/releases/tag/$version"
+    echo "   https://github.com/XiansAiPlatform/community-edition/releases/tag/$version"
     echo
     
     log_step "Testing the workflow:"
