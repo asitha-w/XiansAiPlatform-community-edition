@@ -9,11 +9,18 @@ import {
   Stepper,
   Step,
   StepLabel,
+  Menu,
+  MenuItem,
+  Button,
+  Chip,
 } from '@mui/material';
 import {
   Notifications as NotificationsIcon,
   Settings as SettingsIcon,
+  SmartToy as AgentIcon,
+  KeyboardArrowDown as ArrowDownIcon,
 } from '@mui/icons-material';
+import type { Agent } from '../types';
 
 interface MainLayoutProps {
   children?: React.ReactNode;
@@ -22,6 +29,9 @@ interface MainLayoutProps {
   recommendationsPanel?: React.ReactNode; // Now optional since it's integrated
   currentStep?: number; // Current step in the process
   steps?: string[]; // Array of step names
+  currentAgent?: Agent;
+  availableAgents?: Agent[];
+  onSelectAgent?: (agent: Agent) => void;
 }
 
 const MainLayout: React.FC<MainLayoutProps> = ({
@@ -29,19 +39,37 @@ const MainLayout: React.FC<MainLayoutProps> = ({
   entityPanel,
   currentStep = 0,
   steps = ['Setup', 'Configuration', 'Review', 'Complete'],
+  currentAgent,
+  availableAgents = [],
+  onSelectAgent,
   // recommendationsPanel is now integrated into entityPanel
 }) => {
+  const [agentMenuAnchorEl, setAgentMenuAnchorEl] = React.useState<null | HTMLElement>(null);
+
+  const handleAgentMenuClick = (event: React.MouseEvent<HTMLElement>) => {
+    setAgentMenuAnchorEl(event.currentTarget);
+  };
+
+  const handleAgentMenuClose = () => {
+    setAgentMenuAnchorEl(null);
+  };
+
+  const handleAgentSelect = (agent: Agent) => {
+    onSelectAgent?.(agent);
+    handleAgentMenuClose();
+  };
+
   return (
     <Box sx={{ 
       height: '100vh', 
       display: 'flex', 
       flexDirection: 'column',
-      backgroundColor: '#FAFAFA' // Slightly cooler background
+      backgroundColor: '#FAFAFA'
     }}>
-      {/* Enhanced Header with Stronger Border */}
+      {/* Professional Header */}
       <AppBar position="static" elevation={0} sx={{
         backgroundColor: 'background.paper',
-        borderBottom: '2px solid #E0E0E0'
+        borderBottom: '1px solid #E5E7EB'
       }}>
         <Box sx={{ 
           maxWidth: '1440px',
@@ -50,27 +78,139 @@ const MainLayout: React.FC<MainLayoutProps> = ({
           px: { xs: 4, sm: 5 } 
         }}>
           <Toolbar sx={{ justifyContent: 'space-between', px: 0, py: 3 }}>
-            <Typography variant="h5" component="div" sx={{ 
-              fontWeight: 500,
-              letterSpacing: '-0.01em',
-              color: 'text.primary',
-              fontSize: '1.35rem'
-            }}>
-              AI Studio
-            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <Typography variant="h5" component="div" sx={{ 
+                fontWeight: 600,
+                letterSpacing: '-0.01em',
+                color: '#111827'
+              }}>
+                AI Studio
+              </Typography>
+
+              {/* Professional Agent Selection */}
+              {currentAgent && (
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Button
+                    onClick={handleAgentMenuClick}
+                    endIcon={<ArrowDownIcon />}
+                    sx={{
+                      px: 3,
+                      py: 1.5,
+                      backgroundColor: '#F9FAFB',
+                      border: '1px solid #D1D5DB',
+                      borderRadius: 1.5,
+                      textTransform: 'none',
+                      color: '#374151',
+                      '&:hover': {
+                        backgroundColor: '#F3F4F6',
+                        borderColor: '#9CA3AF',
+                      }
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                      <AgentIcon sx={{ fontSize: 18, color: '#6B7280' }} />
+                      <Box sx={{ textAlign: 'left' }}>
+                        <Typography variant="body2" sx={{ fontWeight: 500, color: '#111827' }}>
+                          {currentAgent.name}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: '#6B7280', lineHeight: 1, textTransform: 'capitalize' }}>
+                          {currentAgent.category}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Button>
+
+                  <Menu
+                    anchorEl={agentMenuAnchorEl}
+                    open={Boolean(agentMenuAnchorEl)}
+                    onClose={handleAgentMenuClose}
+                    sx={{
+                      '& .MuiPaper-root': {
+                        mt: 1,
+                        borderRadius: 2,
+                        minWidth: 300,
+                        boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
+                        border: '1px solid #E5E7EB',
+                      }
+                    }}
+                  >
+                    {availableAgents.map((agent) => (
+                      <MenuItem 
+                        key={agent.id} 
+                        onClick={() => handleAgentSelect(agent)}
+                        selected={agent.id === currentAgent?.id}
+                        sx={{ 
+                          py: 2.5, 
+                          px: 3,
+                          '&.Mui-selected': {
+                            backgroundColor: '#F9FAFB',
+                          },
+                          '&:hover': {
+                            backgroundColor: '#F3F4F6',
+                          }
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2.5, width: '100%' }}>
+                          <Box sx={{
+                            width: 40,
+                            height: 40,
+                            borderRadius: 1.5,
+                            backgroundColor: '#F3F4F6',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            border: '1px solid #E5E7EB'
+                          }}>
+                            <AgentIcon sx={{ fontSize: 20, color: '#6B7280' }} />
+                          </Box>
+                          <Box sx={{ flexGrow: 1 }}>
+                            <Typography variant="body2" sx={{ fontWeight: 500, mb: 0.5, color: '#111827' }}>
+                              {agent.name}
+                            </Typography>
+                            <Typography variant="caption" color="#6B7280" sx={{ display: 'block', mb: 1.5, lineHeight: 1.4 }}>
+                              {agent.description}
+                            </Typography>
+                            <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
+                              {agent.capabilities.slice(0, 2).map((capability) => (
+                                <Chip
+                                  key={capability}
+                                  label={capability}
+                                  size="small"
+                                  variant="outlined"
+                                  sx={{ 
+                                    height: 22,
+                                    fontSize: '0.7rem',
+                                    borderColor: '#D1D5DB',
+                                    color: '#6B7280',
+                                    backgroundColor: '#FFFFFF',
+                                    '& .MuiChip-label': {
+                                      px: 1.5
+                                    }
+                                  }}
+                                />
+                              ))}
+                            </Box>
+                          </Box>
+                        </Box>
+                      </MenuItem>
+                    ))}
+                  </Menu>
+                </Box>
+              )}
+            </Box>
             
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
               <IconButton 
                 color="inherit" 
                 size="small"
                 sx={{ 
-                  color: 'text.secondary',
-                  border: '1px solid #E0E0E0',
+                  color: '#6B7280',
+                  border: '1px solid #E5E7EB',
                   borderRadius: '8px',
                   '&:hover': { 
-                    backgroundColor: 'rgba(46, 52, 64, 0.04)',
-                    borderColor: '#BDBDBD',
-                    color: 'text.primary'
+                    backgroundColor: '#F9FAFB',
+                    borderColor: '#D1D5DB',
+                    color: '#374151'
                   }
                 }}
               >
@@ -80,13 +220,13 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                 color="inherit" 
                 size="small"
                 sx={{ 
-                  color: 'text.secondary',
-                  border: '1px solid #E0E0E0',
+                  color: '#6B7280',
+                  border: '1px solid #E5E7EB',
                   borderRadius: '8px',
                   '&:hover': { 
-                    backgroundColor: 'rgba(46, 52, 64, 0.04)',
-                    borderColor: '#BDBDBD',
-                    color: 'text.primary'
+                    backgroundColor: '#F9FAFB',
+                    borderColor: '#D1D5DB',
+                    color: '#374151'
                   }
                 }}
               >
@@ -96,12 +236,13 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                 sx={{ 
                   width: 36, 
                   height: 36, 
-                  bgcolor: 'primary.main',
+                  bgcolor: '#6B7280',
                   ml: 2,
-                  fontSize: '0.875rem',
                   fontWeight: 500,
                   border: '2px solid #FFFFFF',
-                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                  color: '#FFFFFF',
+                  fontSize: '0.875rem'
                 }}
               >
                 U
@@ -115,7 +256,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
       <Box sx={{ 
         flexGrow: 1, 
         width: '100%',
-        backgroundColor: '#F5F5F5' // Subtle content area distinction
+        backgroundColor: '#F9FAFB'
       }}>
         <Box 
           sx={{ 
@@ -134,7 +275,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
             flexDirection: { xs: 'column', md: 'row' },
             alignItems: { xs: 'stretch', md: 'flex-start' }
           }}>
-            {/* Enhanced Chat Panel with Stronger Border */}
+            {/* Enhanced Chat Panel */}
             <Box sx={{ 
               flex: { xs: '1', md: '0 0 420px' },
               minHeight: { xs: '400px', md: '600px' },
@@ -145,13 +286,13 @@ const MainLayout: React.FC<MainLayoutProps> = ({
             }}>
               <Box sx={{ 
                 flexGrow: 1,
-                backgroundColor: 'background.paper',
-                borderRadius: 3,
-                border: '2px solid #E0E0E0',
+                backgroundColor: '#FFFFFF',
+                borderRadius: 2,
+                border: '1px solid #E5E7EB',
                 overflow: 'hidden',
                 display: 'flex',
                 flexDirection: 'column',
-                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)'
+                boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)'
               }}>
                 {chatPanel}
               </Box>
@@ -163,14 +304,14 @@ const MainLayout: React.FC<MainLayoutProps> = ({
               display: 'flex',
               flexDirection: 'column'
             }}>
-              {/* Process Steps with Enhanced Border */}
+              {/* Process Steps */}
               <Box sx={{ 
                 mb: 4,
-                backgroundColor: 'background.paper',
+                backgroundColor: '#FFFFFF',
                 borderRadius: 2,
                 p: 3,
-                border: '2px solid #E8E8E8',
-                boxShadow: '0 2px 12px rgba(0, 0, 0, 0.06)'
+                border: '1px solid #E5E7EB',
+                boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)'
               }}>
                 <Stepper activeStep={currentStep} alternativeLabel>
                   {steps.map((label, index) => (
@@ -178,8 +319,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({
                       <StepLabel 
                         sx={{
                           '& .MuiStepLabel-label': {
-                            fontSize: '0.875rem',
                             fontWeight: index === currentStep ? 600 : 400,
+                            color: index === currentStep ? '#111827' : '#6B7280',
                           }
                         }}
                       >
@@ -191,12 +332,12 @@ const MainLayout: React.FC<MainLayoutProps> = ({
               </Box>
 
               <Box sx={{ 
-                backgroundColor: '#FEFEFE', // Slightly warmer white
-                borderRadius: 3,
-                border: '2px solid #DADADA',
+                backgroundColor: '#FFFFFF',
+                borderRadius: 2,
+                border: '1px solid #E5E7EB',
                 display: 'flex',
                 flexDirection: 'column',
-                boxShadow: '0 4px 16px rgba(0, 0, 0, 0.08)'
+                boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)'
               }}>
                 {entityPanel}
               </Box>

@@ -72,7 +72,7 @@ const RecommendationsPanel: React.FC<RecommendationsPanelProps> = ({
     }
   };
 
-  const getIconColor = (type: string, priority: string) => {
+  const getIconColor = (priority: string) => {
     if (priority === 'high') return '#EBCB8B';
     if (priority === 'medium') return '#88C0D0';
     if (priority === 'low') return '#A3BE8C';
@@ -104,14 +104,14 @@ const RecommendationsPanel: React.FC<RecommendationsPanelProps> = ({
         alignItems: 'center', 
         justifyContent: 'center',
         color: 'text.secondary',
-        p: 6
+        p: 3
       }}>
         <Box sx={{ textAlign: 'center' }}>
-          <TrendingUpIcon sx={{ fontSize: 48, mb: 2, opacity: 0.3 }} />
-          <Typography variant="body1" sx={{ fontWeight: 500, mb: 1 }}>
+          <TrendingUpIcon sx={{ fontSize: 32, mb: 1, opacity: 0.3 }} />
+          <Typography variant="body1" sx={{ fontWeight: 500, mb: 0.5 }}>
             No Insights Available
           </Typography>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="caption" color="text.secondary">
             AI recommendations will appear here as you work
           </Typography>
         </Box>
@@ -131,22 +131,21 @@ const RecommendationsPanel: React.FC<RecommendationsPanelProps> = ({
               <Box sx={{ 
                 height: 1, 
                 backgroundColor: 'grey.50', 
-                mx: 4, 
-                my: 5 
+                mx: 3, 
+                my: 2 
               }} />
             )}
             
             {/* Enhanced Priority Section */}
-            <Box sx={{ px: 4, py: 3 }}>
+            <Box sx={{ px: 3, py: 1.5 }}>
               <Typography 
                 variant="caption" 
                 sx={{ 
                   fontWeight: 600,
-                  color: getIconColor('', priority),
+                  color: getIconColor(priority),
                   textTransform: 'uppercase',
                   letterSpacing: '0.1em',
-                  fontSize: '0.75rem',
-                  mb: 4,
+                  mb: 1.5,
                   display: 'block'
                 }}
               >
@@ -157,44 +156,41 @@ const RecommendationsPanel: React.FC<RecommendationsPanelProps> = ({
                 <Box 
                   key={recommendation.id}
                   sx={{ 
-                    mb: recIndex < recs.length - 1 ? 4 : 0,
-                    p: 4,
-                    borderRadius: 3,
-                    backgroundColor: priority === 'high' ? '#FFF9E6' : '#FCFCFC',
-                    border: '1px solid',
-                    borderColor: priority === 'high' ? '#F0D49C' : '#F1F3F4',
-                    transition: 'all 0.2s ease',
+                    py: 1,
+                    px: 0,
+                    borderBottom: recIndex < recs.length - 1 ? '1px solid #F1F3F4' : 'none',
                     '&:hover': {
-                      borderColor: priority === 'high' ? '#EBCB8B' : '#E8EAED',
-                      backgroundColor: priority === 'high' ? '#FFF6D9' : '#F8F9FA',
-                      boxShadow: '0 2px 12px rgba(46, 52, 64, 0.04)',
+                      backgroundColor: 'rgba(0, 0, 0, 0.02)',
                     }
                   }}
                 >
-                  <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 3.5 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
+                    {/* Icon */}
                     <Box sx={{ 
-                      mt: 0.5,
-                      color: getIconColor(recommendation.type, recommendation.priority),
-                      opacity: 0.8
+                      mt: 0.125,
+                      color: getIconColor(recommendation.priority),
+                      opacity: 0.8,
+                      flexShrink: 0
                     }}>
                       {getRecommendationIcon(recommendation.type)}
                     </Box>
                     
+                    {/* Content */}
                     <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 2.5 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 0.5 }}>
                         <Typography 
-                          variant="subtitle2" 
+                          variant="body2" 
                           sx={{ 
                             fontWeight: 600, 
-                            lineHeight: 1.4,
-                            color: 'text.primary',
-                            fontSize: '0.95rem'
+                            lineHeight: 1.3,
+                            color: 'text.primary'
                           }}
                         >
                           {recommendation.title}
                         </Typography>
                         
-                        <Box sx={{ display: 'flex', gap: 0.5, ml: 3 }}>
+                        {/* Action Buttons */}
+                        <Box sx={{ display: 'flex', gap: 0.25, ml: 1.5, flexShrink: 0 }}>
                           {recommendation.suggestedAction && (
                             <Tooltip title="Apply suggestion">
                               <IconButton 
@@ -205,10 +201,11 @@ const RecommendationsPanel: React.FC<RecommendationsPanelProps> = ({
                                 }}
                                 sx={{ 
                                   color: '#A3BE8C',
-                                  '&:hover': { backgroundColor: 'rgba(163, 190, 140, 0.08)' }
+                                  '&:hover': { backgroundColor: 'rgba(163, 190, 140, 0.08)' },
+                                  p: 0.25
                                 }}
                               >
-                                <CheckIcon sx={{ fontSize: 16 }} />
+                                <CheckIcon sx={{ fontSize: 12 }} />
                               </IconButton>
                             </Tooltip>
                           )}
@@ -221,48 +218,48 @@ const RecommendationsPanel: React.FC<RecommendationsPanelProps> = ({
                               }}
                               sx={{ 
                                 color: 'text.secondary',
-                                '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' }
+                                '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' },
+                                p: 0.25
                               }}
                             >
-                              <CloseIcon sx={{ fontSize: 16 }} />
+                              <CloseIcon sx={{ fontSize: 12 }} />
                             </IconButton>
                           </Tooltip>
                         </Box>
                       </Box>
                       
+                      {/* Description */}
                       <Typography 
                         variant="body2" 
                         color="text.secondary"
-                        sx={{ mb: 3, lineHeight: 1.6 }}
+                        sx={{ 
+                          mb: recommendation.suggestedAction ? 0.75 : 0.5, 
+                          lineHeight: 1.4
+                        }}
                       >
                         {recommendation.description}
                       </Typography>
                       
+                      {/* Suggested Action - Inline */}
                       {recommendation.suggestedAction && (
-                        <Box sx={{ 
-                          p: 3,
-                          backgroundColor: '#F0F7FF',
-                          borderRadius: 2,
-                          border: '1px solid #E1F0FF',
-                          mb: 3
-                        }}>
-                          <Typography variant="body2" sx={{ 
-                            color: '#2E3440',
-                            fontWeight: 500,
-                            fontSize: '0.875rem'
-                          }}>
-                            💡 {recommendation.suggestedAction}
-                          </Typography>
-                        </Box>
+                        <Typography 
+                          variant="body2" 
+                          sx={{ 
+                            color: '#5F6368',
+                            fontStyle: 'italic',
+                            mb: 0.5
+                          }}
+                        >
+                          💡 {recommendation.suggestedAction}
+                        </Typography>
                       )}
                       
+                      {/* Timestamp and entity field */}
                       <Typography 
                         variant="caption" 
                         color="text.secondary"
                         sx={{ 
-                          fontSize: '0.75rem',
-                          display: 'block',
-                          opacity: 0.7
+                          opacity: 0.6
                         }}
                       >
                         {recommendation.createdAt.toLocaleTimeString([], { 
@@ -274,7 +271,6 @@ const RecommendationsPanel: React.FC<RecommendationsPanelProps> = ({
                             {' • '}
                             <Typography component="span" variant="caption" sx={{ 
                               fontFamily: 'monospace',
-                              fontSize: '0.7rem',
                               opacity: 0.7
                             }}>
                               {recommendation.entityField}

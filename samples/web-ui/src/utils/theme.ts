@@ -69,53 +69,59 @@ export const theme = createTheme({
       'Arial',
       'sans-serif',
     ].join(','),
+    // Main headers - simplified scale
     h1: {
-      fontSize: '2.5rem',
-      fontWeight: 300,
+      fontSize: '2rem',
+      fontWeight: 500,
       letterSpacing: '-0.02em',
       lineHeight: 1.2,
     },
     h2: {
-      fontSize: '2rem',
-      fontWeight: 300,
+      fontSize: '1.75rem',
+      fontWeight: 500,
       letterSpacing: '-0.01em',
       lineHeight: 1.3,
     },
     h3: {
-      fontSize: '1.75rem',
-      fontWeight: 400,
+      fontSize: '1.5rem',
+      fontWeight: 500,
       lineHeight: 1.3,
     },
     h4: {
-      fontSize: '1.5rem',
-      fontWeight: 400,
+      fontSize: '1.25rem',
+      fontWeight: 500,
       lineHeight: 1.4,
     },
     h5: {
-      fontSize: '1.25rem',
-      fontWeight: 400, // Lighter weight for better hierarchy
+      fontSize: '1.125rem',
+      fontWeight: 500,
       lineHeight: 1.4,
     },
     h6: {
-      fontSize: '1.125rem',
-      fontWeight: 500,
+      fontSize: '1rem',
+      fontWeight: 600,
       lineHeight: 1.5,
     },
+    // Body text - two consistent sizes
     body1: {
-      fontSize: '1rem',
+      fontSize: '0.875rem',
       lineHeight: 1.6,
       letterSpacing: '0.01em',
+      fontWeight: 400,
     },
     body2: {
-      fontSize: '0.875rem',
+      fontSize: '0.8rem',
       lineHeight: 1.5,
       letterSpacing: '0.01em',
+      fontWeight: 400,
     },
+    // Small text for metadata
     caption: {
       fontSize: '0.75rem',
       lineHeight: 1.4,
       letterSpacing: '0.02em',
-      color: '#80868B', // Softer caption color
+      fontWeight: 400,
+      color: '#80868B',
     },
   },
   spacing: 8, // Generous 8px base spacing for better rhythm
@@ -168,7 +174,7 @@ export const theme = createTheme({
           fontWeight: 500,
           padding: '10px 20px',
           boxShadow: 'none',
-          fontSize: '0.875rem',
+          fontSize: '0.875rem', // Matches body1
           letterSpacing: '0.01em',
           '&:hover': {
             boxShadow: '0 2px 12px rgba(46, 52, 64, 0.08)',
@@ -183,6 +189,7 @@ export const theme = createTheme({
         },
         outlined: {
           borderColor: '#F1F3F4',
+          borderWidth: '0.5px',
           color: '#556B7D',
           '&:hover': {
             borderColor: '#E8EAED',
@@ -196,10 +203,10 @@ export const theme = createTheme({
         root: {
           borderRadius: 16,
           boxShadow: 'none',
-          border: '1px solid #F8F9FA',
+          border: '0.5px solid #F8F9FA',
           backgroundColor: '#FEFEFE',
           '&:hover': {
-            border: '1px solid #F1F3F4',
+            border: '0.5px solid #F1F3F4',
             boxShadow: '0 2px 12px rgba(46, 52, 64, 0.04)',
           },
         },
@@ -210,7 +217,7 @@ export const theme = createTheme({
         root: {
           borderRadius: 16,
           boxShadow: 'none',
-          border: '1px solid #F8F9FA',
+          border: '0.5px solid #F8F9FA',
           backgroundColor: '#FEFEFE',
         },
         elevation0: {
@@ -219,7 +226,7 @@ export const theme = createTheme({
         },
         elevation1: {
           boxShadow: 'none',
-          border: '1px solid #F8F9FA',
+          border: '0.5px solid #F8F9FA',
         },
       },
     },
@@ -231,14 +238,15 @@ export const theme = createTheme({
             backgroundColor: '#FEFEFE',
             '& fieldset': {
               borderColor: '#F1F3F4',
-              borderWidth: 1,
+              borderWidth: '0.5px',
             },
             '&:hover fieldset': {
               borderColor: '#E8EAED',
+              borderWidth: '0.5px',
             },
             '&.Mui-focused fieldset': {
               borderColor: '#5E81AC',
-              borderWidth: 1,
+              borderWidth: '0.5px',
             },
           },
         },
@@ -254,6 +262,7 @@ export const theme = createTheme({
         },
         outlined: {
           borderColor: '#F1F3F4',
+          borderWidth: '0.5px',
           backgroundColor: 'transparent',
           color: '#556B7D',
           '&:hover': {
@@ -268,7 +277,7 @@ export const theme = createTheme({
           backgroundColor: '#FEFEFE',
           color: '#2E3440',
           boxShadow: 'none',
-          borderBottom: '1px solid #F8F9FA',
+          borderBottom: '0.5px solid #F8F9FA',
         },
       },
     },
@@ -285,13 +294,13 @@ export const theme = createTheme({
     MuiTableCell: {
       styleOverrides: {
         root: {
-          borderBottom: '1px solid #F8F9FA',
+          borderBottom: '0.5px solid #F8F9FA',
           padding: '16px 20px',
         },
         head: {
           backgroundColor: '#FCFCFC',
           fontWeight: 600,
-          fontSize: '0.75rem',
+          fontSize: '0.75rem', // Matches caption
           textTransform: 'uppercase',
           letterSpacing: '0.1em',
           color: '#80868B',
@@ -303,7 +312,7 @@ export const theme = createTheme({
         root: {
           borderRadius: 12,
           border: 'none',
-          fontSize: '0.875rem',
+          fontSize: '0.875rem', // Matches body1
         },
         standardInfo: {
           backgroundColor: '#F0F7FF',
@@ -326,7 +335,7 @@ export const theme = createTheme({
     MuiAvatar: {
       styleOverrides: {
         root: {
-          fontSize: '0.875rem',
+          fontSize: '0.875rem', // Matches body1
           fontWeight: 500,
         },
       },
@@ -337,12 +346,15 @@ export const theme = createTheme({
           borderRadius: 12,
           '& .MuiOutlinedInput-notchedOutline': {
             borderColor: '#F1F3F4',
+            borderWidth: '0.5px',
           },
           '&:hover .MuiOutlinedInput-notchedOutline': {
             borderColor: '#E8EAED',
+            borderWidth: '0.5px',
           },
           '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
             borderColor: '#5E81AC',
+            borderWidth: '0.5px',
           },
         },
       },
@@ -351,6 +363,7 @@ export const theme = createTheme({
       styleOverrides: {
         root: {
           borderColor: '#F8F9FA',
+          borderWidth: '0.5px',
         },
       },
     },

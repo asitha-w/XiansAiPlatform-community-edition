@@ -180,7 +180,46 @@ const BusinessEntityPanel: React.FC<BusinessEntityPanelProps> = ({
     const mediumPriority = recommendations.filter(r => r.priority === 'medium').length;
     const lowPriority = recommendations.filter(r => r.priority === 'low').length;
     
-    return { highPriority, mediumPriority, lowPriority, total: recommendations.length };
+    // Get insight categories with counts
+    const categories = recommendations.reduce((acc, rec) => {
+      if (!acc[rec.type]) acc[rec.type] = 0;
+      acc[rec.type]++;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    return { 
+      highPriority, 
+      mediumPriority, 
+      lowPriority, 
+      total: recommendations.length,
+      categories
+    };
+  };
+
+  const getCategoryIcon = (type: string) => {
+    switch (type) {
+      case 'validation':
+        return <CheckIcon sx={{ fontSize: 16 }} />;
+      case 'warning':
+        return <WarningIcon sx={{ fontSize: 16 }} />;
+      case 'suggestion':
+        return <CheckIcon sx={{ fontSize: 16 }} />; // Using CheckIcon for suggestions too
+      default:
+        return <CheckIcon sx={{ fontSize: 16 }} />;
+    }
+  };
+
+  const getCategoryColor = (type: string) => {
+    switch (type) {
+      case 'validation':
+        return '#A3BE8C';
+      case 'warning':
+        return '#EBCB8B';
+      case 'suggestion':
+        return '#88C0D0';
+      default:
+        return '#80868B';
+    }
   };
 
   const insightsSummary = getInsightsSummary();
@@ -189,26 +228,26 @@ const BusinessEntityPanel: React.FC<BusinessEntityPanelProps> = ({
     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
       <Box sx={{ flexGrow: 1 }}>
         {/* Enhanced Entity Header with Better Visual Hierarchy */}
-        <Box sx={{ p: 5, pb: 4 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 4 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+        <Box sx={{ p: 3, pb: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Box sx={{ 
-                p: 2, 
-                borderRadius: 3, 
+                p: 1.5, 
+                borderRadius: 2, 
                 backgroundColor: 'grey.50',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                border: '1px solid',
+                border: '0.5px solid',
                 borderColor: 'grey.100'
               }}>
                 {getEntityIcon(entity.type)}
               </Box>
               <Box>
-                <Typography variant="h5" sx={{ fontWeight: 400, mb: 1, fontSize: '1.35rem' }}>
+                <Typography variant="h4" sx={{ fontWeight: 400, mb: 0.5 }}>
                   {entity.title}
                 </Typography>
-                <Box sx={{ display: 'flex', gap: 3, alignItems: 'center' }}>
+                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
                   <Typography variant="body2" color="text.secondary" sx={{ fontFamily: 'monospace' }}>
                     {entity.id}
                   </Typography>
@@ -251,7 +290,7 @@ const BusinessEntityPanel: React.FC<BusinessEntityPanelProps> = ({
             </Box>
           </Box>
           
-          <Box sx={{ display: 'flex', gap: 6, fontSize: '0.875rem', color: 'text.secondary' }}>
+          <Box sx={{ display: 'flex', gap: 4, color: 'text.secondary' }}>
             <Typography variant="caption" sx={{ opacity: 0.8 }}>
               Last modified: {entity.lastModified.toLocaleDateString()}
             </Typography>
@@ -263,106 +302,159 @@ const BusinessEntityPanel: React.FC<BusinessEntityPanelProps> = ({
           </Box>
         </Box>
 
-        <Divider sx={{ mx: 5, borderColor: 'grey.50' }} />
+        <Divider sx={{ mx: 3, borderColor: 'grey.50' }} />
 
-        {/* Enhanced AI Insights with Better Design */}
-        <Box sx={{ p: 5 }}>
-          <Typography variant="h6" sx={{ 
-            mb: 4, 
-            fontWeight: 400,
-            color: 'text.primary',
-            fontSize: '1.125rem'
+        {/* AI Insights - Unified Component Container */}
+        <Box sx={{ px: 3, py: 2 }}>
+          {/* Unified AI Insights Component */}
+          <Box sx={{
+            borderRadius: 2,
+            backgroundColor: '#FFFFFF',
+            border: '0.5px solid #E8EAED',
+            overflow: 'hidden',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)'
           }}>
-            AI Insights
-          </Typography>
-
-          {/* Enhanced Insights Summary */}
-          <Box 
-            sx={{ 
-              p: 4,
-              borderRadius: 3,
-              backgroundColor: insightsSummary.highPriority > 0 ? '#FFF9E6' : '#FCFCFC',
-              border: '1px solid',
-              borderColor: insightsSummary.highPriority > 0 ? '#F0D49C' : '#F1F3F4',
-              cursor: 'pointer',
-              transition: 'all 0.2s ease',
-              '&:hover': {
-                borderColor: insightsSummary.highPriority > 0 ? '#EBCB8B' : '#E8EAED',
-                backgroundColor: insightsSummary.highPriority > 0 ? '#FFF6D9' : '#F8F9FA',
-                boxShadow: '0 2px 12px rgba(46, 52, 64, 0.04)',
-              }
-            }}
-            onClick={() => setInsightsExpanded(!insightsExpanded)}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                <Box sx={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: 3,
-                  backgroundColor: 'background.paper',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  border: '1px solid',
-                  borderColor: 'grey.100'
-                }}>
-                  {insightsSummary.highPriority > 0 ? (
-                    <WarningIcon sx={{ color: '#EBCB8B', fontSize: 22 }} />
-                  ) : (
-                    <CheckIcon sx={{ color: '#A3BE8C', fontSize: 22 }} />
-                  )}
-                </Box>
-                
-                <Box>
-                  <Typography variant="body1" sx={{ 
-                    fontWeight: 500, 
-                    mb: 0.5,
+            {/* Combined AI Insights Title and Summary in One Row */}
+            <Box 
+              sx={{ 
+                p: 2,
+                backgroundColor: insightsSummary.highPriority > 0 ? '#FFF9E6' : '#F8F9FA',
+                borderBottom: insightsExpanded ? '0.5px solid #E8EAED' : 'none',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                  backgroundColor: insightsSummary.highPriority > 0 ? '#FFF6D9' : '#F1F3F4',
+                }
+              }}
+              onClick={() => setInsightsExpanded(!insightsExpanded)}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  {/* AI Insights Title */}
+                  <Typography variant="h6" sx={{ 
+                    fontWeight: 500,
                     color: 'text.primary',
-                    fontSize: '1rem'
+                    mr: 1
                   }}>
-                    {insightsSummary.total === 0 ? 'No insights to review' : 
-                     insightsSummary.highPriority > 0 ? 'Action required' : 'All insights reviewed'}
+                    AI Insights
                   </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
-                    {insightsSummary.total} insights available
-                    {insightsSummary.highPriority > 0 && ` • ${insightsSummary.highPriority} high priority`}
-                  </Typography>
+                  
+                  {/* Insight Categories Overview */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    {Object.entries(insightsSummary.categories).map(([type, count]) => (
+                      <Box 
+                        key={type}
+                        sx={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          gap: 0.5,
+                          px: 1,
+                          py: 0.25,
+                          borderRadius: 1,
+                          backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                          border: '0.5px solid',
+                          borderColor: getCategoryColor(type) + '40',
+                        }}
+                      >
+                        <Box sx={{ color: getCategoryColor(type), display: 'flex' }}>
+                          {getCategoryIcon(type)}
+                        </Box>
+                        <Typography 
+                          variant="caption" 
+                          sx={{ 
+                            fontWeight: 500, 
+                            color: 'text.primary',
+                            textTransform: 'capitalize'
+                          }}
+                        >
+                          {type}: {count}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Box>
+                  
+                  {/* Priority Summary */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    {insightsSummary.highPriority > 0 && (
+                      <Chip
+                        label={`${insightsSummary.highPriority} High`}
+                        size="small"
+                        sx={{
+                          backgroundColor: '#FFF2D9',
+                          color: '#B8860B',
+                          fontWeight: 500,
+                          height: 20,
+                          border: '0.5px solid #F0D49C',
+                          '& .MuiChip-label': { px: 0.75 }
+                        }}
+                      />
+                    )}
+                    {(insightsSummary.mediumPriority > 0 || insightsSummary.lowPriority > 0) && (
+                      <Typography 
+                        variant="caption" 
+                        sx={{ 
+                          color: 'text.secondary'
+                        }}
+                      >
+                        +{insightsSummary.mediumPriority + insightsSummary.lowPriority} more
+                      </Typography>
+                    )}
+                  </Box>
+                </Box>
+
+                <IconButton 
+                  size="small" 
+                  sx={{ 
+                    color: 'text.secondary',
+                    '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' }
+                  }}
+                >
+                  {insightsExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                </IconButton>
+              </Box>
+            </Box>
+
+            {/* Expanded Content - Same Container */}
+            <Collapse in={insightsExpanded}>
+              <Box>
+                
+                {/* Content Container */}
+                <Box sx={{ 
+                  maxHeight: '400px',
+                  overflowY: 'auto',
+                  '&::-webkit-scrollbar': {
+                    width: '6px',
+                  },
+                  '&::-webkit-scrollbar-track': {
+                    backgroundColor: '#F1F3F4',
+                  },
+                  '&::-webkit-scrollbar-thumb': {
+                    backgroundColor: '#DADCE0',
+                    borderRadius: '3px',
+                    '&:hover': {
+                      backgroundColor: '#BDC1C6',
+                    },
+                  },
+                }}>
+                  <RecommendationsPanel 
+                    recommendations={recommendations}
+                    onDismiss={onDismissRecommendation}
+                    onApply={onApplyRecommendation}
+                  />
                 </Box>
               </Box>
-              
-              <IconButton 
-                size="small" 
-                sx={{ 
-                  color: 'text.secondary',
-                  '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' }
-                }}
-              >
-                {insightsExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-              </IconButton>
-            </Box>
+            </Collapse>
           </Box>
-
-          {/* Expanded Insights Content */}
-          <Collapse in={insightsExpanded}>
-            <Box sx={{ mt: 4 }}>
-              <RecommendationsPanel 
-                recommendations={recommendations}
-                onDismiss={onDismissRecommendation}
-                onApply={onApplyRecommendation}
-              />
-            </Box>
-          </Collapse>
         </Box>
 
-        <Divider sx={{ mx: 5, borderColor: 'grey.50' }} />
+        <Divider sx={{ mx: 3, borderColor: 'grey.50' }} />
 
         {/* Enhanced Order-specific content */}
         {entity.type === 'order' && entity.data && (
           <Box sx={{ p: 5, pt: 4 }}>
             {/* Enhanced Customer Information */}
             <Box sx={{ mb: 5 }}>
-              <Typography variant="h6" sx={{ mb: 4, fontWeight: 400, fontSize: '1.125rem' }}>
+              <Typography variant="h6" sx={{ mb: 4, fontWeight: 400 }}>
                 Customer Information
               </Typography>
               <Box sx={{ 
@@ -453,7 +545,7 @@ const BusinessEntityPanel: React.FC<BusinessEntityPanelProps> = ({
 
             {/* Enhanced Order Details */}
             <Box sx={{ mb: 5 }}>
-              <Typography variant="h6" sx={{ mb: 4, fontWeight: 400, fontSize: '1.125rem' }}>
+              <Typography variant="h6" sx={{ mb: 4, fontWeight: 400 }}>
                 Order Details
               </Typography>
               <Box sx={{ 
@@ -528,11 +620,11 @@ const BusinessEntityPanel: React.FC<BusinessEntityPanelProps> = ({
 
             {/* Enhanced Order Items */}
             <Box sx={{ mb: 5 }}>
-              <Typography variant="h6" sx={{ mb: 4, fontWeight: 400, fontSize: '1.125rem' }}>
+              <Typography variant="h6" sx={{ mb: 4, fontWeight: 400 }}>
                 Order Items
               </Typography>
               <TableContainer sx={{ 
-                border: '1px solid',
+                border: '0.5px solid',
                 borderColor: 'grey.100',
                 borderRadius: 3,
                 backgroundColor: 'background.paper'
@@ -550,7 +642,7 @@ const BusinessEntityPanel: React.FC<BusinessEntityPanelProps> = ({
                     {entity.data.items?.map((item) => (
                       <TableRow key={item.id}>
                         <TableCell sx={{ py: 3 }}>
-                          <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                          <Typography variant="body1" sx={{ fontWeight: 500 }}>
                             {item.name}
                           </Typography>
                         </TableCell>
@@ -584,7 +676,6 @@ const BusinessEntityPanel: React.FC<BusinessEntityPanelProps> = ({
                     <TableRow>
                       <TableCell colSpan={3} sx={{ 
                         fontWeight: 600, 
-                        fontSize: '1.1rem',
                         borderBottom: 'none',
                         pt: 3
                       }}>
@@ -592,7 +683,6 @@ const BusinessEntityPanel: React.FC<BusinessEntityPanelProps> = ({
                       </TableCell>
                       <TableCell align="right" sx={{ 
                         fontWeight: 600, 
-                        fontSize: '1.1rem',
                         borderBottom: 'none',
                         pt: 3,
                         color: 'primary.main'
@@ -610,17 +700,17 @@ const BusinessEntityPanel: React.FC<BusinessEntityPanelProps> = ({
               <>
                 <Divider sx={{ my: 5, borderColor: 'grey.50' }} />
                 <Box>
-                  <Typography variant="h6" sx={{ mb: 3, fontWeight: 400, fontSize: '1.125rem' }}>
+                  <Typography variant="h6" sx={{ mb: 3, fontWeight: 400 }}>
                     Notes
                   </Typography>
                   <Box sx={{ 
                     p: 4, 
                     backgroundColor: '#FFF9E6',
                     borderRadius: 3,
-                    border: '1px solid',
+                    border: '0.5px solid',
                     borderColor: '#F0D49C'
                   }}>
-                    <Typography variant="body2" sx={{ 
+                    <Typography variant="body1" sx={{ 
                       lineHeight: 1.6,
                       color: 'text.primary'
                     }}>

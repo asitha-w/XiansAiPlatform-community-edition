@@ -8,15 +8,12 @@ import {
   List,
   ListItem,
   Chip,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
 } from '@mui/material';
 import {
   Send as SendIcon,
   SmartToy as AgentIcon,
   Person as PersonIcon,
+  Circle as StatusIcon,
 } from '@mui/icons-material';
 import type { ChatMessage, Agent } from '../../types';
 
@@ -24,8 +21,6 @@ interface ChatPanelProps {
   messages?: ChatMessage[];
   onSendMessage?: (message: string) => void;
   currentAgent?: Agent | null;
-  availableAgents?: Agent[];
-  onSelectAgent?: (agent: Agent) => void;
   isLoading?: boolean;
 }
 
@@ -77,8 +72,6 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
   messages = mockMessages,
   onSendMessage,
   currentAgent = mockAgents[0],
-  availableAgents = mockAgents,
-  onSelectAgent,
   isLoading = false,
 }) => {
   const [messageInput, setMessageInput] = useState('');
@@ -102,76 +95,85 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
       height: '100%', 
       display: 'flex', 
       flexDirection: 'column',
-      backgroundColor: 'background.paper',
+      backgroundColor: '#FFFFFF',
       minHeight: '600px'
     }}>
-      {/* Enhanced Agent Selection with Better Spacing */}
-      <Box sx={{ p: 4, borderBottom: '1px solid', borderColor: 'grey.50' }}>
-        <FormControl fullWidth size="small">
-          <InputLabel sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>Select Agent</InputLabel>
-          <Select
-            value={currentAgent?.id || ''}
-            label="Select Agent"
-            onChange={(e) => {
-              const agent = availableAgents.find(a => a.id === e.target.value);
-              if (agent && onSelectAgent) {
-                onSelectAgent(agent);
-              }
-            }}
-            sx={{
-              '& .MuiOutlinedInput-notchedOutline': {
-                borderColor: 'grey.100',
-              },
-              '&:hover .MuiOutlinedInput-notchedOutline': {
-                borderColor: 'grey.200',
-              }
-            }}
-          >
-            {availableAgents.map((agent) => (
-              <MenuItem key={agent.id} value={agent.id}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <AgentIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
-                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                    {agent.name}
+      {/* Professional Agent Header */}
+      {currentAgent && (
+        <Box sx={{ 
+          p: 4, 
+          backgroundColor: '#F9FAFB',
+          borderBottom: '1px solid #E5E7EB'
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+            <Box sx={{
+              width: 48,
+              height: 48,
+              borderRadius: 2,
+              backgroundColor: '#FFFFFF',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              border: '1px solid #E5E7EB',
+              boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)'
+            }}>
+              <AgentIcon sx={{ fontSize: 24, color: '#6B7280' }} />
+            </Box>
+            
+            <Box sx={{ flexGrow: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
+                <Typography variant="h6" sx={{ 
+                  fontWeight: 600,
+                  color: '#111827'
+                }}>
+                  {currentAgent.name}
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <StatusIcon sx={{ fontSize: 8, color: '#10B981' }} />
+                  <Typography variant="caption" sx={{ 
+                    color: '#10B981',
+                    fontWeight: 500,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em'
+                  }}>
+                    Active
                   </Typography>
                 </Box>
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-        
-        {currentAgent && (
-          <Box sx={{ mt: 3 }}>
-            <Typography variant="caption" color="text.secondary" sx={{ 
-              display: 'block', 
-              mb: 2,
-              lineHeight: 1.5,
-              fontSize: '0.8rem'
-            }}>
-              {currentAgent.description}
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-              {currentAgent.capabilities.slice(0, 2).map((capability) => (
-                <Chip
-                  key={capability}
-                  label={capability}
-                  size="small"
-                  variant="outlined"
-                  sx={{ 
-                    fontSize: '0.7rem', 
-                    height: 24,
-                    borderColor: 'grey.200',
-                    color: 'text.secondary',
-                    backgroundColor: 'grey.50'
-                  }}
-                />
-              ))}
+              </Box>
+              
+              <Typography variant="body2" color="#6B7280" sx={{ 
+                mb: 2,
+                lineHeight: 1.4
+              }}>
+                {currentAgent.description}
+              </Typography>
+              
+              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                {currentAgent.capabilities.map((capability) => (
+                  <Chip
+                    key={capability}
+                    label={capability}
+                    size="small"
+                    variant="outlined"
+                    sx={{ 
+                      height: 24,
+                      borderColor: '#D1D5DB',
+                      color: '#6B7280',
+                      backgroundColor: '#FFFFFF',
+                      fontSize: '0.75rem',
+                      '& .MuiChip-label': {
+                        px: 1.5
+                      }
+                    }}
+                  />
+                ))}
+              </Box>
             </Box>
           </Box>
-        )}
-      </Box>
+        </Box>
+      )}
 
-      {/* Enhanced Messages List with Better Visual Design */}
+      {/* Messages List */}
       <Box sx={{ 
         flexGrow: 1, 
         overflow: 'auto',
@@ -202,8 +204,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
                 <Avatar sx={{ 
                   width: 36, 
                   height: 36,
-                  bgcolor: message.sender === 'agent' ? 'secondary.main' : 'primary.main',
-                  fontSize: '0.875rem'
+                  bgcolor: message.sender === 'agent' ? '#6B7280' : '#374151'
                 }}>
                   {message.sender === 'agent' ? <AgentIcon /> : <PersonIcon />}
                 </Avatar>
@@ -213,23 +214,21 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
                     px: 3.5,
                     py: 2.5,
                     backgroundColor: message.sender === 'user' 
-                      ? 'primary.main' 
-                      : 'grey.50',
+                      ? '#374151' 
+                      : '#F9FAFB',
                     color: message.sender === 'user' 
-                      ? 'primary.contrastText' 
-                      : 'text.primary',
-                    borderRadius: 4,
-                    border: message.sender === 'agent' ? '1px solid' : 'none',
-                    borderColor: 'grey.100',
+                      ? '#FFFFFF' 
+                      : '#111827',
+                    borderRadius: 3,
+                    border: message.sender === 'agent' ? '1px solid #E5E7EB' : 'none',
                     maxWidth: '100%',
                     boxShadow: message.sender === 'user' 
-                      ? '0 2px 8px rgba(46, 52, 64, 0.08)' 
+                      ? '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)' 
                       : 'none',
                   }}
                 >
-                  <Typography variant="body2" sx={{ 
-                    lineHeight: 1.6,
-                    fontSize: '0.875rem'
+                  <Typography variant="body1" sx={{ 
+                    lineHeight: 1.6
                   }}>
                     {message.content}
                   </Typography>
@@ -238,14 +237,12 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
               
               <Typography 
                 variant="caption" 
-                color="text.secondary"
+                color="#9CA3AF"
                 sx={{ 
                   mt: 1.5,
                   alignSelf: message.sender === 'user' ? 'flex-end' : 'flex-start',
                   mr: message.sender === 'user' ? 6 : 0,
                   ml: message.sender === 'agent' ? 6 : 0,
-                  fontSize: '0.75rem',
-                  opacity: 0.7
                 }}
               >
                 {message.timestamp.toLocaleTimeString([], { 
@@ -258,12 +255,11 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
         </List>
       </Box>
 
-      {/* Enhanced Message Input with Better Design */}
+      {/* Professional Message Input */}
       <Box sx={{ 
         p: 4, 
-        borderTop: '1px solid',
-        borderColor: 'grey.50',
-        backgroundColor: 'background.paper'
+        borderTop: '1px solid #E5E7EB',
+        backgroundColor: '#FFFFFF'
       }}>
         <Box sx={{ display: 'flex', gap: 2.5, alignItems: 'flex-end' }}>
           <TextField
@@ -271,23 +267,23 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
             multiline
             maxRows={3}
             size="small"
-            placeholder="Type your message..."
+            placeholder={`Message ${currentAgent?.name || 'AI Assistant'}...`}
             value={messageInput}
             onChange={(e) => setMessageInput(e.target.value)}
             onKeyPress={handleKeyPress}
             disabled={isLoading}
             sx={{
               '& .MuiOutlinedInput-root': {
-                backgroundColor: 'background.paper',
-                borderRadius: 3,
+                backgroundColor: '#FFFFFF',
+                borderRadius: 2,
                 '& fieldset': {
-                  borderColor: 'grey.100',
+                  borderColor: '#D1D5DB',
                 },
                 '&:hover fieldset': {
-                  borderColor: 'grey.200',
+                  borderColor: '#9CA3AF',
                 },
                 '&.Mui-focused fieldset': {
-                  borderColor: 'primary.main',
+                  borderColor: '#6B7280',
                 },
               }
             }}
@@ -296,18 +292,17 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
             onClick={handleSendMessage}
             disabled={!messageInput.trim() || isLoading}
             sx={{
-              bgcolor: messageInput.trim() ? 'primary.main' : 'grey.100',
-              color: messageInput.trim() ? 'white' : 'grey.400',
-              borderRadius: 3,
+              bgcolor: messageInput.trim() ? '#374151' : '#F3F4F6',
+              color: messageInput.trim() ? '#FFFFFF' : '#9CA3AF',
+              borderRadius: 2,
               width: 44,
               height: 44,
               '&:hover': {
-                bgcolor: messageInput.trim() ? 'primary.dark' : 'grey.200',
-                boxShadow: messageInput.trim() ? '0 2px 8px rgba(46, 52, 64, 0.12)' : 'none',
+                bgcolor: messageInput.trim() ? '#1F2937' : '#E5E7EB',
               },
               '&:disabled': {
-                bgcolor: 'grey.100',
-                color: 'grey.400',
+                bgcolor: '#F3F4F6',
+                color: '#9CA3AF',
               }
             }}
           >
