@@ -5,7 +5,7 @@ import HomePage from './pages/HomePage';
 import BotPage from './pages/BotPage';
 import Navbar from './components/Navbar';
 import type { Agent } from './types';
-import BusinessEntityPanel from './components/legal/BusinessEntityPanel';
+import { ContractEntityWithSteps } from './components/legal/ContractEntityWithSteps';
 
 // Mock agents data - centralized for the entire app
 const agents: Agent[] = [
@@ -16,7 +16,7 @@ const agents: Agent[] = [
     capabilities: ['Contract Creation', 'Legal Analysis'],
     workflow: 'Legal Contract Agent:Legal Contract Bot',
     slug: 'legal',
-    mainComponent: <BusinessEntityPanel />,
+    mainComponent: ContractEntityWithSteps,
   },
   {
     id: '1',
@@ -76,6 +76,26 @@ function App() {
                 <BotPage 
                   agents={agents} 
                   onSelectAgent={handleAgentSelect}
+                />
+              } 
+            />
+            <Route 
+              path="/:slug/new" 
+              element={
+                <BotPage 
+                  agents={agents} 
+                  onSelectAgent={handleAgentSelect}
+                  mode="new"
+                />
+              } 
+            />
+            <Route 
+              path="/:slug/:documentId" 
+              element={
+                <BotPage 
+                  agents={agents} 
+                  onSelectAgent={handleAgentSelect}
+                  mode="document"
                 />
               } 
             />

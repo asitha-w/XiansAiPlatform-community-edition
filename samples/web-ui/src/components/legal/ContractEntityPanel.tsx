@@ -26,13 +26,13 @@ import {
   Warning as WarningIcon,
   CheckCircle as CheckIcon,
 } from '@mui/icons-material';
-import type { BusinessEntity, AgentRecommendation } from '../../types';
+import type { ContractEntity, AgentRecommendation } from '../../types';
 import RecommendationsPanel from './RecommendationsPanel';
 
-interface BusinessEntityPanelProps {
-  entity?: BusinessEntity | null;
-  onEdit?: (entity: BusinessEntity) => void;
-  onSave?: (entity: BusinessEntity) => void;
+interface ContractEntityPanelProps {
+  entity?: ContractEntity | null;
+  onEdit?: (entity: ContractEntity) => void;
+  onSave?: (entity: ContractEntity) => void;
   isEditing?: boolean;
   recommendations?: AgentRecommendation[];
   onDismissRecommendation?: (id: string) => void;
@@ -40,7 +40,7 @@ interface BusinessEntityPanelProps {
 }
 
 // Mock data for demonstration
-const mockOrder: BusinessEntity = {
+const mockOrder: ContractEntity = {
   id: 'ORD-2024-001',
   type: 'order',
   title: 'Customer Order #2024-001',
@@ -113,7 +113,7 @@ const mockRecommendations: AgentRecommendation[] = [
   },
 ];
 
-const BusinessEntityPanel: React.FC<BusinessEntityPanelProps> = ({
+const ContractEntityPanel: React.FC<ContractEntityPanelProps> = ({
   entity = mockOrder,
   onEdit,
   onSave,
@@ -132,6 +132,7 @@ const BusinessEntityPanel: React.FC<BusinessEntityPanelProps> = ({
         alignItems: 'center', 
         justifyContent: 'center',
         color: 'text.secondary',
+        mt: 10,
         p: 4
       }}>
         <Box sx={{ textAlign: 'center' }}>
@@ -726,4 +727,6 @@ const BusinessEntityPanel: React.FC<BusinessEntityPanelProps> = ({
   );
 };
 
-export default BusinessEntityPanel; 
+
+
+export default ContractEntityPanel;

@@ -26,6 +26,7 @@ The application follows a three-panel layout:
 - **TanStack Query** for server state management
 - **Axios** for HTTP client
 - **React Hook Form + Zod** for forms and validation
+- **XiansAI Socket SDK** for real-time agent communication
 
 ## 📱 Features
 
@@ -47,6 +48,51 @@ The application follows a three-panel layout:
 - Different recommendation types (validation, warning, suggestion, info)
 - Actionable insights with apply/dismiss options
 - Real-time recommendation updates
+
+## 🔌 Socket SDK Integration
+
+The application integrates with XiansAI backend agents using the Socket SDK for real-time bidirectional communication.
+
+### Features
+- **Real-time messaging** with backend agents
+- **Auto-reconnection** with connection state monitoring
+- **Workflow mapping** from agent configuration to SDK workflow property
+- **Message history** retrieval and display
+- **Error handling** with user-friendly feedback
+- **Connection status** indicators
+
+### Configuration
+
+Create a `.env.local` file with your XiansAI configuration:
+
+```env
+VITE_XIANSAI_TENANT_ID=your-tenant-id
+VITE_XIANSAI_API_KEY=sk-your-api-key
+VITE_XIANSAI_SERVER_URL=https://api.yourdomain.com
+VITE_XIANSAI_PARTICIPANT_ID=default-participant
+```
+
+### Workflow Mapping
+
+Each agent in the application has a `workflow` property that maps directly to the Socket SDK's `sendInboundMessage` workflow parameter:
+
+```typescript
+const agents: Agent[] = [
+  {
+    id: '1',
+    name: 'Legal Assistant',
+    workflow: 'Legal Contract Agent:Legal Contract Bot', // Maps to SDK workflow
+    // ... other properties
+  }
+];
+```
+
+### Architecture
+
+- **ChatService**: Wrapper around Socket SDK with React-friendly callbacks
+- **SocketSDK**: Mock implementation following the official SDK interface
+- **Auto-generated Participant IDs**: Unique per session with optional document context
+- **Real-time Updates**: Immediate message display and agent responses
 
 ## 🚀 Getting Started
 
@@ -169,7 +215,7 @@ The primary layout component that organizes the three-panel structure.
 ### ChatPanel
 Interactive chat interface with agent selection and message history.
 
-### BusinessEntityPanel
+### ContractEntityPanel
 Dynamic business entity display with edit capabilities.
 
 ### RecommendationsPanel

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Box,
   TextField,
@@ -8,74 +8,157 @@ import {
   List,
   ListItem,
   Chip,
+  Alert,
+  CircularProgress,
 } from '@mui/material';
 import {
   Send as SendIcon,
   SmartToy as AgentIcon,
   Person as PersonIcon,
   Circle as StatusIcon,
+  Warning as WarningIcon,
 } from '@mui/icons-material';
 import type { ChatMessage, Agent } from '../../types';
+import { ChatService } from '../../services/chatService';
 
 interface ChatPanelProps {
-  messages?: ChatMessage[];
-  onSendMessage?: (message: string) => void;
   currentAgent?: Agent | null;
-  isLoading?: boolean;
+  participantId?: string; // Optional - will use SDK config participant ID if not provided
 }
 
-// Mock data for demonstration
-const mockMessages: ChatMessage[] = [
-  {
-    id: '1',
-    content: 'Hello! I\'m here to help you with your business processes. What would you like to work on today?',
-    sender: 'agent',
-    timestamp: new Date(Date.now() - 10000),
-    type: 'text',
-  },
-  {
-    id: '2',
-    content: 'I need help reviewing this customer order for accuracy.',
-    sender: 'user',
-    timestamp: new Date(Date.now() - 5000),
-    type: 'text',
-  },
-  {
-    id: '3',
-    content: 'I\'ll analyze the order details for you. Let me check the customer information and order items.',
-    sender: 'agent',
-    timestamp: new Date(),
-    type: 'text',
-  },
-];
-
-const mockAgents: Agent[] = [
-  {
-    id: '1',
-    name: 'Sales Assistant',
-    description: 'Helps with orders and customer management',
-    capabilities: ['Order Processing', 'Customer Analysis'],
-  },
-  {
-    id: '2',
-    name: 'Finance Advisor',
-    description: 'Financial analysis and invoice management',
-    capabilities: ['Invoice Review', 'Financial Analysis'],
-  },
-];
-
 const ChatPanel: React.FC<ChatPanelProps> = ({
-  messages = mockMessages,
-  onSendMessage,
-  currentAgent = mockAgents[0],
-  isLoading = false,
+  currentAgent,
+  participantId,
 }) => {
   const [messageInput, setMessageInput] = useState('');
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [isConnected, setIsConnected] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const chatServiceRef = useRef<ChatService | null>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
 
-  const handleSendMessage = () => {
-    if (messageInput.trim() && onSendMessage) {
-      onSendMessage(messageInput);
-      setMessageInput('');
+  // Initialize chat service
+  useEffect(() => {
+    const chatService = new ChatService({
+      onMessageReceived: (message: ChatMessage) => {
+        setMessages(prev => {
+          // Check if this is the first history message (indicates history loading start)
+          if (prev.length === 0 && message.metadata?.socketMessage) {
+            setIsLoadingHistory(true);
+            // Set a timeout to stop loading indicator after a reasonable time
+            setTimeout(() => setIsLoadingHistory(false), 2000);
+          }
+
+          // Prevent duplicate history messages by checking if message already exists
+          if (message.metadata?.isHistoryMessage) {
+            const messageSocketData = message.metadata?.socketMessage as { id?: string } | undefined;
+            const existingMessage = prev.find(m => {
+              const existingSocketData = m.metadata?.socketMessage as { id?: string } | undefined;
+              return messageSocketData?.id && existingSocketData?.id && 
+                     messageSocketData.id === existingSocketData.id;
+            });
+            if (existingMessage) {
+              console.log(`[ChatPanel] Skipping duplicate history message: ${message.id}`);
+              return prev;
+            }
+          }
+
+          return [...prev, message];
+        });
+      },
+      onConnectionStateChanged: (connected: boolean) => {
+        console.log('[ChatPanel] 🔌 Connection state changed:', connected);
+        setIsConnected(connected);
+        if (connected) {
+          setError(null);
+        }
+      },
+      onError: (errorMessage: string) => {
+        setError(errorMessage);
+        setIsLoadingHistory(false);
+      },
+      // Use provided participantId or let ChatService use the configured one from SDK config
+      participantId,
+    });
+
+    chatServiceRef.current = chatService;
+
+    // Connect to the service
+    const connect = async () => {
+      try {
+        setIsLoading(true);
+        await chatService.connect();
+      } catch (err) {
+        setError('Failed to connect to chat service');
+        console.error('Chat service connection error:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    connect();
+
+    // Cleanup on unmount
+    return () => {
+      chatService.dispose();
+    };
+  }, [participantId]);
+
+  // Set current agent when it changes
+  useEffect(() => {
+    if (chatServiceRef.current && currentAgent && isConnected) {
+      const setAgent = async () => {
+        try {
+          setIsLoadingHistory(true);
+          setMessages([]); // Clear messages when switching agents
+          await chatServiceRef.current!.setCurrentAgent(currentAgent);
+          // Loading history indicator will be turned off when messages start arriving
+        } catch (err) {
+          setError('Failed to set current agent');
+          setIsLoadingHistory(false);
+          console.error('Set agent error:', err);
+        }
+      };
+      
+      setAgent();
+    }
+  }, [currentAgent, isConnected]);
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (messages.length > 0 && messagesContainerRef.current) {
+      const container = messagesContainerRef.current;
+      container.scrollTop = container.scrollHeight;
+    }
+  }, [messages]);
+
+  const handleSendMessage = async () => {
+    if (!messageInput.trim() || !chatServiceRef.current || !isConnected) {
+      return;
+    }
+
+    const userMessage: ChatMessage = {
+      id: `user-${Date.now()}`,
+      content: messageInput,
+      sender: 'user',
+      timestamp: new Date(),
+      type: 'text',
+    };
+
+    // Add user message immediately to UI
+    setMessages(prev => [...prev, userMessage]);
+    setMessageInput('');
+    setIsLoading(true);
+
+    try {
+      await chatServiceRef.current.sendMessage(messageInput);
+    } catch (err) {
+      setError('Failed to send message');
+      console.error('Send message error:', err);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -88,20 +171,22 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
 
   return (
     <Box sx={{ 
-      height: '100%', 
+      height: 'calc(100vh - 150px)', // Full viewport height minus navbar height
       display: 'flex', 
       flexDirection: 'column',
       backgroundColor: '#FFFFFF',
-      minHeight: '600px'
+      position: 'relative',
+      overflow: 'hidden' // Prevent any overflow that might push content down
     }}>
       {/* Professional Agent Header */}
       {currentAgent && (
         <Box sx={{ 
-          p: 4, 
+          p: 2, 
           backgroundColor: '#F9FAFB',
-          borderBottom: '1px solid #E5E7EB'
+          borderBottom: '1px solid #E5E7EB',
+          flexShrink: 0 // Prevent header from shrinking
         }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Box sx={{
               width: 48,
               height: 48,
@@ -125,20 +210,22 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
                   {currentAgent.name}
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <StatusIcon sx={{ fontSize: 8, color: '#10B981' }} />
+                  <StatusIcon sx={{ 
+                    fontSize: 8, 
+                    color: isConnected ? '#10B981' : '#EF4444' 
+                  }} />
                   <Typography variant="caption" sx={{ 
-                    color: '#10B981',
+                    color: isConnected ? '#10B981' : '#EF4444',
                     fontWeight: 500,
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em'
                   }}>
-                    Active
                   </Typography>
                 </Box>
               </Box>
               
               <Typography variant="body2" color="#6B7280" sx={{ 
-                mb: 2,
+                mb: 1,
                 lineHeight: 1.4
               }}>
                 {currentAgent.description}
@@ -169,14 +256,64 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
         </Box>
       )}
 
+      {/* Error Alert */}
+      {error && (
+        <Box sx={{ p: 2, flexShrink: 0 }}>
+          <Alert 
+            severity="error" 
+            icon={<WarningIcon />}
+            onClose={() => setError(null)}
+          >
+            {error}
+          </Alert>
+        </Box>
+      )}
+
+      {/* Loading Indicators */}
+      {isLoading && !isConnected && (
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          p: 3,
+          borderBottom: '1px solid #E5E7EB',
+          flexShrink: 0
+        }}>
+          <CircularProgress size={20} sx={{ mr: 2 }} />
+          <Typography variant="body2" color="#6B7280">
+            Connecting to chat service...
+          </Typography>
+        </Box>
+      )}
+
+      {/* History Loading Indicator */}
+      {isLoadingHistory && isConnected && (
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          p: 3,
+          borderBottom: '1px solid #E5E7EB',
+          flexShrink: 0
+        }}>
+          <CircularProgress size={20} sx={{ mr: 2 }} />
+          <Typography variant="body2" color="#6B7280">
+            Loading conversation history...
+          </Typography>
+        </Box>
+      )}
+
       {/* Messages List */}
-      <Box sx={{ 
-        flexGrow: 1, 
-        overflow: 'auto',
-        px: 4,
-        py: 3,
-        minHeight: 0
-      }}>
+      <Box 
+        ref={messagesContainerRef}
+        sx={{ 
+          flex: 1, // Take up all available space
+          overflow: 'auto',
+          overflowX: 'hidden', // Prevent horizontal scroll
+          px: 2,
+          py: 2,
+          minHeight: 0 // Allow shrinking to zero if needed
+        }}>
         <List sx={{ p: 0 }}>
           {messages.map((message) => (
             <ListItem
@@ -185,7 +322,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: message.sender === 'user' ? 'flex-end' : 'flex-start',
-                mb: 4,
+                mb: 2,
                 px: 0,
                 py: 0,
               }}
@@ -253,11 +390,12 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
 
       {/* Professional Message Input */}
       <Box sx={{ 
-        p: 4, 
+        p: 2, 
         borderTop: '1px solid #E5E7EB',
-        backgroundColor: '#FFFFFF'
+        backgroundColor: '#FFFFFF',
+        flexShrink: 0 // Prevent input area from shrinking
       }}>
-        <Box sx={{ display: 'flex', gap: 2.5, alignItems: 'flex-end' }}>
+        <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-end' }}>
           <TextField
             fullWidth
             multiline
@@ -286,15 +424,15 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
           />
           <IconButton
             onClick={handleSendMessage}
-            disabled={!messageInput.trim() || isLoading}
+            disabled={!messageInput.trim() || isLoading || !isConnected}
             sx={{
-              bgcolor: messageInput.trim() ? '#374151' : '#F3F4F6',
-              color: messageInput.trim() ? '#FFFFFF' : '#9CA3AF',
+              bgcolor: (messageInput.trim() && isConnected && !isLoading) ? '#374151' : '#F3F4F6',
+              color: (messageInput.trim() && isConnected && !isLoading) ? '#FFFFFF' : '#9CA3AF',
               borderRadius: 2,
               width: 44,
               height: 44,
               '&:hover': {
-                bgcolor: messageInput.trim() ? '#1F2937' : '#E5E7EB',
+                bgcolor: (messageInput.trim() && isConnected && !isLoading) ? '#1F2937' : '#E5E7EB',
               },
               '&:disabled': {
                 bgcolor: '#F3F4F6',

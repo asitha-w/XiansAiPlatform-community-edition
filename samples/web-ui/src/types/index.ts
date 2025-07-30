@@ -16,20 +16,20 @@ export interface Agent {
   capabilities: string[];
   workflow: string;
   slug: string;
-  mainComponent?: React.ReactNode;
+  mainComponent?: React.ComponentType<any>;
 }
 
-export interface BusinessEntity {
+export interface ContractEntity {
   id: string;
-  type: BusinessEntityType;
+  type: ContractEntityType;
   title: string;
   status: string;
-  data: BusinessEntityData;
+  data: ContractEntityData;
   lastModified: Date;
   assignedTo?: string;
 }
 
-export interface BusinessEntityData {
+export interface ContractEntityData {
   customer?: {
     id: string;
     name: string;
@@ -55,7 +55,7 @@ export interface BusinessEntityData {
   notes?: string;
 }
 
-export type BusinessEntityType = 
+export type ContractEntityType = 
   | 'order'
   | 'customer'
   | 'invoice'
@@ -75,7 +75,7 @@ export interface Chat {
   id: string;
   agentId: string;
   userId: string;
-  businessEntityId?: string;
+  contractEntityId?: string;
   messages: ChatMessage[];
   isActive: boolean;
   createdAt: Date;
@@ -96,7 +96,7 @@ export interface AgentRecommendation {
 export interface AppState {
   user: User | null;
   currentAgent: Agent | null;
-  currentBusinessEntity: BusinessEntity | null;
+  currentContractEntity: ContractEntity | null;
   activeChat: Chat | null;
   recommendations: AgentRecommendation[];
   isLoading: boolean;

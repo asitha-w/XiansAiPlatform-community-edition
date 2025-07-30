@@ -1,24 +1,17 @@
 import React from 'react';
 import {
   Box,
-  Stepper,
-  Step,
-  StepLabel,
 } from '@mui/material';
 
 interface MainLayoutProps {
   children?: React.ReactNode;
   chatPanel: React.ReactNode;
   agentComponent: React.ReactNode; // Dynamic agent component
-  currentStep?: number; // Current step in the process
-  steps?: string[]; // Array of step names
 }
 
 const MainLayout: React.FC<MainLayoutProps> = ({
   chatPanel,
   agentComponent,
-  currentStep = 0,
-  steps = ['Setup', 'Configuration', 'Review', 'Complete'],
 }) => {
   return (
     <Box sx={{ 
@@ -79,40 +72,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({
               display: 'flex',
               flexDirection: 'column'
             }}>
-              {/* Process Steps */}
               <Box sx={{ 
-                mb: 4,
-                backgroundColor: '#FFFFFF',
-                borderRadius: 2,
-                p: 3,
-                border: '1px solid #E5E7EB',
-                boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)'
-              }}>
-                <Stepper activeStep={currentStep} alternativeLabel>
-                  {steps.map((label, index) => (
-                    <Step key={label}>
-                      <StepLabel 
-                        sx={{
-                          '& .MuiStepLabel-label': {
-                            fontWeight: index === currentStep ? 600 : 400,
-                            color: index === currentStep ? '#111827' : '#6B7280',
-                          }
-                        }}
-                      >
-                        {label}
-                      </StepLabel>
-                    </Step>
-                  ))}
-                </Stepper>
-              </Box>
-
-              <Box sx={{ 
-                backgroundColor: '#FFFFFF',
-                borderRadius: 2,
-                border: '1px solid #E5E7EB',
                 display: 'flex',
-                flexDirection: 'column',
-                boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)'
+                flexDirection: 'column'
               }}>
                 {agentComponent}
               </Box>

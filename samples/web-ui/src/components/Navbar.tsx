@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Box,
   AppBar,
@@ -17,6 +17,7 @@ import {
   Settings as SettingsIcon,
   SmartToy as AgentIcon,
   KeyboardArrowDown as ArrowDownIcon,
+  Add as AddIcon,
 } from '@mui/icons-material';
 import type { Agent } from '../types';
 
@@ -32,7 +33,12 @@ const Navbar: React.FC<NavbarProps> = ({
   onSelectAgent,
 }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [agentMenuAnchorEl, setAgentMenuAnchorEl] = React.useState<null | HTMLElement>(null);
+  
+  const isNewRoute = location.pathname.endsWith('/new');
+  const shouldShowAgentSelector = currentAgent || (isNewRoute && availableAgents.length > 0);
+  const shouldShowNewButton = currentAgent || isNewRoute;
 
   const handleAgentMenuClick = (event: React.MouseEvent<HTMLElement>) => {
     setAgentMenuAnchorEl(event.currentTarget);
@@ -47,6 +53,12 @@ const Navbar: React.FC<NavbarProps> = ({
       onSelectAgent(agent);
     }
     handleAgentMenuClose();
+  };
+
+  const handleNewClick = () => {
+    if (currentAgent?.slug) {
+      navigate(`/${currentAgent.slug}/new`);
+    }
   };
 
   return (
@@ -80,8 +92,8 @@ const Navbar: React.FC<NavbarProps> = ({
               AI Studio
             </Typography>
 
-            {/* Agent Selector - Only shown when current agent exists */}
-            {currentAgent && (
+            {/* Agent Selector - Shown when current agent exists or on new route */}
+            {shouldShowAgentSelector && (
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 <Button
                   onClick={handleAgentMenuClick}
@@ -104,7 +116,7 @@ const Navbar: React.FC<NavbarProps> = ({
                     <AgentIcon sx={{ fontSize: 18, color: '#6B7280' }} />
                     <Box sx={{ textAlign: 'left' }}>
                       <Typography variant="body2" sx={{ fontWeight: 500, color: '#111827' }}>
-                        {currentAgent.name}
+                        {currentAgent ? currentAgent.name : 'Select Agent'}
                       </Typography>
                     </Box>
                   </Box>
@@ -189,8 +201,35 @@ const Navbar: React.FC<NavbarProps> = ({
             )}
           </Box>
           
-          {/* Right side - User controls */}
+          {/* Right side - New button and User controls */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            {/* New button */}
+            {shouldShowNewButton && (
+              <Button
+                onClick={handleNewClick}
+                startIcon={<AddIcon sx={{ fontSize: 18 }} />}
+                variant="outlined"
+                sx={{
+                  px: 3,
+                  py: 1.5,
+                  backgroundColor: '#FFFFFF',
+                  border: '1px solid #D1D5DB',
+                  borderRadius: 1.5,
+                  textTransform: 'none',
+                  color: '#374151',
+                  fontWeight: 500,
+                  '&:hover': {
+                    backgroundColor: '#F9FAFB',
+                    borderColor: '#9CA3AF',
+                    color: '#111827',
+                  },
+                  boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)',
+                  mr: 2,
+                }}
+              >
+                New
+              </Button>
+            )}
             <IconButton 
               color="inherit" 
               size="small"
