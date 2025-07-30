@@ -55,16 +55,12 @@ const mockAgents: Agent[] = [
     name: 'Sales Assistant',
     description: 'Helps with orders and customer management',
     capabilities: ['Order Processing', 'Customer Analysis'],
-    isActive: true,
-    category: 'sales',
   },
   {
     id: '2',
     name: 'Finance Advisor',
     description: 'Financial analysis and invoice management',
     capabilities: ['Invoice Review', 'Financial Analysis'],
-    isActive: true,
-    category: 'finance',
   },
 ];
 

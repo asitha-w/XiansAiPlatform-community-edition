@@ -14,16 +14,10 @@ export interface Agent {
   description: string;
   avatar?: string;
   capabilities: string[];
-  isActive: boolean;
-  category: AgentCategory;
+  workflow: string;
+  slug: string;
+  mainComponent?: React.ReactNode;
 }
-
-export type AgentCategory = 
-  | 'sales'
-  | 'customer-service'
-  | 'finance'
-  | 'operations'
-  | 'general';
 
 export interface BusinessEntity {
   id: string;
