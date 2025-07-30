@@ -165,58 +165,14 @@ The XiansAi Platform consists of multiple repositories:
 - **community-edition**
   - Release in this repository [XiansAi Platform Community Edition](https://github.com/XiansAiPlatform/community-edition/releases)
 
-## 🚢 Release Management
-
-This repository includes comprehensive release management tools for maintainers.
-
-### For Contributors
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines.
-
-### For Maintainers
-
-#### Complete Release Workflow
-
-1. **Publish All Artifacts**:
-
-   ```bash
-   # Create release notes first
-   ./scripts/create-release-notes.sh v2.1.0
-   
-   # Edit release notes in ./releases/v2.1.0.md
-   
-   # Publish all artifacts across repositories
-   ./scripts/publish.sh v2.1.0
-   ```
-
-2. **Monitor Workflows** (optional):
-
-   ```bash
-   # Monitor GitHub Actions across all repositories
-   ./scripts/workflow-monitor.sh v2.1.0
-   ```
-
-3. **Create Community Edition Release**:
-
-   ```bash
-   # After all artifacts are published
-   ./release.sh v2.1.0
-   ```
-
-#### Available Scripts
-
-- **`./scripts/publish.sh`** - Publishes artifacts across all repositories
-- **`./scripts/workflow-monitor.sh`** - Monitors GitHub Actions workflows  
-- **`./release.sh`** - Creates community edition GitHub release
-- **`./scripts/create-release-notes.sh`** - Generates release notes templates
-
 ## 📚 Documentation
 
+- **[Agent Development Guide](https://xiansaiplatform.github.io/XiansAi.PublicDocs/)** - Agent development guide
 - **[Complete Setup Guide](docs/SETUP_GUIDE.md)** - Comprehensive setup guide for fresh users
 - **[Troubleshooting Guide](docs/TROUBLESHOOTING.md)** - Common issues and solutions
 - **[Contributing Guide](CONTRIBUTING.md)** - How to contribute to the project
-- **[Release Guide](docs/RELEASE_GUIDE.md)** - Complete release process for maintainers
-- **[Documentation Index](docs/README.md)** - Complete documentation overview
+- **[Release Guide](docs/RELEASE_GUIDE.md)** - Complete release process and documentation for maintainers
+- **[XiansAi Website](https://xians.ai)** - XiansAi Website
 
 ## 📄 License
 
@@ -224,4 +180,4 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request. See our [Contributing Guide](CONTRIBUTING.md) for detailed instructions. 
+Contributions are welcome! Please feel free to submit a Pull Request. See our [Contributing Guide](CONTRIBUTING.md) for detailed instructions.

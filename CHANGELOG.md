@@ -5,6 +5,114 @@ All notable changes to the XiansAi Platform Community Edition will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v2.2.0] - 2025-07-29
+
+### 🚀 New Features
+
+- Ability to keep knowledge in local files when developing agents (and automatically uploading to server)
+
+### 🔧 Improvements
+
+- **Performance**: Describe performance improvements
+- **UI/UX**: User interface and experience enhancements
+- **Developer Experience**: Improvements for developers using the platform
+
+### 🐛 Bug Fixes
+
+- Agent API Key Generation: Fixed the bug where new keys were marked as revoked.
+- Issues in Temporal activity proxy generation.
+
+### ⚠️ Breaking Changes
+
+- none
+
+## [v2.1.2] - 2025-07-28
+
+# Release Notes v2.1.2
+
+## 🔧 Improvements
+
+- **Features**
+  - Added the capability to generate Agent API Keys without revoking old keys.
+  - Implemented RouterOptions in FlowBase to allow for more control over the router.
+  - Added TTL for collections conversation_messages (180 days), activity_history (90 days) and logs (30 days).
+  - Bot2Bot Message Forward Implementation which allows creating super bot that acts as a router.
+
+- **UI/UX**
+  - Portal UI Settings -> User Management features a reorganization of the UI
+
+- **Stability**
+  - Fixed issue with overall connection handling in the Server and in the Lib.
+  - Improved the indexes on server DB to improve performance.
+
+## 🐛 Bug Fixes
+
+- Fixed issue with server DB connections causing connection Exhausted error in Cosmos
+
+## ⚠️ Breaking Changes
+
+- None
+
+## 🎯 What's Next
+
+- Planned features for next release
+- Roadmap items in progress
+- Community feature requests being considered
+
+---
+
+**Full Changelog**: https://github.com/flowmaxer-ai/community-edition/compare/vPREVIOUS...v2.1.2
+**Docker Images**: Available with tag `v2.1.2`
+**Documentation**: See updated documentation in repository
+
+## [v2.1.1] - 2025-07-23
+
+### 🚀 New Features
+
+- N/A
+
+### 🔧 Improvements
+
+- EntraId account conflict gracefully handled in UI
+
+### 🐛 Bug Fixes
+
+- TypeScript SDK Handoff handling bug
+- Server Websocket bug of Authorization handling
+
+### ⚠️ Breaking Changes
+
+- N/A
+
+
+### 🏗️ Infrastructure
+
+- **Docker**: Updated Docker images and configurations
+- **Database**: Database improvements and optimizations
+- **Monitoring**: Enhanced monitoring and health checks
+
+### 📦 Dependencies
+
+- Updated major dependencies to latest versions
+- Security patches for all components
+- Performance improvements in dependencies
+
+---
+
+**Full Changelog**: https://github.com/flowmaxer-ai/community-edition/compare/vPREVIOUS...v2.1.1
+**Docker Images**: Available with tag `v2.1.1`
+**Documentation**: See updated documentation in repository
+
+<!-- 
+INSTRUCTIONS FOR EDITING THIS TEMPLATE:
+1. Replace placeholder text with actual changes
+2. Remove sections that don't apply to this release
+3. Add specific version numbers and dates where needed
+4. Include links to relevant PRs, issues, or documentation
+5. Test all code examples and commands
+6. Review for clarity and completeness before release
+-->
+
 ## [v2.1.0] - 2025-07-21
 
 ### 🚀 New Features

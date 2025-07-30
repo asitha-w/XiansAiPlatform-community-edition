@@ -58,6 +58,7 @@ OPTIONS:
     -i, --interval SECS Polling interval in seconds (default: 30)
     --show-logs         Show workflow logs for failed runs
     --no-jq             Skip JSON parsing (basic monitoring only)
+    --debug             Show debug information including raw workflow data
 
 VERSION:
     Version tag to monitor (e.g., v2.1.0)
@@ -111,7 +112,7 @@ get_workflow_runs_jq() {
     local workflow=$2
     local version=$3
     
-    # Get recent workflow runs and filter for our version
+    # Try gh run list first, fallback to API if it fails
     local runs
     runs=$(gh run list \
         --repo "$repo" \
@@ -119,13 +120,22 @@ get_workflow_runs_jq() {
         --limit 10 \
         --json "databaseId,status,conclusion,createdAt,headBranch,event,displayTitle" 2>/dev/null)
     
+    # If gh run list fails or returns empty, try direct API call
+    if [[ $? -ne 0 || -z "$runs" || "$runs" == "[]" ]]; then
+        if [[ "$DEBUG" == "true" ]]; then
+            echo "gh run list failed, trying direct API call..." >&2
+        fi
+        runs=$(gh api "repos/$repo/actions/workflows/$workflow/runs" --jq '.workflow_runs[0:10] | map({databaseId: .id, status: .status, conclusion: .conclusion, createdAt: .created_at, headBranch: .head_branch, event: .event, displayTitle: .display_title})' 2>/dev/null)
+    fi
+    
     if [[ $? -ne 0 || -z "$runs" ]]; then
         echo "[]"
         return
     fi
     
     # Filter for runs that match our version tag
-    echo "$runs" | jq --arg version "$version" '.[] | select(.headBranch == $version or .displayTitle | contains($version))' 2>/dev/null || echo "[]"
+    # Handle both headBranch (camelCase) and head_branch (snake_case) field names
+    echo "$runs" | jq --arg version "$version" '.[] | select((.headBranch // .head_branch) == $version or ((.displayTitle // .display_title // "") | contains($version)))' 2>/dev/null || echo "[]"
 }
 
 # Check individual workflow status (basic mode)
@@ -189,6 +199,14 @@ check_workflow_status_jq() {
         return 1
     fi
     
+    # Debug output
+    if [[ "$DEBUG" == "true" ]]; then
+        log_info "Raw workflow runs for $repo_name (via API):"
+        gh api "repos/$repo/actions/workflows/$workflow/runs" --jq '.workflow_runs[0:3] | .[] | {id: .id, status: .status, conclusion: .conclusion, head_branch: .head_branch, event: .event, display_title: .display_title}' 2>/dev/null || echo "Failed to get raw API data"
+        log_info "Filtered runs for version $version:"
+        echo "$runs" | jq '.' 2>/dev/null || echo "Failed to parse filtered data"
+    fi
+    
     if [[ "$runs" == "[]" || -z "$runs" ]]; then
         echo "⏳ $repo_name: No workflow runs found for $version"
         return 2  # Not started
@@ -198,7 +216,7 @@ check_workflow_status_jq() {
     local status conclusion run_id
     status=$(echo "$runs" | jq -r 'if type == "array" then .[0].status else .status end' 2>/dev/null)
     conclusion=$(echo "$runs" | jq -r 'if type == "array" then .[0].conclusion else .conclusion end' 2>/dev/null)
-    run_id=$(echo "$runs" | jq -r 'if type == "array" then .[0].databaseId else .databaseId end' 2>/dev/null)
+    run_id=$(echo "$runs" | jq -r 'if type == "array" then (.[0].databaseId // .[0].database_id) else (.databaseId // .database_id) end' 2>/dev/null)
     
     # Handle parsing errors
     if [[ -z "$status" || "$status" == "null" ]]; then
@@ -375,6 +393,10 @@ main() {
                 ;;
             --no-jq)
                 NO_JQ="true"
+                shift
+                ;;
+            --debug)
+                DEBUG="true"
                 shift
                 ;;
             v*.*.*)
