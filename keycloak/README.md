@@ -1,6 +1,6 @@
 # Keycloak Service
 
-This directory contains the Keycloak identity and access management service for the Flowmaxer community edition.
+This directory contains the Keycloak identity and access management service for the XiansAi Platform community edition.
 
 ## Prerequisites
 
@@ -13,7 +13,7 @@ To start the Keycloak service:
 
 ```bash
 cd keycloak
-docker-compose --env-file .env.latest up -d
+docker-compose --env-file .env.local up -d
 ```
 
 To stop the Keycloak service:
@@ -82,14 +82,14 @@ This script:
 
 ## Environment Variables
 
-You can customize the setup by modifying `.env.latest`:
+You can customize the setup by modifying `.env.local`:
 
 - `KEYCLOAK_VERSION`: Keycloak Docker image version
 - `KEYCLOAK_ADMIN`: Admin username
 - `KEYCLOAK_ADMIN_PASSWORD`: Admin password
 - `KEYCLOAK_PORT`: External port mapping
 - `KC_DB_NAME`: Database name for Keycloak
-- `ENVIRONMENT_SUFFIX`: Optional suffix for container names
+
 
 ## Development vs Production
 
@@ -142,8 +142,8 @@ To use your own realm:
 3. Restart the Keycloak service:
 
    ```bash
-   docker-compose --env-file .env.latest down
-   docker-compose --env-file .env.latest up -d
+   docker-compose --env-file .env.local down
+   docker-compose --env-file .env.local up -d
    ```
 
 ### Notes

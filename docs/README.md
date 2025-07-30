@@ -6,6 +6,8 @@ Welcome to the XiansAi Platform Community Edition documentation!
 
 ### User Documentation
 - **[Main README](../README.md)** - Getting started and quick setup
+- **[Complete Setup Guide](SETUP_GUIDE.md)** - Comprehensive setup guide for fresh users
+- **[Troubleshooting Guide](TROUBLESHOOTING.md)** - Common issues and solutions
 - **[Contributing Guide](../CONTRIBUTING.md)** - How to contribute to the project
 
 ### Developer Documentation
@@ -20,6 +22,8 @@ Welcome to the XiansAi Platform Community Edition documentation!
 
 ### For Users
 - [Quick Start Guide](../README.md#-quick-start)
+- [Complete Setup Guide](SETUP_GUIDE.md) - Step-by-step setup for fresh users
+- [Troubleshooting Guide](TROUBLESHOOTING.md) - Common issues and solutions
 - [Configuration Options](../README.md#-configuration)
 - [Access URLs](../README.md#access-the-applications)
 
@@ -66,8 +70,8 @@ scripts/
 ## 📋 Support
 
 For questions and support:
-- **Issues**: [GitHub Issues](https://github.com/flowmaxer-ai/community-edition/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/flowmaxer-ai/community-edition/discussions)
+- **Issues**: [GitHub Issues](https://github.com/XiansAiPlatform/community-edition/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/XiansAiPlatform/community-edition/discussions)
 - **Documentation**: This documentation directory
 
 ---
