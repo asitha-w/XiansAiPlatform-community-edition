@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Box,
   List,
@@ -15,6 +15,7 @@ import ErrorAlert from './ErrorAlert';
 import TypingIndicator from './TypingIndicator';
 import { useDataMessage } from '../../hooks/useDataMessage';
 import type { DataMessagePayload } from '../../context/context';
+import type { UIComponentData } from '../legal/chat-components/ComponentRegistry';
 
 interface ChatPanelProps {
   currentAgent?: Agent | null;
@@ -65,6 +66,8 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
   currentAgent,
   participantId,
 }) => {
+  // Removed render logging to stop console spam during infinite render loop
+  
   const [messageInput, setMessageInput] = useState('');
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
   const [isConnected, setIsConnected] = useState(false);
@@ -79,8 +82,17 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
   const { documentId } = useRoute();
   const dataMessageContext = useDataMessage();
 
+  // Track component lifecycle
+  useEffect(() => {
+    console.log('[ChatPanel] 🚀 Component mounted');
+    return () => {
+      console.log('[ChatPanel] 💀 Component unmounting');
+    };
+  }, []);
+
   // Initialize chat service
   useEffect(() => {
+    console.log('[ChatPanel] 🔧 Initialize chat service useEffect triggered');
     const chatService = new CommsService({
       onMessageReceived: (message: ChatMessageType) => {
         setMessages(prev => {
@@ -120,8 +132,9 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
         setIsLoadingHistory(false);
       },
       onDataMessageReceived: (message) => {
-        // Publish data messages to the DataMessage context
-        dataMessageContext.publish(message);
+        // TODO: Temporarily disabled to test infinite render fix
+        // dataMessageContext.publish(message);
+        console.log('[ChatPanel] Data message received (publish disabled):', message);
       },
       onChatRequestSent: (requestId: string) => {
         console.log('[ChatPanel] Chat request sent:', requestId);
@@ -162,10 +175,11 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
     return () => {
       chatService.dispose();
     };
-  }, [participantId, documentId, dataMessageContext]);
+  }, [participantId, documentId]); // Temporarily removed dataMessageContext to test infinite render fix
 
-  // Set current agent when it changes
+  // Set current agent when it changes (not on reconnection)
   useEffect(() => {
+    console.log('[ChatPanel] 🎯 Agent change useEffect triggered - currentAgent:', currentAgent?.name, 'isConnected:', isConnected, 'chatService:', !!chatServiceRef.current);
     if (chatServiceRef.current && currentAgent && isConnected) {
       const setAgent = async () => {
         try {
@@ -183,7 +197,30 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
       
       setAgent();
     }
-  }, [currentAgent, isConnected]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentAgent]); // Only depend on currentAgent, not isConnected (prevents clearing messages on reconnection)
+
+  // Handle reconnection - re-subscribe to current agent without clearing messages
+  useEffect(() => {
+    console.log('[ChatPanel] 🔍 Reconnection useEffect triggered - isConnected:', isConnected, 'currentAgent:', currentAgent?.name, 'chatService:', !!chatServiceRef.current);
+    
+    if (chatServiceRef.current && currentAgent && isConnected) {
+      const resubscribeAgent = async () => {
+        try {
+          console.log('[ChatPanel] 🔄 Reconnected - re-subscribing to agent:', currentAgent.name);
+          await chatServiceRef.current!.setCurrentAgent(currentAgent);
+        } catch (err) {
+          setError('Failed to re-subscribe to agent after reconnection');
+          console.error('Re-subscribe error:', err);
+        }
+      };
+      
+      resubscribeAgent();
+    } else {
+      console.log('[ChatPanel] ❌ Skipping re-subscription - missing requirements');
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isConnected]); // Only depend on isConnected (prevents double subscription on agent change)
 
   // Subscribe to WorkLog data messages
   useEffect(() => {
@@ -193,7 +230,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
       // Convert WorkLog data message to chat message for display
       const workLogChatMessage: ChatMessageType = {
         id: `worklog-${payload.message.id || Date.now()}`,
-        content: typeof payload.data === 'string' ? payload.data : 'WorkLog update received',
+        content: typeof payload.data === 'string' ? payload.data : 'WorkLog update received, please wait for the agent to respond',
         sender: 'agent',
         timestamp: new Date(payload.message.createdAt || Date.now()),
         type: 'text',
@@ -210,6 +247,39 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
 
     // Subscribe to WorkLog messages
     const unsubscribe = dataMessageContext.subscribe('WorkLog', handleWorkLogMessage);
+
+    return unsubscribe;
+  }, [dataMessageContext]);
+
+  // Subscribe to UIComponent data messages
+  useEffect(() => {
+    const handleUIComponentMessage = (payload: DataMessagePayload) => {
+      console.log('[ChatPanel] Received UIComponent message:', payload);
+      
+      // Extract UIComponent data
+      const uiComponentData = payload.data as UIComponentData;
+      
+      // Convert UIComponent data message to chat message for display
+      const uiComponentChatMessage: ChatMessageType = {
+        id: `ui-component-${payload.message.id || Date.now()}`,
+        content: '', // No text content, just the component
+        sender: 'agent',
+        timestamp: new Date(payload.message.createdAt || Date.now()),
+        type: 'action',
+        metadata: {
+          isUIComponent: true,
+          uiComponentData,
+          socketMessage: payload.message,
+          messageSubject: payload.messageSubject,
+        },
+      };
+
+      // Add the UIComponent message to the chat
+      setMessages(prev => [...prev, uiComponentChatMessage]);
+    };
+
+    // Subscribe to UIComponent messages
+    const unsubscribe = dataMessageContext.subscribe('UIComponent', handleUIComponentMessage);
 
     return unsubscribe;
   }, [dataMessageContext]);

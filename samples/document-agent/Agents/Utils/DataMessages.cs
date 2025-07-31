@@ -1,5 +1,3 @@
-using LegalContract.Services;
-using System.Text.Json.Serialization;
 
 public interface IDataMessage
 {
@@ -9,17 +7,6 @@ public interface IDataMessage
 public interface IDataMessage<T> : IDataMessage
 {
     T Data { get; }
-}
-
-public class NewContractCreated : IDataMessage<Contract>
-{
-    public string MessageSubject => typeof(NewContractCreated).Name;
-    public Contract Data { get; set; }
-
-    public NewContractCreated(Contract contract)
-    {
-        Data = contract;
-    }
 }
 
 public class WorkLog : IDataMessage<string>
@@ -33,19 +20,25 @@ public class WorkLog : IDataMessage<string>
     }
 }
 
-public class ShowContract : IDataMessage<Guid> {
+public class UIComponent : IDataMessage<ComponentDef> {
 
-    public string MessageSubject => typeof(ShowContract).Name;
-    public Guid Data { get; set; }
+    public string MessageSubject => typeof(UIComponent).Name;
+    public ComponentDef Data { get; set; }
 
-    public ShowContract(Guid contractId)
+    public UIComponent(string componentName, IDictionary<string, object> properties)
     {
-        Data = contractId;
+        Data = new ComponentDef(componentName, properties);
     }
 }
 
-public class Link {
-    public required string Title { get; set; }
-    public required string Url { get; set; }
+public class ComponentDef {
+    public string Name { get; set; }
+    public IDictionary<string, object> Properties { get; set; }
+
+    public ComponentDef(string name, IDictionary<string, object> properties)
+    {
+        Name = name;
+        Properties = properties;
+    }
 }
 

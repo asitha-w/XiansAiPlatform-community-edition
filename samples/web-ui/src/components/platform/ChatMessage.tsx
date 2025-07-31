@@ -12,6 +12,7 @@ import {
 import ReactMarkdown from 'react-markdown';
 import type { ChatMessage } from '../../types';
 import { colors } from '../../utils/theme';
+import UIComponentRenderer, { type UIComponentData } from '../legal/chat-components/ComponentRegistry';
 
 interface ChatMessageProps {
   message: ChatMessage;
@@ -117,9 +118,13 @@ const ChatMessageComponent: React.FC<ChatMessageProps> = ({ message }) => {
             },
           }}
         >
-          <ReactMarkdown>
-            {message.content}
-          </ReactMarkdown>
+          {message.metadata?.isUIComponent && message.metadata?.uiComponentData ? (
+            <UIComponentRenderer data={message.metadata.uiComponentData as UIComponentData} />
+          ) : (
+            <ReactMarkdown>
+              {message.content}
+            </ReactMarkdown>
+          )}
         </Box>
       </Box>
       

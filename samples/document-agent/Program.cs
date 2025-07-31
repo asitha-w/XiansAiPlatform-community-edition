@@ -9,6 +9,6 @@ Console.WriteLine("Starting Legal Contract Agent...\n");
 var agent = new Agent("Legal Contract Agent");
 
 var bot = agent.AddBot<LegalContractBot>();
-bot.AddCapabilities(typeof(ContractCapabilities));
+bot.AddCapabilities(typeof(GeneralCapabilities));
 
 await agent.RunAsync();

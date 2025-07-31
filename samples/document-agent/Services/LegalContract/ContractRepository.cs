@@ -25,11 +25,11 @@ public class ContractRepository
     /// <param name="title">Contract title</param>
     /// <param name="contractId">Optional contract ID, will be generated if not provided</param>
     /// <returns>A new Contract instance</returns>
-    public Contract CreateNewContract(string title, string? contractId = null)
+    public Contract CreateNewContract(string title, Guid? contractId = null)
     {
         var contract = new Contract
         {
-            Id = Guid.NewGuid(),
+            Id = contractId ?? Guid.NewGuid(),
             Status = "draft",
             Scope = new ContractScope
             {
@@ -57,6 +57,7 @@ public class ContractRepository
 
         try
         {
+            Console.WriteLine($"Reading contract from {filePath}");
             var jsonContent = await File.ReadAllTextAsync(filePath);
             return JsonSerializer.Deserialize<Contract>(jsonContent, _jsonOptions);
         }
@@ -96,6 +97,7 @@ public class ContractRepository
         {
             var jsonContent = JsonSerializer.Serialize(contract, _jsonOptions);
             await File.WriteAllTextAsync(filePath, jsonContent);
+            Console.WriteLine($"Contract saved to {filePath}");
             return true;
         }
         catch (Exception ex)
