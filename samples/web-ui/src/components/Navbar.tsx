@@ -67,9 +67,10 @@ const Navbar: React.FC<NavbarProps> = ({
   };
 
   return (
-    <AppBar position="static" elevation={0} sx={{
+    <AppBar position="fixed" elevation={0} sx={{
       backgroundColor: 'background.paper',
-      borderBottom: '1px solid #E5E7EB'
+      borderBottom: '1px solid #E5E7EB',
+      zIndex: (theme) => theme.zIndex.drawer + 1
     }}>
       <Box sx={{ 
         maxWidth: '1440px',

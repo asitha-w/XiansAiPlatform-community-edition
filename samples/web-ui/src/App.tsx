@@ -66,7 +66,11 @@ function App() {
           />
 
           {/* Main Content */}
-          <Box sx={{ flexGrow: 1, backgroundColor: '#F9FAFB' }}>
+          <Box sx={{ 
+            flexGrow: 1, 
+            backgroundColor: '#F9FAFB',
+            paddingTop: '92px' // Account for fixed navbar height (toolbar height + padding)
+          }}>
             <Routes>
               <Route 
                 path="/" 

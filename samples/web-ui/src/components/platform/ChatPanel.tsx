@@ -1,24 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Box,
-  TextField,
-  IconButton,
-  Typography,
   List,
-  Chip,
-  Alert,
-  CircularProgress,
 } from '@mui/material';
-import {
-  Send as SendIcon,
-  SmartToy as AgentIcon,
-  Circle as StatusIcon,
-  Warning as WarningIcon,
-} from '@mui/icons-material';
 import type { ChatMessage as ChatMessageType, Agent } from '../../types';
 import { CommsService } from '../../services/commsService';
 import { useRoute } from '../../hooks/useRoute';
 import ChatMessageComponent from './ChatMessage';
+import WorkLogMessageGroup from './WorkLogMessageGroup';
+import AgentHeader from './AgentHeader';
+import MessageInput from './MessageInput';
+import LoadingIndicators from './LoadingIndicators';
+import ErrorAlert from './ErrorAlert';
 import { useDataMessage } from '../../hooks/useDataMessage';
 import type { DataMessagePayload } from '../../context/context';
 
@@ -26,6 +19,46 @@ interface ChatPanelProps {
   currentAgent?: Agent | null;
   participantId?: string; // Optional - will use SDK config participant ID if not provided
 }
+
+// Helper function to group consecutive worklog messages
+const groupMessages = (messages: ChatMessageType[]) => {
+  const groups: Array<{ type: 'chat' | 'worklog'; messages: ChatMessageType[]; isGrouped: boolean }> = [];
+  let currentGroup: ChatMessageType[] = [];
+  let currentType: 'chat' | 'worklog' | null = null;
+
+  for (const message of messages) {
+    const isWorkLog = message.metadata?.isWorkLogMessage === true;
+    const messageType = isWorkLog ? 'worklog' : 'chat';
+
+    if (messageType !== currentType) {
+      // Save the previous group if it exists
+      if (currentGroup.length > 0 && currentType) {
+        groups.push({
+          type: currentType,
+          messages: currentGroup,
+          isGrouped: currentType === 'worklog' && currentGroup.length > 1,
+        });
+      }
+      // Start a new group
+      currentGroup = [message];
+      currentType = messageType;
+    } else {
+      // Add to current group
+      currentGroup.push(message);
+    }
+  }
+
+  // Add the last group
+  if (currentGroup.length > 0 && currentType) {
+    groups.push({
+      type: currentType,
+      messages: currentGroup,
+      isGrouped: currentType === 'worklog' && currentGroup.length > 1,
+    });
+  }
+
+  return groups;
+};
 
 const ChatPanel: React.FC<ChatPanelProps> = ({
   currentAgent,
@@ -216,130 +249,26 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
       position: 'relative',
       overflow: 'hidden' // Prevent any overflow that might push content down
     }}>
-      {/* Professional Agent Header */}
+      {/* Agent Header */}
       {currentAgent && (
-        <Box sx={{ 
-          p: 2, 
-          backgroundColor: '#F9FAFB',
-          borderBottom: '1px solid #E5E7EB',
-          flexShrink: 0 // Prevent header from shrinking
-        }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Box sx={{
-              width: 48,
-              height: 48,
-              borderRadius: 2,
-              backgroundColor: '#FFFFFF',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              border: '1px solid #E5E7EB',
-              boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)'
-            }}>
-              <AgentIcon sx={{ fontSize: 24, color: '#6B7280' }} />
-            </Box>
-            
-            <Box sx={{ flexGrow: 1 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
-                <Typography variant="h6" sx={{ 
-                  fontWeight: 600,
-                  color: '#111827'
-                }}>
-                  {currentAgent.name}
-                </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <StatusIcon sx={{ 
-                    fontSize: 8, 
-                    color: isConnected ? '#10B981' : '#EF4444' 
-                  }} />
-                  <Typography variant="caption" sx={{ 
-                    color: isConnected ? '#10B981' : '#EF4444',
-                    fontWeight: 500,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em'
-                  }}>
-                  </Typography>
-                </Box>
-              </Box>
-              
-              <Typography variant="body2" color="#6B7280" sx={{ 
-                mb: 1,
-                lineHeight: 1.4
-              }}>
-                {currentAgent.description}
-              </Typography>
-              
-              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                {currentAgent.capabilities.map((capability) => (
-                  <Chip
-                    key={capability}
-                    label={capability}
-                    size="small"
-                    variant="outlined"
-                    sx={{ 
-                      height: 24,
-                      borderColor: '#D1D5DB',
-                      color: '#6B7280',
-                      backgroundColor: '#FFFFFF',
-                      fontSize: '0.75rem',
-                      '& .MuiChip-label': {
-                        px: 1.5
-                      }
-                    }}
-                  />
-                ))}
-              </Box>
-            </Box>
-          </Box>
-        </Box>
+        <AgentHeader 
+          currentAgent={currentAgent} 
+          isConnected={isConnected} 
+        />
       )}
 
       {/* Error Alert */}
-      {error && (
-        <Box sx={{ p: 2, flexShrink: 0 }}>
-          <Alert 
-            severity="error" 
-            icon={<WarningIcon />}
-            onClose={() => setError(null)}
-          >
-            {error}
-          </Alert>
-        </Box>
-      )}
+      <ErrorAlert 
+        error={error} 
+        onClose={() => setError(null)} 
+      />
 
       {/* Loading Indicators */}
-      {isLoading && !isConnected && (
-        <Box sx={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center',
-          p: 3,
-          borderBottom: '1px solid #E5E7EB',
-          flexShrink: 0
-        }}>
-          <CircularProgress size={20} sx={{ mr: 2 }} />
-          <Typography variant="body2" color="#6B7280">
-            Connecting to chat service...
-          </Typography>
-        </Box>
-      )}
-
-      {/* History Loading Indicator */}
-      {isLoadingHistory && isConnected && (
-        <Box sx={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          justifyContent: 'center',
-          p: 3,
-          borderBottom: '1px solid #E5E7EB',
-          flexShrink: 0
-        }}>
-          <CircularProgress size={20} sx={{ mr: 2 }} />
-          <Typography variant="body2" color="#6B7280">
-            Loading conversation history...
-          </Typography>
-        </Box>
-      )}
+      <LoadingIndicators 
+        isLoading={isLoading}
+        isConnected={isConnected}
+        isLoadingHistory={isLoadingHistory}
+      />
 
       {/* Messages List */}
       <Box 
@@ -353,71 +282,37 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
           minHeight: 0 // Allow shrinking to zero if needed
         }}>
         <List sx={{ p: 0 }}>
-          {messages.map((message) => (
-            <ChatMessageComponent
-              key={message.id}
-              message={message}
-            />
-          ))}
+          {groupMessages(messages).map((group, index) => {
+            if (group.type === 'worklog') {
+              return (
+                <WorkLogMessageGroup
+                  key={`worklog-group-${index}-${group.messages[0]?.id}`}
+                  messages={group.messages}
+                  isGrouped={group.isGrouped}
+                />
+              );
+            } else {
+              return group.messages.map((message) => (
+                <ChatMessageComponent
+                  key={message.id}
+                  message={message}
+                />
+              ));
+            }
+          })}
         </List>
       </Box>
 
-      {/* Professional Message Input */}
-      <Box sx={{ 
-        p: 2, 
-        borderTop: '1px solid #E5E7EB',
-        backgroundColor: '#FFFFFF',
-        flexShrink: 0 // Prevent input area from shrinking
-      }}>
-        <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-end' }}>
-          <TextField
-            fullWidth
-            multiline
-            maxRows={3}
-            size="small"
-            placeholder={`Message ${currentAgent?.name || 'AI Assistant'}...`}
-            value={messageInput}
-            onChange={(e) => setMessageInput(e.target.value)}
-            onKeyPress={handleKeyPress}
-            disabled={isLoading}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                backgroundColor: '#FFFFFF',
-                borderRadius: 2,
-                '& fieldset': {
-                  borderColor: '#D1D5DB',
-                },
-                '&:hover fieldset': {
-                  borderColor: '#9CA3AF',
-                },
-                '&.Mui-focused fieldset': {
-                  borderColor: '#6B7280',
-                },
-              }
-            }}
-          />
-          <IconButton
-            onClick={handleSendMessage}
-            disabled={!messageInput.trim() || isLoading || !isConnected}
-            sx={{
-              bgcolor: (messageInput.trim() && isConnected && !isLoading) ? '#374151' : '#F3F4F6',
-              color: (messageInput.trim() && isConnected && !isLoading) ? '#FFFFFF' : '#9CA3AF',
-              borderRadius: 2,
-              width: 44,
-              height: 44,
-              '&:hover': {
-                bgcolor: (messageInput.trim() && isConnected && !isLoading) ? '#1F2937' : '#E5E7EB',
-              },
-              '&:disabled': {
-                bgcolor: '#F3F4F6',
-                color: '#9CA3AF',
-              }
-            }}
-          >
-            <SendIcon sx={{ fontSize: 20 }} />
-          </IconButton>
-        </Box>
-      </Box>
+      {/* Message Input */}
+      <MessageInput 
+        messageInput={messageInput}
+        setMessageInput={setMessageInput}
+        onSendMessage={handleSendMessage}
+        onKeyPress={handleKeyPress}
+        isLoading={isLoading}
+        isConnected={isConnected}
+        currentAgent={currentAgent}
+      />
     </Box>
   );
 };
