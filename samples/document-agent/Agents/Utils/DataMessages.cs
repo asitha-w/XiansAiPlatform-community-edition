@@ -1,4 +1,5 @@
 using LegalContract.Services;
+using System.Text.Json.Serialization;
 
 public interface IDataMessage
 {
@@ -31,3 +32,20 @@ public class WorkLog : IDataMessage<string>
         Data = workLog;
     }
 }
+
+public class ShowLink : IDataMessage<Link> {
+
+    public string MessageSubject => typeof(ShowLink).Name;
+    public Link Data { get; set; }
+
+    public ShowLink(string title, string url)
+    {
+        Data = new Link { Title = title, Url = url };
+    }
+}
+
+public class Link {
+    public required string Title { get; set; }
+    public required string Url { get; set; }
+}
+

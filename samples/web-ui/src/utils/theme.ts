@@ -3,60 +3,177 @@ import { createTheme } from '@mui/material/styles';
 // Enhanced Scandinavian design principles: extreme simplicity, generous white space, subtle typography hierarchy
 // Color palette inspired by Nordic nature: crisp whites, soft grays, muted earth tones
 
+// Central Color Palette - All colors used throughout the application
+export const colorPalette = {
+  // Core Nordic palette
+  nordic: {
+    storm: '#2E3440',      // Primary dark
+    charcoal: '#242933',   // Primary dark variant
+    slate: '#4C566A',      // Primary light
+    sky: '#5E81AC',        // Secondary blue
+    lightSky: '#81A1C1',   // Secondary light
+    darkSky: '#4A6491',    // Secondary dark
+    ice: '#88C0D0',        // Info blue
+    lightIce: '#9BCAD7',   // Info light
+    darkIce: '#75ACBE',    // Info dark
+    forest: '#A3BE8C',     // Success green
+    lightForest: '#B8CCA3', // Success light
+    darkForest: '#8CA176', // Success dark
+    sun: '#EBCB8B',        // Warning yellow
+    lightSun: '#F0D49C',   // Warning light
+    darkSun: '#E5C078',    // Warning dark
+    aurora: '#BF616A',     // Error red
+    lightAurora: '#CC7B83', // Error light
+    darkAurora: '#B34A55', // Error dark
+    snow: '#FDFDFD',       // Background default
+    paper: '#FEFEFE',      // Background paper
+  },
+  
+  // Semantic grays (based on Tailwind-like scale but Nordic-tuned)
+  gray: {
+    50: '#FCFCFC',   // Lightest
+    100: '#F8F9FA',  // Very light
+    200: '#F1F3F4',  // Light
+    300: '#E8EAED',  // Light-medium
+    400: '#BDC1C6',  // Medium
+    500: '#80868B',  // Medium-dark
+    600: '#5F6368',  // Dark
+    700: '#3C4043',  // Very dark
+    800: '#202124',  // Darker
+    900: '#0D1117',  // Darkest
+  },
+  
+  // Extended grays for better coverage (matching found hardcoded colors)
+  slate: {
+    50: '#F9FAFB',   // bg-slate-50
+    100: '#F3F4F6',  // bg-slate-100  
+    200: '#E5E7EB',  // bg-slate-200, border colors
+    300: '#D1D5DB',  // bg-slate-300, border colors
+    400: '#9CA3AF',  // text-slate-400
+    500: '#6B7280',  // text-slate-500
+    600: '#4B5563',  // text-slate-600
+    700: '#374151',  // text-slate-700, bg-slate-700
+    800: '#1F2937',  // bg-slate-800
+    900: '#111827',  // text-slate-900, very dark text
+  },
+  
+  // Surface colors for different UI elements
+  surface: {
+    primary: '#FFFFFF',     // Main background
+    secondary: '#FEFEFE',   // Cards, panels
+    tertiary: '#FAFBFC',    // Subtle backgrounds
+    muted: '#F9FAFB',       // Muted sections
+    accent: '#F8F9FA',      // Accent backgrounds
+  },
+  
+  // Border colors
+  border: {
+    primary: '#E5E7EB',     // Main borders
+    secondary: '#D1D5DB',   // Secondary borders  
+    accent: '#F1F3F4',      // Subtle borders
+    muted: '#F8F9FA',       // Very subtle borders
+    focus: '#5E81AC',       // Focus states
+  },
+  
+  // Text colors
+  text: {
+    primary: '#111827',     // Main text
+    secondary: '#374151',   // Secondary text
+    muted: '#6B7280',       // Muted text
+    placeholder: '#9CA3AF', // Placeholder text
+    inverse: '#FFFFFF',     // White text
+    accent: '#556B7D',      // Themed secondary text
+  },
+  
+  // Special component colors
+  worklog: {
+    primary: '#8B5CF6',     // Purple for worklog
+    secondary: '#7C3AED',   // Darker purple
+    background: 'rgba(139, 92, 246, 0.08)', // Light purple background
+  },
+  
+  // Alert/state colors with backgrounds
+  state: {
+    success: {
+      main: '#A3BE8C',
+      background: '#F0F8F0',
+      border: '#B8CCA3',
+    },
+    warning: {
+      main: '#EBCB8B', 
+      background: '#FFF9E6',
+      altBackground: '#FFF6D9',
+      strongBackground: '#FFF2D9',
+      border: '#F0D49C',
+      text: '#B8860B',
+    },
+    error: {
+      main: '#BF616A',
+      background: '#FFF0F0', 
+      border: '#CC7B83',
+    },
+    info: {
+      main: '#88C0D0',
+      background: '#F0F7FF',
+      border: '#9BCAD7',
+    },
+  },
+  
+  // Interactive states
+  interactive: {
+    primary: '#2E3440',
+    primaryHover: '#242933',
+    secondary: '#F3F4F6',
+    secondaryHover: '#E5E7EB',
+    border: '#D1D5DB',
+    borderHover: '#9CA3AF',
+    borderFocus: '#6B7280',
+  },
+} as const;
+
 export const theme = createTheme({
   palette: {
     mode: 'light',
     primary: {
-      main: '#2E3440', // Dark blue-gray (Nordic storm)
-      light: '#4C566A',
-      dark: '#242933',
-      contrastText: '#FFFFFF',
+      main: colorPalette.nordic.storm,
+      light: colorPalette.nordic.slate,
+      dark: colorPalette.nordic.charcoal,
+      contrastText: colorPalette.text.inverse,
     },
     secondary: {
-      main: '#5E81AC', // Muted blue (Nordic sky)
-      light: '#81A1C1',
-      dark: '#4A6491',
-      contrastText: '#FFFFFF',
+      main: colorPalette.nordic.sky,
+      light: colorPalette.nordic.lightSky,
+      dark: colorPalette.nordic.darkSky,
+      contrastText: colorPalette.text.inverse,
     },
     background: {
-      default: '#FDFDFD', // Softer white (Nordic snow)
-      paper: '#FEFEFE',
+      default: colorPalette.nordic.snow,
+      paper: colorPalette.nordic.paper,
     },
     text: {
-      primary: '#2E3440',
-      secondary: '#556B7D', // Softer secondary text
+      primary: colorPalette.nordic.storm,
+      secondary: colorPalette.text.accent,
     },
-    grey: {
-      50: '#FCFCFC',
-      100: '#F8F9FA',
-      200: '#F1F3F4',
-      300: '#E8EAED',
-      400: '#BDC1C6',
-      500: '#80868B',
-      600: '#5F6368',
-      700: '#3C4043',
-      800: '#202124',
-      900: '#0D1117',
-    },
+    grey: colorPalette.gray,
     success: {
-      main: '#A3BE8C', // Muted green (Nordic forest)
-      light: '#B8CCA3',
-      dark: '#8CA176',
+      main: colorPalette.nordic.forest,
+      light: colorPalette.nordic.lightForest,
+      dark: colorPalette.nordic.darkForest,
     },
     warning: {
-      main: '#EBCB8B', // Warm yellow (Nordic sun)
-      light: '#F0D49C',
-      dark: '#E5C078',
+      main: colorPalette.nordic.sun,
+      light: colorPalette.nordic.lightSun,
+      dark: colorPalette.nordic.darkSun,
     },
     error: {
-      main: '#BF616A', // Muted red (Nordic aurora)
-      light: '#CC7B83',
-      dark: '#B34A55',
+      main: colorPalette.nordic.aurora,
+      light: colorPalette.nordic.lightAurora,
+      dark: colorPalette.nordic.darkAurora,
     },
     info: {
-      main: '#88C0D0', // Light blue (Nordic ice)
-      light: '#9BCAD7',
-      dark: '#75ACBE',
+      main: colorPalette.nordic.ice,
+      light: colorPalette.nordic.lightIce,
+      dark: colorPalette.nordic.darkIce,
     },
   },
   typography: {
@@ -369,5 +486,11 @@ export const theme = createTheme({
     },
   },
 });
+
+// Hook to access colors easily in components
+export const useAppColors = () => colorPalette;
+
+// Direct access for non-hook usage
+export const colors = colorPalette;
 
 export default theme; 

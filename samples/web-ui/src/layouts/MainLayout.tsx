@@ -2,6 +2,7 @@ import React from 'react';
 import {
   Box,
 } from '@mui/material';
+import { colors } from '../utils/theme';
 
 interface MainLayoutProps {
   children?: React.ReactNode;
@@ -20,13 +21,13 @@ const MainLayout: React.FC<MainLayoutProps> = ({
         height: '100vh', 
         display: 'flex', 
         flexDirection: 'column',
-        backgroundColor: '#FAFAFA'
+        backgroundColor: colors.surface.muted
       }}>
         {/* Main Content Area - Chat with reduced top spacing */}
         <Box sx={{ 
           flexGrow: 1, 
           width: '100%',
-          backgroundColor: '#F9FAFB',
+          backgroundColor: colors.surface.muted,
           display: 'flex',
           alignItems: 'flex-start',
           justifyContent: 'center',
@@ -46,9 +47,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({
             {/* Centered Chat Panel */}
             <Box sx={{ 
               flexGrow: 1,
-              backgroundColor: '#FFFFFF',
+              backgroundColor: colors.surface.primary,
               borderRadius: 2,
-              border: '1px solid #E5E7EB',
+              border: `1px solid ${colors.border.primary}`,
               overflow: 'hidden',
               display: 'flex',
               flexDirection: 'column',
@@ -68,7 +69,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
       height: '100vh', 
       display: 'flex', 
       flexDirection: 'column',
-      backgroundColor: '#FAFAFA'
+              backgroundColor: colors.surface.muted
     }}>
       {/* Enhanced Main Content Area */}
       <Box sx={{ 
@@ -104,9 +105,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({
             }}>
               <Box sx={{ 
                 flexGrow: 1,
-                backgroundColor: '#FFFFFF',
+                backgroundColor: colors.surface.primary,
                 borderRadius: 2,
-                border: '1px solid #E5E7EB',
+                border: `1px solid ${colors.border.primary}`,
                 overflow: 'hidden',
                 display: 'flex',
                 flexDirection: 'column',

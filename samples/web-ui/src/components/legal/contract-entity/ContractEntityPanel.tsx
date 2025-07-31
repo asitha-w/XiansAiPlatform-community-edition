@@ -28,6 +28,7 @@ import {
 } from '@mui/icons-material';
 import type { ContractEntity, AgentRecommendation } from '../../../types';
 import RecommendationsPanel from './RecommendationsPanel';
+import { colors } from '../../../utils/theme';
 
 interface ContractEntityPanelProps {
   entity?: ContractEntity | null;
@@ -213,13 +214,13 @@ const ContractEntityPanel: React.FC<ContractEntityPanelProps> = ({
   const getCategoryColor = (type: string) => {
     switch (type) {
       case 'validation':
-        return '#A3BE8C';
+        return colors.state.success.main;
       case 'warning':
-        return '#EBCB8B';
+        return colors.state.warning.main;
       case 'suggestion':
-        return '#88C0D0';
+        return colors.state.info.main;
       default:
-        return '#80868B';
+        return colors.gray[500];
     }
   };
 
@@ -309,21 +310,21 @@ const ContractEntityPanel: React.FC<ContractEntityPanelProps> = ({
         <Box sx={{ py: 2 }}>
           {/* Unified AI Insights Component */}
           <Box sx={{
-            backgroundColor: '#FFFFFF',
-            borderTop: '0.5px solid #E8EAED',
-            borderBottom: '0.5px solid #E8EAED',
+            backgroundColor: colors.surface.primary,
+            borderTop: `0.5px solid ${colors.border.accent}`,
+            borderBottom: `0.5px solid ${colors.border.accent}`,
             overflow: 'hidden'
           }}>
             {/* Combined AI Insights Title and Summary in One Row */}
             <Box 
               sx={{ 
                 p: 2,
-                backgroundColor: insightsSummary.highPriority > 0 ? '#FFF9E6' : '#F8F9FA',
+                backgroundColor: insightsSummary.highPriority > 0 ? colors.state.warning.background : colors.surface.accent,
                 borderBottom: insightsExpanded ? '0.5px solid #E8EAED' : 'none',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
                 '&:hover': {
-                  backgroundColor: insightsSummary.highPriority > 0 ? '#FFF6D9' : '#F1F3F4',
+                  backgroundColor: insightsSummary.highPriority > 0 ? colors.state.warning.altBackground : colors.border.accent,
                 }
               }}
               onClick={() => setInsightsExpanded(!insightsExpanded)}
@@ -380,11 +381,11 @@ const ContractEntityPanel: React.FC<ContractEntityPanelProps> = ({
                         label={`${insightsSummary.highPriority} High`}
                         size="small"
                         sx={{
-                          backgroundColor: '#FFF2D9',
-                          color: '#B8860B',
+                                      backgroundColor: colors.state.warning.strongBackground,
+            color: colors.state.warning.text,
                           fontWeight: 500,
                           height: 20,
-                          border: '0.5px solid #F0D49C',
+                          border: `0.5px solid ${colors.state.warning.border}`,
                           '& .MuiChip-label': { px: 0.75 }
                         }}
                       />
@@ -426,13 +427,13 @@ const ContractEntityPanel: React.FC<ContractEntityPanelProps> = ({
                     width: '6px',
                   },
                   '&::-webkit-scrollbar-track': {
-                    backgroundColor: '#F1F3F4',
+                    backgroundColor: colors.border.accent,
                   },
                   '&::-webkit-scrollbar-thumb': {
-                    backgroundColor: '#DADCE0',
+                    backgroundColor: colors.gray[300],
                     borderRadius: '3px',
                     '&:hover': {
-                      backgroundColor: '#BDC1C6',
+                      backgroundColor: colors.gray[400],
                     },
                   },
                 }}>
@@ -705,10 +706,10 @@ const ContractEntityPanel: React.FC<ContractEntityPanelProps> = ({
                   </Typography>
                   <Box sx={{ 
                     p: 4, 
-                    backgroundColor: '#FFF9E6',
+                    backgroundColor: colors.state.warning.background,
                     borderRadius: 3,
                     border: '0.5px solid',
-                    borderColor: '#F0D49C'
+                    borderColor: colors.state.warning.border
                   }}>
                     <Typography variant="body1" sx={{ 
                       lineHeight: 1.6,

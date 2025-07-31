@@ -3,6 +3,7 @@ import { Box, Typography, Card, CardContent, Chip, Button } from '@mui/material'
 import { useNavigate } from 'react-router-dom';
 import { SmartToy as AgentIcon } from '@mui/icons-material';
 import type { Agent } from '../types';
+import { colors } from '../utils/theme';
 
 interface HomePageProps {
   agents: Agent[];
@@ -24,12 +25,12 @@ const HomePage: React.FC<HomePageProps> = ({ agents }) => {
       <Box sx={{ mb: 6, textAlign: 'center' }}>
         <Typography variant="h3" component="h1" sx={{ 
           fontWeight: 600,
-          color: '#111827',
+          color: colors.text.primary,
           mb: 2 
         }}>
           Welcome to AI Studio
         </Typography>
-        <Typography variant="h6" color="#6B7280" sx={{ maxWidth: '600px', mx: 'auto' }}>
+        <Typography variant="h6" color={colors.text.muted} sx={{ maxWidth: '600px', mx: 'auto' }}>
           Choose an AI assistant to help you with your business needs. Each agent specializes in different areas and workflows.
         </Typography>
       </Box>

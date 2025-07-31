@@ -8,6 +8,7 @@ import {
   Send as SendIcon,
 } from '@mui/icons-material';
 import type { Agent } from '../../types';
+import { colors } from '../../utils/theme';
 
 interface MessageInputProps {
   messageInput: string;
@@ -31,11 +32,11 @@ const MessageInput: React.FC<MessageInputProps> = ({
   return (
     <Box sx={{ 
       p: 2, 
-      borderTop: '1px solid #E5E7EB',
-      backgroundColor: '#FFFFFF',
+              borderTop: `1px solid ${colors.border.primary}`,
+      backgroundColor: colors.surface.primary,
       flexShrink: 0 // Prevent input area from shrinking
     }}>
-      <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'flex-end' }}>
+      <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
         <TextField
           fullWidth
           multiline
@@ -48,17 +49,21 @@ const MessageInput: React.FC<MessageInputProps> = ({
           disabled={isLoading}
           sx={{
             '& .MuiOutlinedInput-root': {
-              backgroundColor: '#FFFFFF',
+              backgroundColor: colors.surface.primary,
               borderRadius: 2,
+              minHeight: 44, // Match send button height
               '& fieldset': {
-                borderColor: '#D1D5DB',
+                borderColor: colors.border.secondary,
               },
               '&:hover fieldset': {
-                borderColor: '#9CA3AF',
+                borderColor: colors.text.placeholder,
               },
               '&.Mui-focused fieldset': {
-                borderColor: '#6B7280',
+                borderColor: colors.text.muted,
               },
+            },
+            '& .MuiInputBase-input': {
+              padding: '12px 14px', // Ensure proper internal padding
             }
           }}
         />
@@ -66,17 +71,17 @@ const MessageInput: React.FC<MessageInputProps> = ({
           onClick={onSendMessage}
           disabled={!messageInput.trim() || isLoading || !isConnected}
           sx={{
-            bgcolor: (messageInput.trim() && isConnected && !isLoading) ? '#374151' : '#F3F4F6',
-            color: (messageInput.trim() && isConnected && !isLoading) ? '#FFFFFF' : '#9CA3AF',
+            bgcolor: (messageInput.trim() && isConnected && !isLoading) ? colors.slate[700] : colors.slate[100],
+            color: (messageInput.trim() && isConnected && !isLoading) ? colors.text.inverse : colors.text.placeholder,
             borderRadius: 2,
             width: 44,
             height: 44,
             '&:hover': {
-              bgcolor: (messageInput.trim() && isConnected && !isLoading) ? '#1F2937' : '#E5E7EB',
+              bgcolor: (messageInput.trim() && isConnected && !isLoading) ? colors.slate[800] : colors.border.primary,
             },
             '&:disabled': {
-              bgcolor: '#F3F4F6',
-              color: '#9CA3AF',
+              bgcolor: colors.slate[100],
+              color: colors.text.placeholder,
             }
           }}
         >

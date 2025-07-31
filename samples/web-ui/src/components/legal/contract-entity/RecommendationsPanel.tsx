@@ -14,6 +14,7 @@ import {
   TrendingUp as TrendingUpIcon,
 } from '@mui/icons-material';
 import type { AgentRecommendation } from '../../../types';
+import { colors } from '../../../utils/theme';
 
 interface RecommendationsPanelProps {
   recommendations?: AgentRecommendation[];
@@ -73,10 +74,10 @@ const RecommendationsPanel: React.FC<RecommendationsPanelProps> = ({
   };
 
   const getIconColor = (priority: string) => {
-    if (priority === 'high') return '#EBCB8B';
-    if (priority === 'medium') return '#88C0D0';
-    if (priority === 'low') return '#A3BE8C';
-    return '#80868B'; // Updated to softer color
+    if (priority === 'high') return colors.state.warning.main;
+    if (priority === 'medium') return colors.state.info.main;
+    if (priority === 'low') return colors.state.success.main;
+    return colors.gray[500];
   };
 
   const getPriorityLabel = (priority: string) => {
@@ -158,7 +159,7 @@ const RecommendationsPanel: React.FC<RecommendationsPanelProps> = ({
                   sx={{ 
                     py: 1,
                     px: 0,
-                    borderBottom: recIndex < recs.length - 1 ? '1px solid #F1F3F4' : 'none',
+                    borderBottom: recIndex < recs.length - 1 ? `1px solid ${colors.border.accent}` : 'none',
                     '&:hover': {
                       backgroundColor: 'rgba(0, 0, 0, 0.02)',
                     }
@@ -200,7 +201,7 @@ const RecommendationsPanel: React.FC<RecommendationsPanelProps> = ({
                                   onApply?.(recommendation.id);
                                 }}
                                 sx={{ 
-                                  color: '#A3BE8C',
+                                  color: colors.state.success.main,
                                   '&:hover': { backgroundColor: 'rgba(163, 190, 140, 0.08)' },
                                   p: 0.25
                                 }}
@@ -245,7 +246,7 @@ const RecommendationsPanel: React.FC<RecommendationsPanelProps> = ({
                         <Typography 
                           variant="body2" 
                           sx={{ 
-                            color: '#5F6368',
+                            color: colors.gray[600],
                             fontStyle: 'italic',
                             mb: 0.5
                           }}

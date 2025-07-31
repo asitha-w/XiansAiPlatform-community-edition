@@ -20,6 +20,7 @@ import {
   Add as AddIcon,
 } from '@mui/icons-material';
 import type { Agent } from '../types';
+import { colors } from '../utils/theme';
 
 interface NavbarProps {
   currentAgent?: Agent;
@@ -69,7 +70,7 @@ const Navbar: React.FC<NavbarProps> = ({
   return (
     <AppBar position="fixed" elevation={0} sx={{
       backgroundColor: 'background.paper',
-      borderBottom: '1px solid #E5E7EB',
+      borderBottom: `1px solid ${colors.border.primary}`,
       zIndex: (theme) => theme.zIndex.drawer + 1
     }}>
       <Box sx={{ 
@@ -121,7 +122,7 @@ const Navbar: React.FC<NavbarProps> = ({
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                     <AgentIcon sx={{ fontSize: 18, color: '#6B7280' }} />
                     <Box sx={{ textAlign: 'left' }}>
-                      <Typography variant="body2" sx={{ fontWeight: 500, color: '#111827' }}>
+                      <Typography variant="body2" sx={{ fontWeight: 500, color: colors.text.primary }}>
                         {currentAgent ? currentAgent.name : 'Select Agent'}
                       </Typography>
                     </Box>
@@ -172,10 +173,10 @@ const Navbar: React.FC<NavbarProps> = ({
                           <AgentIcon sx={{ fontSize: 20, color: '#6B7280' }} />
                         </Box>
                         <Box sx={{ flexGrow: 1 }}>
-                          <Typography variant="body2" sx={{ fontWeight: 500, mb: 0.5, color: '#111827' }}>
+                          <Typography variant="body2" sx={{ fontWeight: 500, mb: 0.5, color: colors.text.primary }}>
                             {agent.name}
                           </Typography>
-                          <Typography variant="caption" color="#6B7280" sx={{ display: 'block', mb: 1.5, lineHeight: 1.4 }}>
+                          <Typography variant="caption" color={colors.text.muted} sx={{ display: 'block', mb: 1.5, lineHeight: 1.4 }}>
                             {agent.description}
                           </Typography>
                           <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
@@ -272,12 +273,12 @@ const Navbar: React.FC<NavbarProps> = ({
               sx={{ 
                 width: 36, 
                 height: 36, 
-                bgcolor: '#6B7280',
+                bgcolor: colors.text.muted,
                 ml: 2,
                 fontWeight: 500,
-                border: '2px solid #FFFFFF',
+                border: `2px solid ${colors.surface.primary}`,
                 boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-                color: '#FFFFFF',
+                color: colors.text.inverse,
                 fontSize: '0.875rem'
               }}
             >

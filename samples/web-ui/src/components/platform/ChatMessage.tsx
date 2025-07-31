@@ -11,6 +11,7 @@ import {
 } from '@mui/icons-material';
 import ReactMarkdown from 'react-markdown';
 import type { ChatMessage } from '../../types';
+import { colors } from '../../utils/theme';
 
 interface ChatMessageProps {
   message: ChatMessage;
@@ -38,7 +39,7 @@ const ChatMessageComponent: React.FC<ChatMessageProps> = ({ message }) => {
         <Avatar sx={{ 
           width: 36, 
           height: 36,
-          bgcolor: message.sender === 'agent' ? '#6B7280' : '#374151'
+          bgcolor: message.sender === 'agent' ? colors.text.muted : colors.slate[700]
         }}>
           {message.sender === 'agent' ? <AgentIcon /> : <PersonIcon />}
         </Avatar>
@@ -48,13 +49,13 @@ const ChatMessageComponent: React.FC<ChatMessageProps> = ({ message }) => {
             px: 2.5, // Reduced from 3.5 to 2.5 for more content space
             py: 2, // Reduced from 2.5 to 2
             backgroundColor: message.sender === 'user' 
-              ? '#374151' 
-              : '#F9FAFB',
+              ? colors.slate[700] 
+              : colors.surface.muted,
             color: message.sender === 'user' 
-              ? '#FFFFFF' 
-              : '#111827',
+              ? colors.text.inverse 
+              : colors.text.primary,
             borderRadius: 3,
-            border: message.sender === 'agent' ? '1px solid #E5E7EB' : 'none',
+            border: message.sender === 'agent' ? `1px solid ${colors.border.primary}` : 'none',
             maxWidth: '100%',
             boxShadow: message.sender === 'user' 
               ? '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)' 
@@ -85,14 +86,14 @@ const ChatMessageComponent: React.FC<ChatMessageProps> = ({ message }) => {
               margin: '0.25em 0',
             },
             '& code': {
-              backgroundColor: message.sender === 'user' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+              backgroundColor: message.sender === 'user' ? 'rgba(255, 255, 255, 0.1)' : colors.gray[100],
               padding: '0.125em 0.25em',
               borderRadius: '0.25em',
               fontSize: '0.875em',
               fontFamily: 'monospace',
             },
             '& pre': {
-              backgroundColor: message.sender === 'user' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)',
+              backgroundColor: message.sender === 'user' ? 'rgba(255, 255, 255, 0.1)' : colors.gray[100],
               padding: '1em',
               borderRadius: '0.5em',
               overflow: 'auto',

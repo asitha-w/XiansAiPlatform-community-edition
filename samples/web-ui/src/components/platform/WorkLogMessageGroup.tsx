@@ -14,6 +14,7 @@ import {
 } from '@mui/icons-material';
 import ReactMarkdown from 'react-markdown';
 import type { ChatMessage } from '../../types';
+import { colors } from '../../utils/theme';
 
 interface WorkLogMessageGroupProps {
   messages: ChatMessage[];
@@ -65,7 +66,7 @@ const WorkLogMessageGroup: React.FC<WorkLogMessageGroupProps> = ({
           <Avatar sx={{ 
             width: 28, 
             height: 28,
-            bgcolor: '#8B5CF6', // Purple for worklog
+            bgcolor: colors.worklog.primary,
             opacity: 0.8,
           }}>
             <WorkLogIcon sx={{ fontSize: 16 }} />
@@ -75,9 +76,9 @@ const WorkLogMessageGroup: React.FC<WorkLogMessageGroupProps> = ({
             sx={{
               px: 3,
               py: 2,
-              backgroundColor: '#FAFBFC',
-              color: '#4B5563',
-              border: '1px solid #D1D5DB',
+              backgroundColor: colors.surface.tertiary,
+              color: colors.slate[600],
+              border: `1px solid ${colors.border.secondary}`,
               borderRadius: 0.5, // Much less rounded than chat bubbles
               maxWidth: '100%',
               fontSize: '0.8rem',
@@ -92,7 +93,7 @@ const WorkLogMessageGroup: React.FC<WorkLogMessageGroupProps> = ({
                 left: 0,
                 right: 0,
                 height: '2px',
-                background: 'linear-gradient(90deg, #8B5CF6 0%, transparent 50%)',
+                background: `linear-gradient(90deg, ${colors.worklog.primary} 0%, transparent 50%)`,
                 opacity: 0.3,
               },
               '& p': {
@@ -102,12 +103,12 @@ const WorkLogMessageGroup: React.FC<WorkLogMessageGroupProps> = ({
                 },
               },
               '& code': {
-                backgroundColor: 'rgba(139, 92, 246, 0.08)',
+                backgroundColor: colors.worklog.background,
                 padding: '0.125em 0.25em',
                 borderRadius: '0.25em',
                 fontSize: '0.75em',
                 fontFamily: 'monospace',
-                color: '#7C3AED',
+                color: colors.worklog.secondary,
               },
             }}
           >
@@ -119,7 +120,7 @@ const WorkLogMessageGroup: React.FC<WorkLogMessageGroupProps> = ({
         
         <Typography 
           variant="caption" 
-          color="#9CA3AF"
+          color={colors.text.placeholder}
           sx={{ 
             mt: 1,
             ml: 4,
@@ -159,7 +160,7 @@ const WorkLogMessageGroup: React.FC<WorkLogMessageGroupProps> = ({
           px: 1,
           borderRadius: 1,
           '&:hover': {
-            backgroundColor: '#F9FAFB',
+            backgroundColor: colors.surface.muted,
           },
         }}
         onClick={handleToggleExpanded}
@@ -167,7 +168,7 @@ const WorkLogMessageGroup: React.FC<WorkLogMessageGroupProps> = ({
         <Avatar sx={{ 
           width: 24, 
           height: 24,
-          bgcolor: '#8B5CF6',
+          bgcolor: colors.worklog.primary,
           opacity: 0.7,
         }}>
           <WorkLogIcon sx={{ fontSize: 14 }} />
@@ -176,7 +177,7 @@ const WorkLogMessageGroup: React.FC<WorkLogMessageGroupProps> = ({
         <Typography 
           variant="body2" 
           sx={{ 
-            color: '#6B7280',
+            color: colors.text.muted,
             fontWeight: 500,
             flex: 1,
             fontSize: '0.85rem',
@@ -209,7 +210,7 @@ const WorkLogMessageGroup: React.FC<WorkLogMessageGroupProps> = ({
               top: '8px',
               bottom: '8px',
               width: '2px',
-              backgroundColor: '#E5E7EB',
+              backgroundColor: colors.border.primary,
               opacity: 0.6,
             }}
           />
@@ -244,9 +245,9 @@ const WorkLogMessageGroup: React.FC<WorkLogMessageGroupProps> = ({
                 sx={{
                   px: 2.5,
                   py: 1.5,
-                  backgroundColor: '#FAFBFC',
-                  color: '#4B5563',
-                  border: '1px solid #D1D5DB',
+                  backgroundColor: colors.surface.tertiary,
+              color: colors.slate[600],
+              border: `1px solid ${colors.border.secondary}`,
                   borderRadius: 0.5, // Much less rounded than chat bubbles
                   maxWidth: 'calc(100% - 40px)', // Adjusted for new layout
                   flex: 1,
@@ -262,7 +263,7 @@ const WorkLogMessageGroup: React.FC<WorkLogMessageGroupProps> = ({
                     left: 0,
                     right: 0,
                     height: '1px',
-                    background: 'linear-gradient(90deg, #8B5CF6 0%, transparent 70%)',
+                    background: `linear-gradient(90deg, ${colors.worklog.primary} 0%, transparent 70%)`,
                     opacity: 0.2,
                   },
                   '& p': {
@@ -277,7 +278,7 @@ const WorkLogMessageGroup: React.FC<WorkLogMessageGroupProps> = ({
                     borderRadius: '0.25em',
                     fontSize: '0.75em',
                     fontFamily: 'monospace',
-                    color: '#7C3AED',
+                    color: colors.worklog.secondary,
                   },
                 }}
               >
@@ -287,7 +288,7 @@ const WorkLogMessageGroup: React.FC<WorkLogMessageGroupProps> = ({
                 
                 <Typography 
                   variant="caption" 
-                  color="#9CA3AF"
+                  color={colors.text.placeholder}
                   sx={{ 
                     mt: 0.5,
                     display: 'block',
