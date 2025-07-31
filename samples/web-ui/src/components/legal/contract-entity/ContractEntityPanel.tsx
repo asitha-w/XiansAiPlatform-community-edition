@@ -26,7 +26,7 @@ import {
   Warning as WarningIcon,
   CheckCircle as CheckIcon,
 } from '@mui/icons-material';
-import type { ContractEntity, AgentRecommendation } from '../../types';
+import type { ContractEntity, AgentRecommendation } from '../../../types';
 import RecommendationsPanel from './RecommendationsPanel';
 
 interface ContractEntityPanelProps {

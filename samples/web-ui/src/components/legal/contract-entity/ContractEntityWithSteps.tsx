@@ -2,8 +2,8 @@ import React from 'react';
 import { Box } from '@mui/material';
 import ContractEntityPanel from './ContractEntityPanel';
 import ProcessSteps from './ProcessSteps';
-import { useRoute } from '../../hooks/useRoute';
-import type { ContractEntity, AgentRecommendation } from '../../types';
+import { useRoute } from '../../../hooks/useRoute';
+import type { ContractEntity, AgentRecommendation } from '../../../types';
 
 interface ContractEntityPanelProps {
   entity?: ContractEntity | null;

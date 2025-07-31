@@ -13,7 +13,7 @@ import {
   Close as CloseIcon,
   TrendingUp as TrendingUpIcon,
 } from '@mui/icons-material';
-import type { AgentRecommendation } from '../../types';
+import type { AgentRecommendation } from '../../../types';
 
 interface RecommendationsPanelProps {
   recommendations?: AgentRecommendation[];

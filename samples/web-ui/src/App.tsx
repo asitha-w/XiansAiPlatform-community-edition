@@ -5,7 +5,8 @@ import HomePage from './pages/HomePage';
 import BotPage from './pages/BotPage';
 import Navbar from './components/Navbar';
 import type { Agent } from './types';
-import { ContractEntityWithSteps } from './components/legal/ContractEntityWithSteps';
+import { ContractEntityWithSteps } from './components/legal/contract-entity/ContractEntityWithSteps';
+import { DataMessageProvider } from './context/DataMessageContext';
 
 // Mock agents data - centralized for the entire app
 const agents: Agent[] = [
@@ -51,57 +52,59 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Box sx={{ 
-        height: '100vh', 
-        display: 'flex', 
-        flexDirection: 'column',
-        backgroundColor: '#FAFAFA'
-      }}>
-        <Navbar 
-          currentAgent={currentAgent}
-          availableAgents={agents}
-          onSelectAgent={handleAgentSelect}
-        />
+      <DataMessageProvider>
+        <Box sx={{ 
+          height: '100vh', 
+          display: 'flex', 
+          flexDirection: 'column',
+          backgroundColor: '#FAFAFA'
+        }}>
+          <Navbar 
+            currentAgent={currentAgent}
+            availableAgents={agents}
+            onSelectAgent={handleAgentSelect}
+          />
 
-        {/* Main Content */}
-        <Box sx={{ flexGrow: 1, backgroundColor: '#F9FAFB' }}>
-          <Routes>
-            <Route 
-              path="/" 
-              element={<HomePage agents={agents} />} 
-            />
-            <Route 
-              path="/:slug" 
-              element={
-                <BotPage 
-                  agents={agents} 
-                  onSelectAgent={handleAgentSelect}
-                />
-              } 
-            />
-            <Route 
-              path="/:slug/new" 
-              element={
-                <BotPage 
-                  agents={agents} 
-                  onSelectAgent={handleAgentSelect}
-                  mode="new"
-                />
-              } 
-            />
-            <Route 
-              path="/:slug/:documentId" 
-              element={
-                <BotPage 
-                  agents={agents} 
-                  onSelectAgent={handleAgentSelect}
-                  mode="document"
-                />
-              } 
-            />
-          </Routes>
+          {/* Main Content */}
+          <Box sx={{ flexGrow: 1, backgroundColor: '#F9FAFB' }}>
+            <Routes>
+              <Route 
+                path="/" 
+                element={<HomePage agents={agents} />} 
+              />
+              <Route 
+                path="/:slug" 
+                element={
+                  <BotPage 
+                    agents={agents} 
+                    onSelectAgent={handleAgentSelect}
+                  />
+                } 
+              />
+              <Route 
+                path="/:slug/new" 
+                element={
+                  <BotPage 
+                    agents={agents} 
+                    onSelectAgent={handleAgentSelect}
+                    mode="new"
+                  />
+                } 
+              />
+              <Route 
+                path="/:slug/:documentId" 
+                element={
+                  <BotPage 
+                    agents={agents} 
+                    onSelectAgent={handleAgentSelect}
+                    mode="document"
+                  />
+                } 
+              />
+            </Routes>
+          </Box>
         </Box>
-      </Box>
+      </DataMessageProvider>
     </ThemeProvider>
   );
 }

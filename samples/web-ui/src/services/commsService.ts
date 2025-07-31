@@ -5,21 +5,22 @@ import type { Message, EventHandlers } from '@99xio/xians-sdk-typescript';
 import { getSDKConfig } from '../config/sdk';
 import type { Agent, ChatMessage } from '../types';
 
-export interface ChatServiceOptions {
+export interface CommsServiceOptions {
   onMessageReceived?: (message: ChatMessage) => void;
   onConnectionStateChanged?: (connected: boolean) => void;
   onError?: (error: string) => void;
+  onDataMessageReceived?: (message: Message) => void;
   participantId?: string;
   documentId?: string;
 }
 
-export class ChatService {
+export class CommsService {
   private socketSDK: SocketSDK;
   private currentAgent: Agent | null = null;
-  private options: ChatServiceOptions;
+  private options: CommsServiceOptions;
   private messageCounter = 0;
 
-  constructor(options: ChatServiceOptions = {}) {
+  constructor(options: CommsServiceOptions = {}) {
     this.options = options;
     
     const config = getSDKConfig();
@@ -188,8 +189,10 @@ export class ChatService {
   }
 
   private handleDataMessage(message: Message): void {
-    // Data messages are ignored and not displayed in the chat UI
-    console.log('[ChatService] Data message received but not displayed:', message.id);
+    console.log('[ChatService] Data message received:', message.id, message.data);
+    
+    // Notify subscribers about the data message
+    this.options.onDataMessageReceived?.(message);
   }
 
   private handleHandoffMessage(message: Message): void {

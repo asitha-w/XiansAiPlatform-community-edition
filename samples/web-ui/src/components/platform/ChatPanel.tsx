@@ -16,9 +16,11 @@ import {
   Warning as WarningIcon,
 } from '@mui/icons-material';
 import type { ChatMessage as ChatMessageType, Agent } from '../../types';
-import { ChatService } from '../../services/chatService';
+import { CommsService } from '../../services/commsService';
 import { useRoute } from '../../hooks/useRoute';
 import ChatMessageComponent from './ChatMessage';
+import { useDataMessage } from '../../hooks/useDataMessage';
+import type { DataMessagePayload } from '../../context/context';
 
 interface ChatPanelProps {
   currentAgent?: Agent | null;
@@ -35,13 +37,14 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const chatServiceRef = useRef<ChatService | null>(null);
+  const chatServiceRef = useRef<CommsService | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const { documentId } = useRoute();
+  const dataMessageContext = useDataMessage();
 
   // Initialize chat service
   useEffect(() => {
-    const chatService = new ChatService({
+    const chatService = new CommsService({
       onMessageReceived: (message: ChatMessageType) => {
         setMessages(prev => {
           // Check if this is the first history message (indicates history loading start)
@@ -79,6 +82,10 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
         setError(errorMessage);
         setIsLoadingHistory(false);
       },
+      onDataMessageReceived: (message) => {
+        // Publish data messages to the DataMessage context
+        dataMessageContext.publish(message);
+      },
       // Use provided participantId or let ChatService use the configured one from SDK config
       participantId,
       // Pass documentId from route context for inclusion in all messages
@@ -106,7 +113,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
     return () => {
       chatService.dispose();
     };
-  }, [participantId, documentId]);
+  }, [participantId, documentId, dataMessageContext]);
 
   // Set current agent when it changes
   useEffect(() => {
@@ -127,6 +134,35 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
       setAgent();
     }
   }, [currentAgent, isConnected]);
+
+  // Subscribe to WorkLog data messages
+  useEffect(() => {
+    const handleWorkLogMessage = (payload: DataMessagePayload) => {
+      console.log('[ChatPanel] Received WorkLog message:', payload);
+      
+      // Convert WorkLog data message to chat message for display
+      const workLogChatMessage: ChatMessageType = {
+        id: `worklog-${payload.message.id || Date.now()}`,
+        content: typeof payload.data === 'string' ? payload.data : 'WorkLog update received',
+        sender: 'agent',
+        timestamp: new Date(payload.message.createdAt || Date.now()),
+        type: 'text',
+        metadata: {
+          isWorkLogMessage: true,
+          socketMessage: payload.message,
+          messageSubject: payload.messageSubject,
+        },
+      };
+
+      // Add the WorkLog message to the chat
+      setMessages(prev => [...prev, workLogChatMessage]);
+    };
+
+    // Subscribe to WorkLog messages
+    const unsubscribe = dataMessageContext.subscribe('WorkLog', handleWorkLogMessage);
+
+    return unsubscribe;
+  }, [dataMessageContext]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {

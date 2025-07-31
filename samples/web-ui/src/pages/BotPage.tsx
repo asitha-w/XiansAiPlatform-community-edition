@@ -1,9 +1,9 @@
 import React from 'react';
 import { useParams, Navigate } from 'react-router-dom';
 import MainLayout from '../layouts/MainLayout';
-import ChatOnlyLayout from '../layouts/ChatOnlyLayout';
 import ChatPanel from '../components/platform/ChatPanel';
 import { RouteProvider } from '../context/RouteContext';
+import { useRoute } from '../hooks/useRoute';
 import type { Agent } from '../types';
 
 interface BotPageProps {
@@ -33,6 +33,8 @@ const BotPage: React.FC<BotPageProps> = ({ agents, mode }) => {
 
 // Separate component that has access to route context
 const BotPageContent: React.FC<{ currentAgent: Agent }> = ({ currentAgent }) => {
+  const { documentId } = useRoute();
+  
   // Create chat panel (used in both layouts)
   // Note: ChatPanel will use the configured participant ID from SDK config
   // This enables shared conversation history when users access bot via URL route
@@ -42,22 +44,21 @@ const BotPageContent: React.FC<{ currentAgent: Agent }> = ({ currentAgent }) => 
     />
   );
 
-  // If agent has a main component, use full layout
-  if (currentAgent.mainComponent) {
+  // Show agent component only if:
+  // 1. Agent has a main component AND
+  // 2. There's a documentId in the URL (meaning we're in document mode)
+  const shouldShowAgentComponent = currentAgent.mainComponent && documentId;
+  
+  let agentComponent: React.ReactNode = undefined;
+  if (shouldShowAgentComponent && currentAgent.mainComponent) {
     const MainComponent = currentAgent.mainComponent;
-    
-    return (
-      <MainLayout
-        chatPanel={chatPanel}
-        agentComponent={<MainComponent />}
-      />
-    );
+    agentComponent = <MainComponent />;
   }
 
-  // Otherwise, use chat-only centered layout
   return (
-    <ChatOnlyLayout
+    <MainLayout
       chatPanel={chatPanel}
+      agentComponent={agentComponent}
     />
   );
 };
