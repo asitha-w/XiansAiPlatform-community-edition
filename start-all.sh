@@ -78,9 +78,7 @@ sleep 2
 
 # Start PostgreSQL service first
 echo "🗄️  Starting PostgreSQL service..."
-# Set environment variables
-export POSTGRESQL_VERSION=16
-docker compose -p $COMPOSE_PROJECT_NAME -f postgresql/docker-compose.yml up -d
+docker compose -p $COMPOSE_PROJECT_NAME -f postgresql/docker-compose.yml --env-file postgresql/.env.local up -d
 
 # Wait for PostgreSQL to be ready
 echo "⏳ Waiting for PostgreSQL to be ready..."

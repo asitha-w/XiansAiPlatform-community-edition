@@ -486,7 +486,7 @@ gh auth status
 gh auth login
 
 # Test workflow access
-gh run list --repo flowmaxer-ai/XiansAi.Server
+gh run list --repo XiansAiPlatform/XiansAi.Server
 ```
 
 **Missing release notes:**

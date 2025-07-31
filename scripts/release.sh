@@ -10,7 +10,7 @@
 set -e
 
 # Configuration
-REPO_OWNER="${GITHUB_REPOSITORY_OWNER:-flowmaxer-ai}"
+REPO_OWNER="${GITHUB_REPOSITORY_OWNER:-XiansAiPlatform}"
 REPO_NAME="${GITHUB_REPOSITORY_NAME:-community-edition}"
 RELEASES_DIR="./releases"
 CHANGELOG_FILE="CHANGELOG.md"

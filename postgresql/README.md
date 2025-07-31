@@ -1,6 +1,6 @@
 # PostgreSQL Service
 
-This directory contains the PostgreSQL database service that can be shared across multiple services in the Flowmaxer community edition.
+This directory contains the PostgreSQL database service that can be shared across multiple services in the XiansAi Platform community edition.
 
 ## Usage
 
@@ -25,12 +25,12 @@ The PostgreSQL service is configured with:
 - **Database User**: `temporal`
 - **Database Password**: `temporal`
 - **Port**: `5432`
-- **Container Name**: `postgresql${ENVIRONMENT_SUFFIX:-}`
-- **Volume**: `postgresql-data${ENVIRONMENT_SUFFIX:-}`
+- **Container Name**: `postgresql`
+- **Volume**: `postgresql-data`
 
 ## Network
 
-The service connects to the `xians-community-edition-network${ENVIRONMENT_SUFFIX:-}` network, allowing other services to access it using the container name `postgresql`.
+The service connects to the `xians-community-edition-network` network, allowing other services to access it using the container name `postgresql`.
 
 ## Dependencies
 
@@ -45,5 +45,4 @@ Other services can connect to this PostgreSQL instance by:
 
 The following environment variables are supported:
 
-- `ENVIRONMENT_SUFFIX`: Optional suffix for container and volume names
 - `POSTGRESQL_VERSION`: PostgreSQL Docker image version tag 

@@ -26,8 +26,10 @@ Welcome to the XiansAi Platform Community Edition! This repository provides a si
 ### Prerequisites
 
 - Docker and Docker Compose installed on your system
-- At least 4GB of available RAM
+- At least 4GB of available RAM (8GB recommended)
 - Internet connection to download the Docker images
+
+**💡 New to the project?** Check out our **[Complete Setup Guide](docs/SETUP_GUIDE.md)** for detailed step-by-step instructions.
 
 ### Getting Started
 
@@ -41,8 +43,10 @@ Welcome to the XiansAi Platform Community Edition! This repository provides a si
 2. **Configure your environment:**
 
    **********
-   ***Llm__ApiKey must be set in server/.env.local***
+   Set the ***Llm__ApiKey*** in `server/.env.local`
+   ```bash
    Llm__ApiKey=your-openai-api-key
+   ```
    **********
 
 3. **Start the platform:**
@@ -75,6 +79,16 @@ Welcome to the XiansAi Platform Community Edition! This repository provides a si
    - **XiansAi Server API**: [http://localhost:5001/api-docs](http://localhost:5001/api-docs)
    - **Keycloak Admin Console**: [http://localhost:18080/admin](http://localhost:18080/admin)
    - **Temporal Web UI**: [http://localhost:8080](http://localhost:8080)
+
+## 🔧 Quick Troubleshooting
+
+**Common Issues:**
+- **Container conflicts**: `./reset-all.sh -f` then `./start-all.sh`
+- **Port conflicts**: Check what's using the port with `lsof -i :PORT`
+- **Environment variables**: The project uses `.env.local` files (already included)
+- **API key issues**: Set `Llm__ApiKey` in `server/.env.local`
+
+**📖 For detailed troubleshooting:** See our **[Troubleshooting Guide](docs/TROUBLESHOOTING.md)**
 
 ## 📋 Configuration
 
@@ -154,6 +168,8 @@ The XiansAi Platform consists of multiple repositories:
 ## 📚 Documentation
 
 - **[Agent Development Guide](https://xiansaiplatform.github.io/XiansAi.PublicDocs/)** - Agent development guide
+- **[Complete Setup Guide](docs/SETUP_GUIDE.md)** - Comprehensive setup guide for fresh users
+- **[Troubleshooting Guide](docs/TROUBLESHOOTING.md)** - Common issues and solutions
 - **[Contributing Guide](CONTRIBUTING.md)** - How to contribute to the project
 - **[Release Guide](docs/RELEASE_GUIDE.md)** - Complete release process and documentation for maintainers
 - **[XiansAi Website](https://xians.ai)** - XiansAi Website
