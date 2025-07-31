@@ -188,13 +188,8 @@ export class ChatService {
   }
 
   private handleDataMessage(message: Message): void {
-    // Convert data messages to chat format for display
-    const displayText = `Data received: ${JSON.stringify(message.data, null, 2)}`;
-    const chatMessage = this.convertToChatMessage(
-      { ...message, text: displayText }, 
-      'agent'
-    );
-    this.options.onMessageReceived?.(chatMessage);
+    // Data messages are ignored and not displayed in the chat UI
+    console.log('[ChatService] Data message received but not displayed:', message.id);
   }
 
   private handleHandoffMessage(message: Message): void {
@@ -214,8 +209,21 @@ export class ChatService {
 
     console.log(`[ChatService] Processing ${history.length} history messages`);
     
+    // Filter out Data type messages from history
+    // Data messages typically have data but minimal or no text content
+    const filteredHistory = history.filter(message => {
+      if (message.messageType === MessageType.Data) {
+        return false;
+      }
+      return true; // Keep all other messages
+    });
+    
+    if (filteredHistory.length < history.length) {
+      console.log(`[ChatService] Filtered out ${history.length - filteredHistory.length} Data messages from history`);
+    }
+    
     // Sort messages by creation date to ensure proper chronological order
-    const sortedHistory = [...history].sort((a, b) => {
+    const sortedHistory = [...filteredHistory].sort((a, b) => {
       const dateA = new Date(a.createdAt || 0).getTime();
       const dateB = new Date(b.createdAt || 0).getTime();
       return dateA - dateB;
@@ -237,7 +245,7 @@ export class ChatService {
       }, index * 10); // 10ms delay between each message
     });
 
-    console.log(`[ChatService] ✅ Loaded ${sortedHistory.length} messages from conversation history`);
+    console.log(`[ChatService] ✅ Loaded ${sortedHistory.length} messages from conversation history (${history.length - filteredHistory.length} Data messages filtered out)`);
   }
 
   private convertToChatMessage(message: Message, sender: 'user' | 'agent'): ChatMessage {

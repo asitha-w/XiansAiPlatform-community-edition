@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   AppBar,
@@ -33,12 +33,10 @@ const Navbar: React.FC<NavbarProps> = ({
   onSelectAgent,
 }) => {
   const navigate = useNavigate();
-  const location = useLocation();
   const [agentMenuAnchorEl, setAgentMenuAnchorEl] = React.useState<null | HTMLElement>(null);
   
-  const isNewRoute = location.pathname.endsWith('/new');
-  const shouldShowAgentSelector = currentAgent || (isNewRoute && availableAgents.length > 0);
-  const shouldShowNewButton = currentAgent || isNewRoute;
+  const shouldShowAgentSelector = availableAgents.length > 0; // Always show if agents are available
+  const shouldShowNewButton = true; // Always show new button
 
   const handleAgentMenuClick = (event: React.MouseEvent<HTMLElement>) => {
     setAgentMenuAnchorEl(event.currentTarget);
@@ -58,6 +56,13 @@ const Navbar: React.FC<NavbarProps> = ({
   const handleNewClick = () => {
     if (currentAgent?.slug) {
       navigate(`/${currentAgent.slug}/new`);
+    } else {
+      // If no agent is selected, navigate to a general new route or first available agent
+      if (availableAgents.length > 0) {
+        navigate(`/${availableAgents[0].slug}/new`);
+      } else {
+        navigate('/new');
+      }
     }
   };
 

@@ -45,7 +45,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
           }}>
             {/* Enhanced Chat Panel */}
             <Box sx={{ 
-              flex: { xs: '1', md: '0 0 420px' },
+              flex: { xs: '1', md: '0 0 550px' }, // Increased from 420px to 550px for wider chat panel
               minHeight: { xs: '400px', md: '600px' },
               display: 'flex',
               flexDirection: 'column',

@@ -4,9 +4,7 @@ import {
   TextField,
   IconButton,
   Typography,
-  Avatar,
   List,
-  ListItem,
   Chip,
   Alert,
   CircularProgress,
@@ -14,13 +12,13 @@ import {
 import {
   Send as SendIcon,
   SmartToy as AgentIcon,
-  Person as PersonIcon,
   Circle as StatusIcon,
   Warning as WarningIcon,
 } from '@mui/icons-material';
-import type { ChatMessage, Agent } from '../../types';
+import type { ChatMessage as ChatMessageType, Agent } from '../../types';
 import { ChatService } from '../../services/chatService';
 import { useRoute } from '../../hooks/useRoute';
+import ChatMessageComponent from './ChatMessage';
 
 interface ChatPanelProps {
   currentAgent?: Agent | null;
@@ -32,7 +30,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
   participantId,
 }) => {
   const [messageInput, setMessageInput] = useState('');
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<ChatMessageType[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
@@ -44,7 +42,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
   // Initialize chat service
   useEffect(() => {
     const chatService = new ChatService({
-      onMessageReceived: (message: ChatMessage) => {
+      onMessageReceived: (message: ChatMessageType) => {
         setMessages(prev => {
           // Check if this is the first history message (indicates history loading start)
           if (prev.length === 0 && message.metadata?.socketMessage) {
@@ -143,7 +141,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
       return;
     }
 
-    const userMessage: ChatMessage = {
+    const userMessage: ChatMessageType = {
       id: `user-${Date.now()}`,
       content: messageInput,
       sender: 'user',
@@ -314,80 +312,16 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
           flex: 1, // Take up all available space
           overflow: 'auto',
           overflowX: 'hidden', // Prevent horizontal scroll
-          px: 2,
-          py: 2,
+          px: 1, // Reduced from 2 to 1 for more horizontal space
+          py: 1.5, // Reduced from 2 to 1.5
           minHeight: 0 // Allow shrinking to zero if needed
         }}>
         <List sx={{ p: 0 }}>
           {messages.map((message) => (
-            <ListItem
+            <ChatMessageComponent
               key={message.id}
-              sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: message.sender === 'user' ? 'flex-end' : 'flex-start',
-                mb: 2,
-                px: 0,
-                py: 0,
-              }}
-            >
-              <Box sx={{
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: 2.5,
-                maxWidth: '85%',
-                flexDirection: message.sender === 'user' ? 'row-reverse' : 'row',
-              }}>
-                <Avatar sx={{ 
-                  width: 36, 
-                  height: 36,
-                  bgcolor: message.sender === 'agent' ? '#6B7280' : '#374151'
-                }}>
-                  {message.sender === 'agent' ? <AgentIcon /> : <PersonIcon />}
-                </Avatar>
-                
-                <Box
-                  sx={{
-                    px: 3.5,
-                    py: 2.5,
-                    backgroundColor: message.sender === 'user' 
-                      ? '#374151' 
-                      : '#F9FAFB',
-                    color: message.sender === 'user' 
-                      ? '#FFFFFF' 
-                      : '#111827',
-                    borderRadius: 3,
-                    border: message.sender === 'agent' ? '1px solid #E5E7EB' : 'none',
-                    maxWidth: '100%',
-                    boxShadow: message.sender === 'user' 
-                      ? '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)' 
-                      : 'none',
-                  }}
-                >
-                  <Typography variant="body1" sx={{ 
-                    lineHeight: 1.6
-                  }}>
-                    {message.content}
-                  </Typography>
-                </Box>
-              </Box>
-              
-              <Typography 
-                variant="caption" 
-                color="#9CA3AF"
-                sx={{ 
-                  mt: 1.5,
-                  alignSelf: message.sender === 'user' ? 'flex-end' : 'flex-start',
-                  mr: message.sender === 'user' ? 6 : 0,
-                  ml: message.sender === 'agent' ? 6 : 0,
-                }}
-              >
-                {message.timestamp.toLocaleTimeString([], { 
-                  hour: '2-digit', 
-                  minute: '2-digit' 
-                })}
-              </Typography>
-            </ListItem>
+              message={message}
+            />
           ))}
         </List>
       </Box>

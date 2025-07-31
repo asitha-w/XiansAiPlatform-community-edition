@@ -26,7 +26,7 @@ const ChatOnlyLayout: React.FC<ChatOnlyLayoutProps> = ({ chatPanel }) => {
         <Box 
           sx={{ 
             width: '100%',
-            maxWidth: '800px',
+            maxWidth: '1000px', // Increased from 800px to 1000px for wider chat panel
             height: 'calc(100vh - 120px)', // Adjust height to account for navbar and padding
             maxHeight: '700px',
             px: { xs: 2, sm: 4 },
