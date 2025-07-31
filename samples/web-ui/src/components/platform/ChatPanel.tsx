@@ -20,6 +20,7 @@ import {
 } from '@mui/icons-material';
 import type { ChatMessage, Agent } from '../../types';
 import { ChatService } from '../../services/chatService';
+import { useRoute } from '../../hooks/useRoute';
 
 interface ChatPanelProps {
   currentAgent?: Agent | null;
@@ -38,6 +39,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
   const [error, setError] = useState<string | null>(null);
   const chatServiceRef = useRef<ChatService | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const { documentId } = useRoute();
 
   // Initialize chat service
   useEffect(() => {
@@ -81,6 +83,8 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
       },
       // Use provided participantId or let ChatService use the configured one from SDK config
       participantId,
+      // Pass documentId from route context for inclusion in all messages
+      documentId,
     });
 
     chatServiceRef.current = chatService;
@@ -104,7 +108,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
     return () => {
       chatService.dispose();
     };
-  }, [participantId]);
+  }, [participantId, documentId]);
 
   // Set current agent when it changes
   useEffect(() => {

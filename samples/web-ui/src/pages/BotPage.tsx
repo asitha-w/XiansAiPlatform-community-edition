@@ -23,6 +23,16 @@ const BotPage: React.FC<BotPageProps> = ({ agents, mode }) => {
     return <Navigate to="/" replace />;
   }
 
+  // Wrap everything in RouteProvider so ChatPanel can access route context
+  return (
+    <RouteProvider mode={mode}>
+      <BotPageContent currentAgent={currentAgent} />
+    </RouteProvider>
+  );
+};
+
+// Separate component that has access to route context
+const BotPageContent: React.FC<{ currentAgent: Agent }> = ({ currentAgent }) => {
   // Create chat panel (used in both layouts)
   // Note: ChatPanel will use the configured participant ID from SDK config
   // This enables shared conversation history when users access bot via URL route
@@ -36,27 +46,19 @@ const BotPage: React.FC<BotPageProps> = ({ agents, mode }) => {
   if (currentAgent.mainComponent) {
     const MainComponent = currentAgent.mainComponent;
     
-    const agentComponent = (
-      <RouteProvider mode={mode}>
-        <MainComponent />
-      </RouteProvider>
-    );
-    
     return (
       <MainLayout
         chatPanel={chatPanel}
-        agentComponent={agentComponent}
+        agentComponent={<MainComponent />}
       />
     );
   }
 
   // Otherwise, use chat-only centered layout
   return (
-    <RouteProvider mode={mode}>
-      <ChatOnlyLayout
-        chatPanel={chatPanel}
-      />
-    </RouteProvider>
+    <ChatOnlyLayout
+      chatPanel={chatPanel}
+    />
   );
 };
 

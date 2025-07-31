@@ -16,7 +16,7 @@ export interface Agent {
   capabilities: string[];
   workflow: string;
   slug: string;
-  mainComponent?: React.ComponentType<any>;
+  mainComponent?: React.ComponentType;
 }
 
 export interface ContractEntity {

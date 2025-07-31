@@ -28,7 +28,7 @@ public class ContractCapabilities
     [Returns("A new contract document with generated ID and basic structure")]
     public async Task<Guid> CreateDocument(string title)
     {
-        _logger.LogInformation($"Starting CreateDocument with title: {title}");
+        await _thread.SendData(new WorkLog($"Starting CreateDocument with title: {title}"));
 
         try
         {
@@ -38,7 +38,9 @@ public class ContractCapabilities
             }
 
             var contract = _contractRepository.CreateNewContract(title);
-            
+
+            await _thread.SendData(new WorkLog($"Created contract with ID: {contract.Id}"));
+
             // Save the new contract to ensure it persists
             var saveResult = await _contractRepository.SaveContractAsync(contract);
             if (!saveResult)
@@ -46,10 +48,9 @@ public class ContractCapabilities
                 throw new InvalidOperationException("Failed to save the new contract document.");
             }
 
-            _logger.LogInformation($"Successfully created contract with ID: {contract.Id} and ContractId: {contract.ContractId}");
+            _logger.LogInformation($"Successfully created contract with ID: {contract.Id}");
 
-            var json = JsonSerializer.Serialize(contract);
-            _logger.LogInformation($"Created contract: {json}");
+            await _thread.SendData(new NewContractCreated(contract));
             
             return contract.Id;
         }
@@ -75,6 +76,8 @@ public class ContractCapabilities
             throw new ArgumentException("Contract ID cannot be empty. Do you like to create a new document?");
         }
 
+        await _thread.SendData(new WorkLog($"Starting to Fetch Contract with ID: {contractId}"));
+
         try
         {
             var contract = await _contractRepository.GetContractAsync(contractId.Value);
@@ -83,10 +86,7 @@ public class ContractCapabilities
                 throw new InvalidOperationException($"No contract found with ID: {contractId}");
             }
 
-            _logger.LogInformation($"Successfully retrieved contract with ID: {contractId}");
-
-            var json = JsonSerializer.Serialize(contract);
-            _logger.LogInformation($"Retrieved contract: {json}");
+            await _thread.SendData(new WorkLog($"Successfully retrieved contract with ID: {contractId}"));
             
             return contract;
         }
@@ -104,16 +104,13 @@ public class ContractCapabilities
     [Returns("A list of all contract documents ordered by creation date")]
     public async Task<List<Contract>> ListAllDocuments()
     {
-        _logger.LogInformation("Starting ListAllDocuments");
+        await _thread.SendData(new WorkLog("Starting ListAllDocuments"));
 
         try
         {
             var contracts = await _contractRepository.GetAllContractsAsync();
             
-            _logger.LogInformation($"Successfully retrieved {contracts.Count} contract documents");
-
-            var json = JsonSerializer.Serialize(contracts);
-            _logger.LogInformation($"Retrieved contracts: {json}");
+            await _thread.SendData(new WorkLog($"Successfully retrieved {contracts.Count} contract documents"));
             
             return contracts;
         }
@@ -139,6 +136,8 @@ public class ContractCapabilities
             throw new ArgumentException("Contract ID cannot be empty. Do you like to create a new document?");
         }
 
+        await _thread.SendData(new WorkLog($"Starting to Validate Contract with ID: {contractId}"));
+
         try
         {
             // Fetch the contract
@@ -152,15 +151,10 @@ public class ContractCapabilities
             var validator = new ContractValidator();
             var validationResult = validator.ValidateContract(contract);
 
-            _logger.LogInformation($"Successfully validated contract with ID: {contractId}. " +
+            await _thread.SendData(new WorkLog($"Successfully validated contract with ID: {contractId}. " +
                                  $"Valid: {validationResult.IsValid}, " +
                                  $"Issues: {validationResult.Insights.Count}, " +
-                                 $"Critical: {validationResult.Insights.Count(i => i.Severity == InsightSeverity.Critical)}, " +
-                                 $"Warnings: {validationResult.Insights.Count(i => i.Severity == InsightSeverity.Warning)}, " +
-                                 $"Suggestions: {validationResult.Insights.Count(i => i.Severity == InsightSeverity.Suggestion)}");
-
-            var json = JsonSerializer.Serialize(validationResult);
-            _logger.LogInformation($"Validation result: {json}");
+                                 $"Critical: {validationResult.Insights.Count(i => i.Severity == InsightSeverity.Critical)}, "));
 
             return validationResult;
         }

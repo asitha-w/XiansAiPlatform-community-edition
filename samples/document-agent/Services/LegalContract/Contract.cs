@@ -4,8 +4,7 @@ namespace LegalContract.Services;
 // Model classes for Contract structure
 public class Contract
 {
-    public Guid Id { get; set; } = Guid.NewGuid();
-    public string ContractId { get; set; } = string.Empty;
+    public Guid Id { get; set; }
     public string Status { get; set; } = "draft";
     public ContractScope Scope { get; set; } = new();
     public List<Party> Parties { get; set; } = new();

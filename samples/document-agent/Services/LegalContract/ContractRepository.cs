@@ -30,7 +30,6 @@ public class ContractRepository
         var contract = new Contract
         {
             Id = Guid.NewGuid(),
-            ContractId = contractId ?? $"CONTRACT-{DateTime.UtcNow:yyyy-MM-dd}-{Guid.NewGuid().ToString()[..8].ToUpper()}",
             Status = "draft",
             Scope = new ContractScope
             {
@@ -73,10 +72,10 @@ public class ContractRepository
     /// </summary>
     /// <param name="contractId">The contract ID string</param>
     /// <returns>The contract if found, null otherwise</returns>
-    public async Task<Contract?> GetContractByContractIdAsync(string contractId)
+    public async Task<Contract?> GetContractByIdAsync(Guid contractId)
     {
         var contracts = await GetAllContractsAsync();
-        return contracts.FirstOrDefault(c => c.ContractId.Equals(contractId, StringComparison.OrdinalIgnoreCase));
+        return contracts.FirstOrDefault(c => c.Id == contractId);
     }
 
     /// <summary>

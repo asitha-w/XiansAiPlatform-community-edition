@@ -1,15 +1,16 @@
 // Chat Service - Wrapper around Socket SDK for chat functionality
 import { SocketSDK } from '@99xio/xians-sdk-typescript';
+import { MessageType } from '@99xio/xians-sdk-typescript';
+import type { Message, EventHandlers } from '@99xio/xians-sdk-typescript';
 import { getSDKConfig } from '../config/sdk';
 import type { Agent, ChatMessage } from '../types';
-import type { Message, EventHandlers } from '../types/socket';
-import { MessageType } from '../types/socket';
 
 export interface ChatServiceOptions {
   onMessageReceived?: (message: ChatMessage) => void;
   onConnectionStateChanged?: (connected: boolean) => void;
   onError?: (error: string) => void;
   participantId?: string;
+  documentId?: string;
 }
 
 export class ChatService {
@@ -138,6 +139,7 @@ export class ChatService {
       workflow: this.currentAgent.workflow,
       type: 'Chat' as const,
       text,
+      data: this.getMessageData(),
     };
 
     await this.socketSDK.sendInboundMessage(message, MessageType.Chat);
@@ -157,7 +159,10 @@ export class ChatService {
       participantId: this.getParticipantId(),
       workflow: this.currentAgent.workflow,
       type: 'Data' as const,
-      data,
+      data: {
+        ...data,
+        ...this.getMessageData(),
+      },
     };
 
     await this.socketSDK.sendInboundMessage(message, MessageType.Data);
@@ -165,6 +170,16 @@ export class ChatService {
 
   private getParticipantId(): string {
     return this.options.participantId || getSDKConfig().participantId;
+  }
+
+  private getMessageData(): Record<string, unknown> {
+    const data: Record<string, unknown> = {};
+    
+    if (this.options.documentId) {
+      data.documentId = this.options.documentId;
+    }
+    
+    return data;
   }
 
   private handleChatMessage(message: Message): void {

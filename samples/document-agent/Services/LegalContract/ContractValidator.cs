@@ -543,14 +543,6 @@ public class ContractValidator
             return result;
         }
 
-        // Basic contract validations
-        if (string.IsNullOrWhiteSpace(contract.ContractId))
-        {
-            result.AddInsight(InsightSeverity.Warning, InsightSection.General, "NO_CONTRACT_ID",
-                "Contract ID is missing", "Contract ID helps with tracking and reference",
-                "ContractId", contract.ContractId, "Assign a unique contract identifier");
-        }
-
         // Run all section validators
         foreach (var validator in _validators)
         {
