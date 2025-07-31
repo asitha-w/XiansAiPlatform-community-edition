@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, forwardRef, useImperativeHandle } from 'react';
 import {
   Box,
   TextField,
@@ -20,7 +20,11 @@ interface MessageInputProps {
   currentAgent?: Agent | null;
 }
 
-const MessageInput: React.FC<MessageInputProps> = ({
+export interface MessageInputRef {
+  focusInput: () => void;
+}
+
+const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(({
   messageInput,
   setMessageInput,
   onSendMessage,
@@ -28,7 +32,18 @@ const MessageInput: React.FC<MessageInputProps> = ({
   isLoading,
   isConnected,
   currentAgent,
-}) => {
+}, ref) => {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useImperativeHandle(ref, () => ({
+    focusInput: () => {
+      inputRef.current?.focus();
+    }
+  }));
+
+  const handleSendClick = () => {
+    onSendMessage();
+  };
   return (
     <Box sx={{ 
       p: 2, 
@@ -47,6 +62,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
           onChange={(e) => setMessageInput(e.target.value)}
           onKeyPress={onKeyPress}
           disabled={isLoading}
+          inputRef={inputRef}
           sx={{
             '& .MuiOutlinedInput-root': {
               backgroundColor: colors.surface.primary,
@@ -68,7 +84,7 @@ const MessageInput: React.FC<MessageInputProps> = ({
           }}
         />
         <IconButton
-          onClick={onSendMessage}
+          onClick={handleSendClick}
           disabled={!messageInput.trim() || isLoading || !isConnected}
           sx={{
             bgcolor: (messageInput.trim() && isConnected && !isLoading) ? colors.slate[700] : colors.slate[100],
@@ -90,6 +106,8 @@ const MessageInput: React.FC<MessageInputProps> = ({
       </Box>
     </Box>
   );
-};
+});
+
+MessageInput.displayName = 'MessageInput';
 
 export default MessageInput;

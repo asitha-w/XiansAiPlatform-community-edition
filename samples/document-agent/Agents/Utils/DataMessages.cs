@@ -33,14 +33,14 @@ public class WorkLog : IDataMessage<string>
     }
 }
 
-public class ShowLink : IDataMessage<Link> {
+public class ShowContract : IDataMessage<Guid> {
 
-    public string MessageSubject => typeof(ShowLink).Name;
-    public Link Data { get; set; }
+    public string MessageSubject => typeof(ShowContract).Name;
+    public Guid Data { get; set; }
 
-    public ShowLink(string title, string url)
+    public ShowContract(Guid contractId)
     {
-        Data = new Link { Title = title, Url = url };
+        Data = contractId;
     }
 }
 

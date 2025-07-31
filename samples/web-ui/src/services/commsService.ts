@@ -10,6 +10,8 @@ export interface CommsServiceOptions {
   onConnectionStateChanged?: (connected: boolean) => void;
   onError?: (error: string) => void;
   onDataMessageReceived?: (message: Message) => void;
+  onChatRequestSent?: (requestId: string) => void;
+  onChatResponseReceived?: (requestId: string) => void;
   participantId?: string;
   documentId?: string;
 }
@@ -134,14 +136,18 @@ export class CommsService {
       throw new Error('Not connected to server');
     }
 
+    const requestId = `msg-${Date.now()}-${++this.messageCounter}`;
     const message = {
-      requestId: `msg-${Date.now()}-${++this.messageCounter}`,
+      requestId,
       participantId: this.getParticipantId(),
       workflow: this.currentAgent.workflow,
       type: 'Chat' as const,
       text,
       data: this.getMessageData(),
     };
+
+    // Notify that a chat request was sent
+    this.options.onChatRequestSent?.(requestId);
 
     await this.socketSDK.sendInboundMessage(message, MessageType.Chat);
   }
@@ -184,6 +190,11 @@ export class CommsService {
   }
 
   private handleChatMessage(message: Message): void {
+    // Check if this is a Chat response with a requestId
+    if (message.requestId && message.messageType === 'Chat') {
+      this.options.onChatResponseReceived?.(message.requestId);
+    }
+    
     const chatMessage = this.convertToChatMessage(message, 'agent');
     this.options.onMessageReceived?.(chatMessage);
   }

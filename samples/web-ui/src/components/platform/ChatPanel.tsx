@@ -9,9 +9,10 @@ import { useRoute } from '../../hooks/useRoute';
 import ChatMessageComponent from './ChatMessage';
 import WorkLogMessageGroup from './WorkLogMessageGroup';
 import AgentHeader from './AgentHeader';
-import MessageInput from './MessageInput';
+import MessageInput, { type MessageInputRef } from './MessageInput';
 import LoadingIndicators from './LoadingIndicators';
 import ErrorAlert from './ErrorAlert';
+import TypingIndicator from './TypingIndicator';
 import { useDataMessage } from '../../hooks/useDataMessage';
 import type { DataMessagePayload } from '../../context/context';
 
@@ -70,8 +71,11 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pendingRequests, setPendingRequests] = useState<Set<string>>(new Set());
+  const [shouldFocusInput, setShouldFocusInput] = useState(false);
   const chatServiceRef = useRef<CommsService | null>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const messageInputRef = useRef<MessageInputRef>(null);
   const { documentId } = useRoute();
   const dataMessageContext = useDataMessage();
 
@@ -119,6 +123,18 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
         // Publish data messages to the DataMessage context
         dataMessageContext.publish(message);
       },
+      onChatRequestSent: (requestId: string) => {
+        console.log('[ChatPanel] Chat request sent:', requestId);
+        setPendingRequests(prev => new Set(prev).add(requestId));
+      },
+      onChatResponseReceived: (requestId: string) => {
+        console.log('[ChatPanel] Chat response received:', requestId);
+        setPendingRequests(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(requestId);
+          return newSet;
+        });
+      },
       // Use provided participantId or let ChatService use the configured one from SDK config
       participantId,
       // Pass documentId from route context for inclusion in all messages
@@ -155,6 +171,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
         try {
           setIsLoadingHistory(true);
           setMessages([]); // Clear messages when switching agents
+          setPendingRequests(new Set()); // Clear pending requests when switching agents
           await chatServiceRef.current!.setCurrentAgent(currentAgent);
           // Loading history indicator will be turned off when messages start arriving
         } catch (err) {
@@ -205,6 +222,20 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
     }
   }, [messages]);
 
+  // Handle input focus after user sends message
+  useEffect(() => {
+    if (shouldFocusInput && messageInputRef.current) {
+      const focusInput = () => {
+        messageInputRef.current?.focusInput();
+        setShouldFocusInput(false);
+      };
+      
+      // Use a longer timeout to ensure all updates are complete
+      const timeoutId = setTimeout(focusInput, 100);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [shouldFocusInput]);
+
   const handleSendMessage = async () => {
     if (!messageInput.trim() || !chatServiceRef.current || !isConnected) {
       return;
@@ -222,6 +253,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
     setMessages(prev => [...prev, userMessage]);
     setMessageInput('');
     setIsLoading(true);
+    setShouldFocusInput(true);
 
     try {
       await chatServiceRef.current.sendMessage(messageInput);
@@ -303,8 +335,14 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
         </List>
       </Box>
 
+      {/* Typing Indicator */}
+      <TypingIndicator 
+        isVisible={pendingRequests.size > 0}
+      />
+
       {/* Message Input */}
       <MessageInput 
+        ref={messageInputRef}
         messageInput={messageInput}
         setMessageInput={setMessageInput}
         onSendMessage={handleSendMessage}

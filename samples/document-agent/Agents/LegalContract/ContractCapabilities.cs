@@ -37,22 +37,18 @@ public class ContractCapabilities
                 throw new ArgumentException("Contract title cannot be empty or null.", nameof(title));
             }
 
-            var contract = _contractRepository.CreateNewContract(title);
+            var contractId = Guid.NewGuid();
 
-            await _thread.SendData(new WorkLog($"Created contract with ID: {contract.Id}"));
-
-            // Save the new contract to ensure it persists
-            var saveResult = await _contractRepository.SaveContractAsync(contract);
-            if (!saveResult)
-            {
-                throw new InvalidOperationException("Failed to save the new contract document.");
-            }
-
-            _logger.LogInformation($"Successfully created contract with ID: {contract.Id}");
-
-            await _thread.SendData(new NewContractCreated(contract));
+            //var contract = _contractRepository.CreateNewContract(title);
+            // var saveResult = await _contractRepository.SaveContractAsync(contract);
+            // if (!saveResult)
+            // {
+            //     throw new InvalidOperationException("Failed to save the new contract document.");
+            // }
+            await _thread.SendData(new WorkLog($"Contract created with ID `{contractId}`"));
+            await _thread.SendData(new ShowContract(contractId));
             
-            return contract.Id;
+            return contractId;
         }
         catch (Exception ex)
         {
