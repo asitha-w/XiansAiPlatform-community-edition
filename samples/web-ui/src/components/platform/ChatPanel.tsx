@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Box,
   List,
@@ -132,9 +132,8 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
         setIsLoadingHistory(false);
       },
       onDataMessageReceived: (message) => {
-        // TODO: Temporarily disabled to test infinite render fix
-        // dataMessageContext.publish(message);
-        console.log('[ChatPanel] Data message received (publish disabled):', message);
+        dataMessageContext.publish(message);
+        console.log('[ChatPanel] Data message received:', message);
       },
       onChatRequestSent: (requestId: string) => {
         console.log('[ChatPanel] Chat request sent:', requestId);
@@ -283,6 +282,55 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
 
     return unsubscribe;
   }, [dataMessageContext]);
+
+  // Listen for SendChat events from UI components
+  useEffect(() => {
+    const handleSendChat = async (event: CustomEvent) => {
+      console.log('[ChatPanel] Received SendChat event:', event.detail);
+      
+      const { message } = event.detail as { message: string };
+      if (message && typeof message === 'string') {
+        // Send the message to the agent
+        if (chatServiceRef.current && isConnected) {
+          try {
+            // Add user message to show what was requested
+            const userMessage: ChatMessageType = {
+              id: `user-${Date.now()}`,
+              content: message,
+              sender: 'user',
+              timestamp: new Date(),
+              type: 'text',
+            };
+
+            // Add user message immediately to UI
+            setMessages(prev => [...prev, userMessage]);
+            setIsLoading(true);
+
+            // Send to agent
+            await chatServiceRef.current.sendMessage(message);
+          } catch (err) {
+            setError('Failed to send message to agent');
+            console.error('Send message error:', err);
+          } finally {
+            setIsLoading(false);
+          }
+        } else {
+          console.warn('[ChatPanel] Cannot send message - not connected to chat service');
+        }
+      }
+    };
+
+    // Listen for SendChat events
+    const eventHandler = (event: Event) => {
+      handleSendChat(event as CustomEvent);
+    };
+    
+    window.addEventListener('SendChat', eventHandler);
+
+    return () => {
+      window.removeEventListener('SendChat', eventHandler);
+    };
+  }, [isConnected]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {

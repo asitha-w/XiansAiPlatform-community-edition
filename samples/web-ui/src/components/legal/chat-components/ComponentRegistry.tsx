@@ -1,5 +1,6 @@
 import React from 'react';
 import ContractLink from './ContractLink';
+import EditParty from './EditParty';
 
 export interface UIComponentData {
   name: string;
@@ -13,6 +14,7 @@ export interface UIComponentProps {
 // Registry mapping component names to their implementations
 const componentRegistry: Record<string, React.FC<UIComponentProps>> = {
   ContractLink,
+  EditParty,
   // Add more components here as needed
   // ExampleComponent: ExampleComponent,
 };

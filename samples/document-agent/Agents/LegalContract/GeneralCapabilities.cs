@@ -26,7 +26,7 @@ public class GeneralCapabilities
     [Capability("Create a new legal contract document from scratch - Use when user wants to start a new contract or has no existing contract ID")]
     [Parameter("title", "Descriptive title for the new contract (e.g., 'Software Development Agreement', 'Service Contract')")]
     [Returns("Unique GUID identifier for the newly created contract document with basic structure initialized")]
-    public async Task<Guid> CreateDocument(string title)
+    public async Task<Guid> CreateNewContract(string title)
     {
         await _thread.SendData(new WorkLog($"Starting CreateDocument with title: {title}"));
 
@@ -58,6 +58,14 @@ public class GeneralCapabilities
                 ex
             );
         }
+    }
+
+    [Capability("Check if there is a currently active contract document in session context - Use to determine if the user has a contract set for the current session")]
+    [Returns("True if there is a current contract set in the document context, false otherwise")]
+    public bool HasCurrentContract()
+    {
+        var contractId = _documentContext.DocumentId;
+        return contractId.HasValue && contractId.Value != Guid.Empty;
     }
 
     [Capability("Retrieve the currently active contract document from session context - Use when working with a contract already set in the current session")]
