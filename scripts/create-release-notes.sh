@@ -159,7 +159,7 @@ fi)
 
 ---
 
-**Full Changelog**: https://github.com/flowmaxer-ai/community-edition/compare/vPREVIOUS...${version}
+**Full Changelog**: https://github.com/XiansAiPlatform/community-edition/compare/vPREVIOUS...${version}
 **Docker Images**: Available with tag \`${version}\`
 **Documentation**: See updated documentation in repository
 

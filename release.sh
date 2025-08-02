@@ -39,78 +39,6 @@ log_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
-# Download assets from other repositories
-download_external_assets() {
-    local version=$1
-    local assets_dir="./release-assets"
-    
-    if [[ "$INCLUDE_ASSETS" != "true" ]]; then
-        log_info "Skipping external assets download (use --include-assets to enable)"
-        return
-    fi
-    
-    log_info "Downloading assets from related repositories..."
-    
-    # Create temporary assets directory
-    mkdir -p "$assets_dir"
-    
-    if [[ "$DRY_RUN" == "true" ]]; then
-        log_info "[DRY RUN] Would download assets for version $version from: $ASSETS_REPOS"
-        return
-    fi
-    
-    # Convert comma-separated repos to array
-    IFS=',' read -ra REPO_ARRAY <<< "$ASSETS_REPOS"
-    
-    for repo in "${REPO_ARRAY[@]}"; do
-        repo=$(echo "$repo" | xargs) # trim whitespace
-        repo_name=$(basename "$repo")
-        
-        if download_repo_assets "$repo" "$version" "$assets_dir"; then
-            log_success "Downloaded $repo_name assets"
-        else
-            log_warning "Could not download $repo_name assets (release may not exist yet)"
-        fi
-    done
-}
-
-# Download assets from a specific repository
-download_repo_assets() {
-    local repo=$1
-    local version=$2
-    local assets_dir=$3
-    local repo_assets_dir="$assets_dir/$(basename $repo)"
-    
-    mkdir -p "$repo_assets_dir"
-    
-    # Check if release exists
-    if ! gh release view "$version" --repo "$repo" &>/dev/null; then
-        return 1
-    fi
-    
-    # Download all assets from the release
-    gh release download "$version" --repo "$repo" --dir "$repo_assets_dir" 2>/dev/null || return 1
-    
-    # Also create a manifest file for this repo
-    echo "Repository: $repo" > "$repo_assets_dir/MANIFEST.txt"
-    echo "Version: $version" >> "$repo_assets_dir/MANIFEST.txt"
-    echo "Downloaded: $(date)" >> "$repo_assets_dir/MANIFEST.txt"
-    echo "Assets:" >> "$repo_assets_dir/MANIFEST.txt"
-    find "$repo_assets_dir" -type f ! -name "MANIFEST.txt" -exec basename {} \; >> "$repo_assets_dir/MANIFEST.txt"
-    
-    return 0
-}
-
-# Clean up temporary assets
-cleanup_assets() {
-    local assets_dir="./release-assets"
-    
-    if [[ -d "$assets_dir" ]]; then
-        log_info "Cleaning up temporary assets directory"
-        rm -rf "$assets_dir"
-    fi
-}
-
 # Show usage
 show_help() {
     cat << EOF
@@ -125,9 +53,6 @@ OPTIONS:
     --draft             Create a draft release
     --prerelease        Mark as pre-release
     --no-github         Skip GitHub release creation
-    --include-assets    Download and include assets from related repositories
-    --assets-repos      Comma-separated list of repos to download assets from
-                        (default: XiansAiPlatform/XiansAi.Server,XiansAiPlatform/XiansAi.UI,XiansAiPlatform/XiansAi.Lib,XiansAiPlatform/sdk-web-typescript)
 
 VERSION:
     Version number in semantic versioning format (e.g., v2.1.0, v2.1.0-beta.1)
@@ -137,14 +62,17 @@ EXAMPLES:
     $0 v2.1.0-beta.1 --prerelease  # Create a pre-release
     $0 v2.1.0 --dry-run          # Test the release process
     $0 v2.1.0 --draft            # Create a draft release
-    $0 v2.1.0 --include-assets   # Include assets from related repositories
-    $0 v2.1.0 --include-assets --assets-repos "org/repo1,org/repo2"  # Custom repos
 
 REQUIREMENTS:
     - Git repository with clean working directory
     - GitHub CLI (gh) installed and authenticated
     - Docker installed for image validation
     - Release notes file in ./releases/VERSION.md
+
+WORKFLOW:
+    1. Run ./scripts/publish.sh to publish all artifacts
+    2. Wait for GitHub Actions to complete
+    3. Run this script to create community edition release
 
 EOF
 }
@@ -211,7 +139,7 @@ check_release_notes() {
     
     if [[ ! -f "$notes_file" ]]; then
         log_error "Release notes not found: $notes_file"
-        log_info "Please create release notes using: ./create-release-notes.sh $version"
+        log_info "Please create release notes using: ./scripts/create-release-notes.sh $version"
         exit 1
     fi
     
@@ -258,7 +186,6 @@ create_github_release() {
     local version=$1
     local notes_file="$RELEASES_DIR/${version}.md"
     local release_args=()
-    local assets_dir="./release-assets"
     
     log_info "Creating GitHub release: $version"
     
@@ -274,34 +201,14 @@ create_github_release() {
         release_args+=("--prerelease")
     fi
     
-    # Add assets if they exist
-    if [[ -d "$assets_dir" ]]; then
-        # Find all files in assets directory (excluding MANIFEST.txt files)
-        while IFS= read -r -d '' asset_file; do
-            if [[ $(basename "$asset_file") != "MANIFEST.txt" ]]; then
-                release_args+=("$asset_file")
-            fi
-        done < <(find "$assets_dir" -type f -print0 2>/dev/null)
-    fi
-    
     if [[ "$DRY_RUN" == "true" ]]; then
         log_info "[DRY RUN] Would create GitHub release with args: ${release_args[*]}"
-        if [[ -d "$assets_dir" ]]; then
-            log_info "[DRY RUN] Would upload assets from: $assets_dir"
-            find "$assets_dir" -type f ! -name "MANIFEST.txt" -exec echo "  - {}" \;
-        fi
         return
     fi
     
     gh release create "$version" "${release_args[@]}"
     
     log_success "GitHub release created: https://github.com/$REPO_OWNER/$REPO_NAME/releases/tag/$version"
-    
-    # Upload additional manifest files separately if needed
-    if [[ -d "$assets_dir" ]]; then
-        find "$assets_dir" -name "MANIFEST.txt" -exec gh release upload "$version" {} \; 2>/dev/null || true
-        log_success "Assets uploaded from related repositories"
-    fi
 }
 
 # Update changelog
@@ -348,10 +255,6 @@ update_changelog() {
 main() {
     local version=""
     
-    # Default configuration
-    INCLUDE_ASSETS="false"
-    ASSETS_REPOS="XiansAiPlatform/XiansAi.Server,XiansAiPlatform/XiansAi.UI,XiansAiPlatform/XiansAi.Lib,XiansAiPlatform/sdk-web-typescript"
-    
     # Parse arguments
     while [[ $# -gt 0 ]]; do
         case $1 in
@@ -378,14 +281,6 @@ main() {
             --no-github)
                 NO_GITHUB="true"
                 shift
-                ;;
-            --include-assets)
-                INCLUDE_ASSETS="true"
-                shift
-                ;;
-            --assets-repos)
-                ASSETS_REPOS="$2"
-                shift 2
                 ;;
             v*.*.*)
                 version=$1
@@ -417,10 +312,6 @@ main() {
     echo "Draft: ${DRAFT:-false}"
     echo "Pre-release: ${PRERELEASE:-false}"
     echo "Dry run: ${DRY_RUN:-false}"
-    echo "Include assets: ${INCLUDE_ASSETS:-false}"
-    if [[ "$INCLUDE_ASSETS" == "true" ]]; then
-        echo "Asset repositories: $ASSETS_REPOS"
-    fi
     echo "======================================"
     echo
     
@@ -447,16 +338,12 @@ main() {
     create_git_tag "$version"
     
     if [[ "$NO_GITHUB" != "true" ]]; then
-        download_external_assets "$version"
         create_github_release "$version"
     fi
     
     log_success "Release $version completed successfully!"
     log_info "Release URL: https://github.com/$REPO_OWNER/$REPO_NAME/releases/tag/$version"
-    
-    # Clean up temporary files
-    cleanup_assets
 }
 
 # Run main function
-main "$@"
+main "$@" 
