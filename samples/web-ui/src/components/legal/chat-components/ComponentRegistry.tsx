@@ -1,8 +1,10 @@
 import React from 'react';
 import ContractLink from './ContractLink';
-import EditParty from './EditParty';
+import ContractParty from './ContractParty';
+import Calendar from './Calendar';
+import TermsConditions from './TermsConditions';
 
-export interface UIComponentData {
+export interface UIComponentRef {
   name: string;
   properties: Record<string, unknown>;
 }
@@ -14,13 +16,15 @@ export interface UIComponentProps {
 // Registry mapping component names to their implementations
 const componentRegistry: Record<string, React.FC<UIComponentProps>> = {
   ContractLink,
-  EditParty,
+  ContractParty,
+  Calendar,
+  TermsConditions,
   // Add more components here as needed
   // ExampleComponent: ExampleComponent,
 };
 
 interface UIComponentRendererProps {
-  data: UIComponentData;
+  data: UIComponentRef;
 }
 
 const UIComponentRenderer: React.FC<UIComponentRendererProps> = ({ data }) => {

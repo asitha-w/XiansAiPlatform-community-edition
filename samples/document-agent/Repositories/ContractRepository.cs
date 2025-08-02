@@ -1,6 +1,7 @@
 using System.Text.Json;
+using Services;
 
-namespace LegalContract.Services;
+namespace Repositories;
 public class ContractRepository
 {
     private readonly string _tempDirectory;
@@ -30,12 +31,8 @@ public class ContractRepository
         var contract = new Contract
         {
             Id = contractId ?? Guid.NewGuid(),
-            Status = "draft",
-            Scope = new ContractScope
-            {
-                Title = title,
-                CreatedDate = DateTime.UtcNow
-            }
+            Title = title,
+            CreatedDate = DateTime.UtcNow
         };
 
         return contract;
@@ -84,7 +81,7 @@ public class ContractRepository
     /// </summary>
     /// <param name="contract">The contract to save</param>
     /// <returns>True if successful, false otherwise</returns>
-    public async Task<bool> SaveContractAsync(Contract contract)
+    public async Task SaveContractAsync(Contract contract)
     {
         if (contract.Id == Guid.Empty)
         {
@@ -98,12 +95,10 @@ public class ContractRepository
             var jsonContent = JsonSerializer.Serialize(contract, _jsonOptions);
             await File.WriteAllTextAsync(filePath, jsonContent);
             Console.WriteLine($"Contract saved to {filePath}");
-            return true;
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error saving contract {contract.Id}: {ex.Message}");
-            return false;
+            throw new Exception($"Error saving contract {contract.Id}: {ex.Message}");
         }
     }
 
@@ -159,7 +154,7 @@ public class ContractRepository
             }
         }
         
-        return contracts.OrderByDescending(c => c.Scope.CreatedDate).ToList();
+        return contracts.OrderByDescending(c => c.CreatedDate).ToList();
     }
 
     /// <summary>
@@ -167,15 +162,15 @@ public class ContractRepository
     /// </summary>
     /// <param name="contract">The contract to update</param>
     /// <returns>True if successful, false otherwise</returns>
-    public async Task<bool> UpdateContractAsync(Contract contract)
+    public async Task UpdateContractAsync(Contract contract)
     {
         var existingContract = await GetContractAsync(contract.Id);
         if (existingContract == null)
         {
-            return false;
+            throw new Exception($"Contract with ID {contract.Id} not found. Update failed.");
         }
 
-        return await SaveContractAsync(contract);
+        await SaveContractAsync(contract);
     }
 
     /// <summary>
@@ -187,17 +182,6 @@ public class ContractRepository
     {
         var filePath = Path.Combine(_tempDirectory, $"{contractId}.json");
         return File.Exists(filePath);
-    }
-
-    /// <summary>
-    /// Gets contracts by status
-    /// </summary>
-    /// <param name="status">The status to filter by</param>
-    /// <returns>A list of contracts with the specified status</returns>
-    public async Task<List<Contract>> GetContractsByStatusAsync(string status)
-    {
-        var allContracts = await GetAllContractsAsync();
-        return allContracts.Where(c => c.Status.Equals(status, StringComparison.OrdinalIgnoreCase)).ToList();
     }
 
     /// <summary>

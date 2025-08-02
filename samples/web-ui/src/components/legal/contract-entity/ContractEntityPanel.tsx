@@ -1,131 +1,216 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
   Chip,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   IconButton,
   Button,
   Divider,
-  Collapse,
+  Alert,
+  Card,
+  CardContent,
 } from '@mui/material';
 import {
   Edit as EditIcon,
   Save as SaveIcon,
   Cancel as CancelIcon,
-  Receipt as ReceiptIcon,
+  Description as ContractIcon,
   Person as PersonIcon,
-  Business as BusinessIcon,
-  ExpandMore as ExpandMoreIcon,
-  ExpandLess as ExpandLessIcon,
   Warning as WarningIcon,
-  CheckCircle as CheckIcon,
+  Error as ErrorIcon,
+  Info as InfoIcon,
+  CalendarToday as CalendarIcon,
+  Article as TermsIcon,
 } from '@mui/icons-material';
-import type { ContractEntity, AgentRecommendation } from '../../../types';
-import RecommendationsPanel from './RecommendationsPanel';
-import { colors } from '../../../utils/theme';
+import type { ContractEntity, ContractValidation, Contract, TermCategory } from '../../../types';
+import type { DataMessagePayload } from '../../../context/context';
+import { useDataMessage } from '../../../hooks/useDataMessage';
+import { useRoute } from '../../../hooks/useRoute';
 
 interface ContractEntityPanelProps {
   entity?: ContractEntity | null;
   onEdit?: (entity: ContractEntity) => void;
   onSave?: (entity: ContractEntity) => void;
   isEditing?: boolean;
-  recommendations?: AgentRecommendation[];
-  onDismissRecommendation?: (id: string) => void;
-  onApplyRecommendation?: (id: string) => void;
 }
 
-// Mock data for demonstration
-const mockOrder: ContractEntity = {
-  id: 'ORD-2024-001',
-  type: 'order',
-  title: 'Customer Order #2024-001',
-  status: 'pending_review',
-  lastModified: new Date(),
-  assignedTo: 'sarah.johnson@company.com',
-  data: {
-    customer: {
-      id: 'CUST-001',
-      name: 'Acme Corporation',
-      email: 'orders@acme.com',
-      phone: '+1 (555) 123-4567',
-      address: '123 Business St, Suite 100, New York, NY 10001',
-    },
-    orderDetails: {
-      orderDate: '2024-01-15',
-      dueDate: '2024-02-15',
-      currency: 'USD',
-      total: 12450.00,
-      taxAmount: 1245.00,
-      subtotal: 11205.00,
-    },
-    items: [
-      {
-        id: 'ITEM-001',
-        name: 'Enterprise Software License',
-        quantity: 1,
-        unitPrice: 8500.00,
-        total: 8500.00,
-      },
-      {
-        id: 'ITEM-002',
-        name: 'Implementation Services',
-        quantity: 15,
-        unitPrice: 180.50,
-        total: 2707.50,
-      },
-    ],
-    notes: 'Urgent order - customer needs delivery by end of month.',
-  },
-};
-
-const mockRecommendations: AgentRecommendation[] = [
-  {
-    id: 'rec-1',
-    type: 'validation',
-    title: 'Order Total Verified',
-    description: 'The order calculations are correct. Tax amount and total match expected values.',
-    priority: 'low',
-    createdAt: new Date(Date.now() - 5000),
-  },
-  {
-    id: 'rec-2',
-    type: 'warning',
-    title: 'Customer Credit Check',
-    description: 'Customer has exceeded their credit limit by $2,450. Consider requesting payment before delivery.',
-    priority: 'high',
-    entityField: 'orderDetails.total',
-    suggestedAction: 'Request payment',
-    createdAt: new Date(Date.now() - 10000),
-  },
-  {
-    id: 'rec-3',
-    type: 'suggestion',
-    title: 'Upsell Opportunity',
-    description: 'Customer frequently orders implementation services. Consider offering a training package at 15% discount.',
-    priority: 'medium',
-    suggestedAction: 'Add training package',
-    createdAt: new Date(Date.now() - 15000),
-  },
-];
+// Interface for DocumentUpdate message data structure
+interface DocumentUpdateData {
+  contract: Contract;
+  validations: ContractValidation[];
+}
 
 const ContractEntityPanel: React.FC<ContractEntityPanelProps> = ({
-  entity = mockOrder,
+  entity: propEntity,
   onEdit,
   onSave,
   isEditing = false,
-  recommendations = mockRecommendations,
-  onDismissRecommendation,
-  onApplyRecommendation,
 }) => {
-  const [insightsExpanded, setInsightsExpanded] = useState(false);
+  const [contractData, setContractData] = useState<Contract | null>(null);
+  const [validations, setValidations] = useState<ContractValidation[]>([]);
+  const [entity, setEntity] = useState<ContractEntity | null>(propEntity || null);
+  const dataMessageContext = useDataMessage();
+  const { documentId } = useRoute();
 
-  if (!entity) {
+  // Listen for DocumentUpdate messages
+  useEffect(() => {
+    const handleDocumentUpdate = (payload: DataMessagePayload) => {
+      console.log('[ContractEntityPanel] Received DocumentUpdate:', payload);
+      
+      const data = payload.data as DocumentUpdateData;
+      if (data && data.contract) {
+        setContractData(data.contract);
+        setValidations(data.validations || []);
+        
+        // Create or update the entity
+        const updatedEntity: ContractEntity = {
+          id: data.contract.id,
+          type: 'contract',
+          title: data.contract.title,
+          status: getContractStatus(data.validations || []),
+          data: {
+            contract: data.contract,
+            validations: data.validations || [],
+          },
+          lastModified: new Date(),
+          assignedTo: 'admin@example.com',
+        };
+        
+        setEntity(updatedEntity);
+      }
+    };
+
+    const unsubscribe = dataMessageContext.subscribe('DocumentUpdate', handleDocumentUpdate);
+    return unsubscribe;
+  }, [dataMessageContext]);
+
+  // Send chat message when documentId changes
+  useEffect(() => {
+    if (documentId) {
+      console.log('[ContractEntityPanel] DocumentId changed:', documentId);
+      
+      const message = `Please retrieve and display the contract document information for document ID: ${documentId}. 
+
+I need you to show any validation issues or warnings for this document and provide the current status and any recommendations for next steps.`;
+
+      console.log('[ContractEntityPanel] Sending chat message for document:', documentId);
+      
+      const sendChatEvent = new CustomEvent('SendChat', {
+        detail: {
+          message: message
+        }
+      });
+      
+      window.dispatchEvent(sendChatEvent);
+    }
+  }, [documentId]);
+
+  // Update entity when prop changes
+  useEffect(() => {
+    if (propEntity) {
+      setEntity(propEntity);
+      if (propEntity.data?.contract) {
+        setContractData(propEntity.data.contract);
+        setValidations(propEntity.data.validations || []);
+      }
+    }
+  }, [propEntity]);
+
+  const getContractStatus = (validations: ContractValidation[]): string => {
+    const hasErrors = validations.some(v => v.severity === 0);
+    const hasWarnings = validations.some(v => v.severity === 1);
+    
+    if (hasErrors) return 'needs_attention';
+    if (hasWarnings) return 'review_required';
+    return 'in_progress';
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return 'success';
+      case 'needs_attention':
+        return 'error';
+      case 'review_required':
+        return 'warning';
+      case 'in_progress':
+        return 'info';
+      case 'cancelled':
+        return 'error';
+      default:
+        return 'default';
+    }
+  };
+
+  const getValidationsForField = (fieldPath: string): ContractValidation[] => {
+    return validations.filter(v => v.fieldPath === fieldPath);
+  };
+
+  const getSeverityIcon = (severity: number) => {
+    switch (severity) {
+      case 0: return <ErrorIcon color="error" sx={{ fontSize: 16 }} />;
+      case 1: return <WarningIcon color="warning" sx={{ fontSize: 16 }} />;
+      case 2: return <InfoIcon color="info" sx={{ fontSize: 16 }} />;
+      default: return <InfoIcon color="info" sx={{ fontSize: 16 }} />;
+    }
+  };
+
+  const getTermCategoryLabel = (category: TermCategory): string => {
+    switch (category) {
+      case 'General': return 'General';
+      case 'Payment': return 'Payment';
+      case 'Delivery': return 'Delivery';
+      case 'Warranty': return 'Warranty';
+      case 'Liability': return 'Liability';
+      case 'Termination': return 'Termination';
+      case 'Confidentiality': return 'Confidentiality';
+      case 'Intellectual_Property': return 'Intellectual Property';
+      case 'Dispute_Resolution': return 'Dispute Resolution';
+      case 'Compliance': return 'Compliance';
+      default: return 'General';
+    }
+  };
+
+  const ValidationAlert: React.FC<{ validation: ContractValidation }> = ({ validation }) => (
+    <Alert 
+      severity={validation.severity === 0 ? 'error' : validation.severity === 1 ? 'warning' : 'info'}
+      sx={{ 
+        mt: 1, 
+        fontSize: '0.875rem',
+        '& .MuiAlert-message': { fontSize: '0.875rem' }
+      }}
+      icon={getSeverityIcon(validation.severity)}
+    >
+      <Box>
+        <Typography variant="body2" sx={{ fontWeight: 500 }}>
+          {validation.message}
+        </Typography>
+        {validation.suggestedAction && (
+          <Typography variant="caption" sx={{ display: 'block', mt: 0.5, opacity: 0.8 }}>
+            Suggestion: {validation.suggestedAction}
+          </Typography>
+        )}
+      </Box>
+    </Alert>
+  );
+
+  const FieldWithValidations: React.FC<{
+    fieldPath: string;
+    children: React.ReactNode;
+  }> = ({ fieldPath, children }) => {
+    const fieldValidations = getValidationsForField(fieldPath);
+    
+    return (
+      <Box>
+        {children}
+        {fieldValidations.map((validation, index) => (
+          <ValidationAlert key={index} validation={validation} />
+        ))}
+      </Box>
+    );
+  };
+
+  if (!contractData && !entity) {
     return (
       <Box sx={{ 
         height: '100%', 
@@ -137,99 +222,22 @@ const ContractEntityPanel: React.FC<ContractEntityPanelProps> = ({
         p: 4
       }}>
         <Box sx={{ textAlign: 'center' }}>
-          <BusinessIcon sx={{ fontSize: 56, mb: 2, opacity: 0.3 }} />
+          <ContractIcon sx={{ fontSize: 56, mb: 2, opacity: 0.3 }} />
           <Typography variant="h6" gutterBottom sx={{ fontWeight: 500 }}>
-            No Entity Selected
+            No Contract Selected
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Select a business entity to view details
+            Select a contract to view details or wait for contract data to load
           </Typography>
         </Box>
       </Box>
     );
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'success';
-      case 'pending_review':
-        return 'warning';
-      case 'in_progress':
-        return 'info';
-      case 'cancelled':
-        return 'error';
-      default:
-        return 'default';
-    }
-  };
-
-  const getEntityIcon = (type: string) => {
-    switch (type) {
-      case 'order':
-        return <ReceiptIcon />;
-      case 'customer':
-        return <PersonIcon />;
-      case 'invoice':
-        return <ReceiptIcon />;
-      default:
-        return <BusinessIcon />;
-    }
-  };
-
-  const getInsightsSummary = () => {
-    const highPriority = recommendations.filter(r => r.priority === 'high').length;
-    const mediumPriority = recommendations.filter(r => r.priority === 'medium').length;
-    const lowPriority = recommendations.filter(r => r.priority === 'low').length;
-    
-    // Get insight categories with counts
-    const categories = recommendations.reduce((acc, rec) => {
-      if (!acc[rec.type]) acc[rec.type] = 0;
-      acc[rec.type]++;
-      return acc;
-    }, {} as Record<string, number>);
-    
-    return { 
-      highPriority, 
-      mediumPriority, 
-      lowPriority, 
-      total: recommendations.length,
-      categories
-    };
-  };
-
-  const getCategoryIcon = (type: string) => {
-    switch (type) {
-      case 'validation':
-        return <CheckIcon sx={{ fontSize: 16 }} />;
-      case 'warning':
-        return <WarningIcon sx={{ fontSize: 16 }} />;
-      case 'suggestion':
-        return <CheckIcon sx={{ fontSize: 16 }} />; // Using CheckIcon for suggestions too
-      default:
-        return <CheckIcon sx={{ fontSize: 16 }} />;
-    }
-  };
-
-  const getCategoryColor = (type: string) => {
-    switch (type) {
-      case 'validation':
-        return colors.state.success.main;
-      case 'warning':
-        return colors.state.warning.main;
-      case 'suggestion':
-        return colors.state.info.main;
-      default:
-        return colors.gray[500];
-    }
-  };
-
-  const insightsSummary = getInsightsSummary();
-
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
       <Box sx={{ flexGrow: 1 }}>
-        {/* Enhanced Entity Header with Better Visual Hierarchy */}
+        {/* Contract Header */}
         <Box sx={{ p: 3, pb: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -243,16 +251,19 @@ const ContractEntityPanel: React.FC<ContractEntityPanelProps> = ({
                 border: '0.5px solid',
                 borderColor: 'grey.100'
               }}>
-                {getEntityIcon(entity.type)}
+                <ContractIcon />
               </Box>
               <Box>
+                <FieldWithValidations fieldPath="title">
                 <Typography variant="h4" sx={{ fontWeight: 400, mb: 0.5 }}>
-                  {entity.title}
+                    {contractData?.title || entity?.title || 'Untitled Contract'}
                 </Typography>
+                </FieldWithValidations>
                 <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
                   <Typography variant="body2" color="text.secondary" sx={{ fontFamily: 'monospace' }}>
-                    {entity.id}
+                    {contractData?.id || entity?.id}
                   </Typography>
+                  {entity && (
                   <Chip 
                     label={entity.status.replace('_', ' ')} 
                     size="small" 
@@ -264,6 +275,7 @@ const ContractEntityPanel: React.FC<ContractEntityPanelProps> = ({
                       backgroundColor: 'grey.50'
                     }}
                   />
+                  )}
                 </Box>
               </Box>
             </Box>
@@ -273,7 +285,7 @@ const ContractEntityPanel: React.FC<ContractEntityPanelProps> = ({
                 <Button
                   startIcon={<EditIcon />}
                   size="small"
-                  onClick={() => onEdit?.(entity)}
+                  onClick={() => entity && onEdit?.(entity)}
                   variant="outlined"
                   sx={{ minWidth: 80 }}
                 >
@@ -281,7 +293,7 @@ const ContractEntityPanel: React.FC<ContractEntityPanelProps> = ({
                 </Button>
               ) : (
                 <Box sx={{ display: 'flex', gap: 1 }}>
-                  <IconButton size="small" color="success" onClick={() => onSave?.(entity)}>
+                  <IconButton size="small" color="success" onClick={() => entity && onSave?.(entity)}>
                     <SaveIcon />
                   </IconButton>
                   <IconButton size="small" color="error">
@@ -294,9 +306,14 @@ const ContractEntityPanel: React.FC<ContractEntityPanelProps> = ({
           
           <Box sx={{ display: 'flex', gap: 4, color: 'text.secondary' }}>
             <Typography variant="caption" sx={{ opacity: 0.8 }}>
-              Last modified: {entity.lastModified.toLocaleDateString()}
+              Created: {contractData?.createdDate ? new Date(contractData.createdDate).toLocaleDateString() : 'Unknown'}
             </Typography>
-            {entity.assignedTo && (
+            {entity?.lastModified && (
+              <Typography variant="caption" sx={{ opacity: 0.8 }}>
+                Last modified: {entity.lastModified.toLocaleDateString()}
+              </Typography>
+            )}
+            {entity?.assignedTo && (
               <Typography variant="caption" sx={{ opacity: 0.8 }}>
                 Assigned to: {entity.assignedTo}
               </Typography>
@@ -306,418 +323,195 @@ const ContractEntityPanel: React.FC<ContractEntityPanelProps> = ({
 
         <Divider sx={{ mx: 3, borderColor: 'grey.50' }} />
 
-        {/* AI Insights - Unified Component Container */}
-        <Box sx={{ py: 2 }}>
-          {/* Unified AI Insights Component */}
-          <Box sx={{
-            backgroundColor: colors.surface.primary,
-            borderTop: `0.5px solid ${colors.border.accent}`,
-            borderBottom: `0.5px solid ${colors.border.accent}`,
-            overflow: 'hidden'
-          }}>
-            {/* Combined AI Insights Title and Summary in One Row */}
-            <Box 
-              sx={{ 
-                p: 2,
-                backgroundColor: insightsSummary.highPriority > 0 ? colors.state.warning.background : colors.surface.accent,
-                borderBottom: insightsExpanded ? '0.5px solid #E8EAED' : 'none',
-                cursor: 'pointer',
-                transition: 'all 0.2s ease',
-                '&:hover': {
-                  backgroundColor: insightsSummary.highPriority > 0 ? colors.state.warning.altBackground : colors.border.accent,
-                }
-              }}
-              onClick={() => setInsightsExpanded(!insightsExpanded)}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  {/* AI Insights Title */}
-                  <Typography variant="h6" sx={{ 
-                    fontWeight: 500,
-                    color: 'text.primary',
-                    mr: 1
-                  }}>
-                    AI Insights
+        {/* Contract Content */}
+        {contractData && (
+          <Box sx={{ p: 3, pt: 4 }}>
+            {/* Contract Description */}
+            <Box sx={{ mb: 4 }}>
+              <Typography variant="h6" sx={{ mb: 3, fontWeight: 400 }}>
+                Description
+              </Typography>
+              <FieldWithValidations fieldPath="description">
+                {contractData.description ? (
+                  <Typography variant="body1" sx={{ lineHeight: 1.6 }}>
+                    {contractData.description}
                   </Typography>
-                  
-                  {/* Insight Categories Overview */}
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    {Object.entries(insightsSummary.categories).map(([type, count]) => (
-                      <Box 
-                        key={type}
-                        sx={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          gap: 0.5,
-                          px: 1,
-                          py: 0.25,
-                          borderRadius: 1,
-                          backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                          border: '0.5px solid',
-                          borderColor: getCategoryColor(type) + '40',
-                        }}
-                      >
-                        <Box sx={{ color: getCategoryColor(type), display: 'flex' }}>
-                          {getCategoryIcon(type)}
-                        </Box>
-                        <Typography 
-                          variant="caption" 
-                          sx={{ 
-                            fontWeight: 500, 
-                            color: 'text.primary',
-                            textTransform: 'capitalize'
-                          }}
-                        >
-                          {type}: {count}
-                        </Typography>
-                      </Box>
-                    ))}
-                  </Box>
-                  
-                  {/* Priority Summary */}
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    {insightsSummary.highPriority > 0 && (
-                      <Chip
-                        label={`${insightsSummary.highPriority} High`}
-                        size="small"
-                        sx={{
-                                      backgroundColor: colors.state.warning.strongBackground,
-            color: colors.state.warning.text,
-                          fontWeight: 500,
-                          height: 20,
-                          border: `0.5px solid ${colors.state.warning.border}`,
-                          '& .MuiChip-label': { px: 0.75 }
-                        }}
-                      />
-                    )}
-                    {(insightsSummary.mediumPriority > 0 || insightsSummary.lowPriority > 0) && (
-                      <Typography 
-                        variant="caption" 
-                        sx={{ 
-                          color: 'text.secondary'
-                        }}
-                      >
-                        +{insightsSummary.mediumPriority + insightsSummary.lowPriority} more
+                ) : (
+                  <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                    No description provided
                       </Typography>
                     )}
-                  </Box>
-                </Box>
-
-                <IconButton 
-                  size="small" 
-                  sx={{ 
-                    color: 'text.secondary',
-                    '&:hover': { backgroundColor: 'rgba(0, 0, 0, 0.04)' }
-                  }}
-                >
-                  {insightsExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                </IconButton>
-              </Box>
+              </FieldWithValidations>
             </Box>
 
-            {/* Expanded Content - Same Container */}
-            <Collapse in={insightsExpanded}>
-              <Box>
-                
-                {/* Content Container */}
-                <Box sx={{ 
-                  maxHeight: '400px',
-                  overflowY: 'auto',
-                  '&::-webkit-scrollbar': {
-                    width: '6px',
-                  },
-                  '&::-webkit-scrollbar-track': {
-                    backgroundColor: colors.border.accent,
-                  },
-                  '&::-webkit-scrollbar-thumb': {
-                    backgroundColor: colors.gray[300],
-                    borderRadius: '3px',
-                    '&:hover': {
-                      backgroundColor: colors.gray[400],
-                    },
-                  },
-                }}>
-                  <RecommendationsPanel 
-                    recommendations={recommendations}
-                    onDismiss={onDismissRecommendation}
-                    onApply={onApplyRecommendation}
-                  />
-                </Box>
-              </Box>
-            </Collapse>
-          </Box>
-        </Box>
+            <Divider sx={{ my: 4, borderColor: 'grey.50' }} />
 
-        <Divider sx={{ mx: 3, borderColor: 'grey.50' }} />
-
-        {/* Enhanced Order-specific content */}
-        {entity.type === 'order' && entity.data && (
-          <Box sx={{ p: 5, pt: 4 }}>
-            {/* Enhanced Customer Information */}
-            <Box sx={{ mb: 5 }}>
-              <Typography variant="h6" sx={{ mb: 4, fontWeight: 400 }}>
-                Customer Information
+            {/* Effective Date */}
+            <Box sx={{ mb: 4 }}>
+              <Typography variant="h6" sx={{ mb: 3, fontWeight: 400, display: 'flex', alignItems: 'center', gap: 1 }}>
+                <CalendarIcon sx={{ fontSize: 20 }} />
+                Effective Date
               </Typography>
-              <Box sx={{ 
-                display: 'grid', 
-                gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', 
-                gap: 4,
-                mb: 4
-              }}>
-                <Box>
-                  <Typography variant="caption" color="text.secondary" sx={{ 
-                    textTransform: 'uppercase', 
-                    letterSpacing: '0.1em',
-                    fontWeight: 600,
-                    mb: 1,
-                    display: 'block',
-                    opacity: 0.8
-                  }}>
-                    Name
-                  </Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                    {entity.data.customer?.name}
-                  </Typography>
-                </Box>
-                <Box>
-                  <Typography variant="caption" color="text.secondary" sx={{ 
-                    textTransform: 'uppercase', 
-                    letterSpacing: '0.1em',
-                    fontWeight: 600,
-                    mb: 1,
-                    display: 'block',
-                    opacity: 0.8
-                  }}>
-                    Email
-                  </Typography>
+              <FieldWithValidations fieldPath="effectiveDate">
+                {contractData.effectiveDate ? (
                   <Typography variant="body1">
-                    {entity.data.customer?.email}
+                    {new Date(contractData.effectiveDate).toLocaleDateString()}
                   </Typography>
-                </Box>
-                <Box>
-                  <Typography variant="caption" color="text.secondary" sx={{ 
-                    textTransform: 'uppercase', 
-                    letterSpacing: '0.1em',
-                    fontWeight: 600,
-                    mb: 1,
-                    display: 'block',
-                    opacity: 0.8
-                  }}>
-                    Phone
+                ) : (
+                  <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                    No effective date set
                   </Typography>
-                  <Typography variant="body1">
-                    {entity.data.customer?.phone}
-                  </Typography>
-                </Box>
-                <Box>
-                  <Typography variant="caption" color="text.secondary" sx={{ 
-                    textTransform: 'uppercase', 
-                    letterSpacing: '0.1em',
-                    fontWeight: 600,
-                    mb: 1,
-                    display: 'block',
-                    opacity: 0.8
-                  }}>
-                    Customer ID
-                  </Typography>
-                  <Typography variant="body1" sx={{ fontFamily: 'monospace' }}>
-                    {entity.data.customer?.id}
-                  </Typography>
-                </Box>
-              </Box>
-              <Box>
-                <Typography variant="caption" color="text.secondary" sx={{ 
-                  textTransform: 'uppercase', 
-                  letterSpacing: '0.1em',
-                  fontWeight: 600,
-                  mb: 1,
-                  display: 'block',
-                  opacity: 0.8
-                }}>
-                  Address
-                </Typography>
-                <Typography variant="body1">
-                  {entity.data.customer?.address}
-                </Typography>
-              </Box>
+                )}
+              </FieldWithValidations>
             </Box>
 
-            <Divider sx={{ my: 5, borderColor: 'grey.50' }} />
+            <Divider sx={{ my: 4, borderColor: 'grey.50' }} />
 
-            {/* Enhanced Order Details */}
-            <Box sx={{ mb: 5 }}>
-              <Typography variant="h6" sx={{ mb: 4, fontWeight: 400 }}>
-                Order Details
+                        {/* Contract Parties */}
+            <Box sx={{ mb: 4 }}>
+              <Typography variant="h6" sx={{ mb: 3, fontWeight: 400, display: 'flex', alignItems: 'center', gap: 1 }}>
+                <PersonIcon sx={{ fontSize: 20 }} />
+                Parties
               </Typography>
-              <Box sx={{ 
-                display: 'grid', 
-                gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', 
-                gap: 4 
-              }}>
-                <Box>
-                  <Typography variant="caption" color="text.secondary" sx={{ 
-                    textTransform: 'uppercase', 
-                    letterSpacing: '0.1em',
-                    fontWeight: 600,
-                    mb: 1,
-                    display: 'block',
-                    opacity: 0.8
-                  }}>
-                    Order Date
-                  </Typography>
-                  <Typography variant="body1">
-                    {entity.data.orderDetails?.orderDate}
-                  </Typography>
-                </Box>
-                <Box>
-                  <Typography variant="caption" color="text.secondary" sx={{ 
-                    textTransform: 'uppercase', 
-                    letterSpacing: '0.1em',
-                    fontWeight: 600,
-                    mb: 1,
-                    display: 'block',
-                    opacity: 0.8
-                  }}>
-                    Due Date
-                  </Typography>
-                  <Typography variant="body1">
-                    {entity.data.orderDetails?.dueDate}
-                  </Typography>
-                </Box>
-                <Box>
-                  <Typography variant="caption" color="text.secondary" sx={{ 
-                    textTransform: 'uppercase', 
-                    letterSpacing: '0.1em',
-                    fontWeight: 600,
-                    mb: 1,
-                    display: 'block',
-                    opacity: 0.8
-                  }}>
-                    Currency
-                  </Typography>
-                  <Typography variant="body1">
-                    {entity.data.orderDetails?.currency}
-                  </Typography>
-                </Box>
-                <Box>
-                  <Typography variant="caption" color="text.secondary" sx={{ 
-                    textTransform: 'uppercase', 
-                    letterSpacing: '0.1em',
-                    fontWeight: 600,
-                    mb: 1,
-                    display: 'block',
-                    opacity: 0.8
-                  }}>
-                    Total
-                  </Typography>
-                  <Typography variant="h6" sx={{ fontWeight: 600, color: 'primary.main' }}>
-                    ${entity.data.orderDetails?.total?.toLocaleString()}
-                  </Typography>
-                </Box>
-              </Box>
-            </Box>
-
-            <Divider sx={{ my: 5, borderColor: 'grey.50' }} />
-
-            {/* Enhanced Order Items */}
-            <Box sx={{ mb: 5 }}>
-              <Typography variant="h6" sx={{ mb: 4, fontWeight: 400 }}>
-                Order Items
-              </Typography>
-              <TableContainer sx={{ 
-                border: '0.5px solid',
-                borderColor: 'grey.100',
-                borderRadius: 3,
-                backgroundColor: 'background.paper'
-              }}>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Item</TableCell>
-                      <TableCell align="right">Quantity</TableCell>
-                      <TableCell align="right">Unit Price</TableCell>
-                      <TableCell align="right">Total</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {entity.data.items?.map((item) => (
-                      <TableRow key={item.id}>
-                        <TableCell sx={{ py: 3 }}>
-                          <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                            {item.name}
+              <FieldWithValidations fieldPath="parties">
+                {contractData.parties && contractData.parties.length > 0 ? (
+                  <Box sx={{ display: 'grid', gap: 3 }}>
+                    {contractData.parties.map((party, index) => (
+                      <Card key={party.id || index} variant="outlined" sx={{ backgroundColor: 'grey.50' }}>
+                        <CardContent sx={{ p: 3 }}>
+                          <Typography variant="h6" sx={{ fontWeight: 500, mb: 2 }}>
+                            {party.name}
                           </Typography>
-                        </TableCell>
-                        <TableCell align="right" sx={{ py: 3 }}>
-                          {item.quantity}
-                        </TableCell>
-                        <TableCell align="right" sx={{ py: 3 }}>
-                          ${item.unitPrice?.toLocaleString()}
-                        </TableCell>
-                        <TableCell align="right" sx={{ py: 3, fontWeight: 500 }}>
-                          ${item.total?.toLocaleString()}
-                        </TableCell>
-                      </TableRow>
+                          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                            Role: {party.role}
+                          </Typography>
+                          
+                          {/* Representatives */}
+                          {party.representatives && party.representatives.length > 0 && (
+                            <Box sx={{ mb: 2 }}>
+                              <Typography variant="subtitle2" sx={{ fontWeight: 500, mb: 1 }}>
+                                Representatives
+                              </Typography>
+                              {party.representatives.map((person, personIndex) => (
+                                <Box key={person.id || personIndex} sx={{ ml: 2, mb: 1 }}>
+                                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                    {person.name} {person.title && `(${person.title})`}
+                                  </Typography>
+                                  {person.email && (
+                                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                                      Email: {person.email}
+                                    </Typography>
+                                  )}
+                                  {person.phone && (
+                                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                                      Phone: {person.phone}
+                                    </Typography>
+                                  )}
+                                  {person.nationalId && (
+                                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                                      ID: {person.nationalId}
+                                    </Typography>
+                                  )}
+                                </Box>
+                              ))}
+                            </Box>
+                          )}
+                          
+                          {/* Signatories */}
+                          {party.signatories && party.signatories.length > 0 && (
+                            <Box>
+                              <Typography variant="subtitle2" sx={{ fontWeight: 500, mb: 1 }}>
+                                Signatories
+                              </Typography>
+                              {party.signatories.map((person, personIndex) => (
+                                <Box key={person.id || personIndex} sx={{ ml: 2, mb: 1 }}>
+                                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                                    {person.name} {person.title && `(${person.title})`}
+                                  </Typography>
+                                  {person.email && (
+                                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                                      Email: {person.email}
+                                    </Typography>
+                                  )}
+                                  {person.phone && (
+                                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                                      Phone: {person.phone}
+                                    </Typography>
+                                  )}
+                                  {person.nationalId && (
+                                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                                      ID: {person.nationalId}
+                                    </Typography>
+                                  )}
+                                </Box>
+                              ))}
+                            </Box>
+                          )}
+                        </CardContent>
+                      </Card>
                     ))}
-                    <TableRow>
-                      <TableCell colSpan={3} sx={{ fontWeight: 500, borderBottom: 'none' }}>
-                        Subtotal
-                      </TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 500, borderBottom: 'none' }}>
-                        ${entity.data.orderDetails?.subtotal?.toLocaleString()}
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell colSpan={3} sx={{ fontWeight: 500, borderBottom: 'none' }}>
-                        Tax
-                      </TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 500, borderBottom: 'none' }}>
-                        ${entity.data.orderDetails?.taxAmount?.toLocaleString()}
-                      </TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell colSpan={3} sx={{ 
-                        fontWeight: 600, 
-                        borderBottom: 'none',
-                        pt: 3
-                      }}>
-                        Total
-                      </TableCell>
-                      <TableCell align="right" sx={{ 
-                        fontWeight: 600, 
-                        borderBottom: 'none',
-                        pt: 3,
-                        color: 'primary.main'
-                      }}>
-                        ${entity.data.orderDetails?.total?.toLocaleString()}
-                      </TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </TableContainer>
+                  </Box>
+                ) : (
+                  <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                    No parties defined
+                  </Typography>
+                )}
+              </FieldWithValidations>
             </Box>
 
-            {/* Enhanced Notes */}
-            {entity.data.notes && (
-              <>
-                <Divider sx={{ my: 5, borderColor: 'grey.50' }} />
-                <Box>
-                  <Typography variant="h6" sx={{ mb: 3, fontWeight: 400 }}>
-                    Notes
-                  </Typography>
-                  <Box sx={{ 
-                    p: 4, 
-                    backgroundColor: colors.state.warning.background,
-                    borderRadius: 3,
-                    border: '0.5px solid',
-                    borderColor: colors.state.warning.border
-                  }}>
-                    <Typography variant="body1" sx={{ 
-                      lineHeight: 1.6,
-                      color: 'text.primary'
-                    }}>
-                      {entity.data.notes}
-                    </Typography>
+            <Divider sx={{ my: 4, borderColor: 'grey.50' }} />
+
+            {/* Contract Terms */}
+            <Box sx={{ mb: 4 }}>
+              <Typography variant="h6" sx={{ mb: 3, fontWeight: 400, display: 'flex', alignItems: 'center', gap: 1 }}>
+                <TermsIcon sx={{ fontSize: 20 }} />
+                Terms & Conditions
+              </Typography>
+              <FieldWithValidations fieldPath="terms">
+                {contractData.terms && contractData.terms.length > 0 ? (
+                  <Box sx={{ display: 'grid', gap: 3 }}>
+                    {contractData.terms.map((term, index) => (
+                      <Card key={term.id || index} variant="outlined">
+                        <CardContent>
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                            <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
+                              Term #{index + 1}
+                            </Typography>
+                            <Chip 
+                              label={getTermCategoryLabel(term.category)} 
+                              size="small" 
+                              variant="outlined" 
+                              color="primary"
+                            />
+                          </Box>
+                          <Typography variant="body2" sx={{ lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
+                            {term.text}
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    ))}
                   </Box>
+                ) : (
+                  <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                    No terms and conditions defined
+                  </Typography>
+                )}
+              </FieldWithValidations>
+            </Box>
+
+            {/* Global Validations (for fields not displayed above) */}
+            {validations.filter(v => !['title', 'description', 'effectiveDate', 'parties', 'terms'].includes(v.fieldPath)).length > 0 && (
+              <>
+                <Divider sx={{ my: 4, borderColor: 'grey.50' }} />
+                <Box sx={{ mb: 4 }}>
+                  <Typography variant="h6" sx={{ mb: 3, fontWeight: 400 }}>
+                    Additional Validations
+                  </Typography>
+                  {validations
+                    .filter(v => !['title', 'description', 'effectiveDate', 'parties', 'terms'].includes(v.fieldPath))
+                    .map((validation, index) => (
+                      <ValidationAlert key={index} validation={validation} />
+                    ))}
                 </Box>
               </>
             )}
@@ -727,7 +521,5 @@ const ContractEntityPanel: React.FC<ContractEntityPanelProps> = ({
     </Box>
   );
 };
-
-
 
 export default ContractEntityPanel;

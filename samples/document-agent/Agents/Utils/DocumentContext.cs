@@ -7,6 +7,9 @@ namespace Agents.Utils;
 public class DocumentContext
 {
     public Guid? DocumentId { get; set; }
+
+    public string UserId { get; set; }
+
     public MessageThread? Thread { get; set; }
 
     private static readonly Logger<DocumentContext> _logger = Logger<DocumentContext>.For();
@@ -14,6 +17,7 @@ public class DocumentContext
     public DocumentContext(MessageThread thread)
     {
         Thread = thread;
+        UserId = thread.ParticipantId;
         ExtractDocumentId();
     }
 

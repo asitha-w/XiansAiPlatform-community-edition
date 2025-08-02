@@ -1,3 +1,4 @@
+using Services;
 
 public interface IDataMessage
 {
@@ -20,22 +21,38 @@ public class WorkLog : IDataMessage<string>
     }
 }
 
-public class UIComponent : IDataMessage<ComponentDef> {
+public class DocumentUpdate : IDataMessage<ContractWithValidations>
+{
+    public string MessageSubject => typeof(DocumentUpdate).Name;
+    public ContractWithValidations Data { get; set; }
 
-    public string MessageSubject => typeof(UIComponent).Name;
-    public ComponentDef Data { get; set; }
-
-    public UIComponent(string componentName, IDictionary<string, object> properties)
+    public DocumentUpdate(ContractWithValidations contractWithValidations)
     {
-        Data = new ComponentDef(componentName, properties);
+        Data = contractWithValidations;
     }
 }
 
-public class ComponentDef {
+public class ContractWithValidations {
+    public required Contract Contract { get; set; }
+    public required List<ValidationInsight> Validations { get; set; }
+}
+
+public class UICommand : IDataMessage<ComponentRef> {
+
+    public string MessageSubject => typeof(UICommand).Name;
+    public ComponentRef Data { get; set; }
+
+    public UICommand(string componentName, IDictionary<string, object> properties)
+    {
+        Data = new ComponentRef(componentName, properties);
+    }
+}
+
+public class ComponentRef {
     public string Name { get; set; }
     public IDictionary<string, object> Properties { get; set; }
 
-    public ComponentDef(string name, IDictionary<string, object> properties)
+    public ComponentRef(string name, IDictionary<string, object> properties)
     {
         Name = name;
         Properties = properties;

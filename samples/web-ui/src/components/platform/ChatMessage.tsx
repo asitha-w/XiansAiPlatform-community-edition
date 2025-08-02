@@ -12,7 +12,7 @@ import {
 import ReactMarkdown from 'react-markdown';
 import type { ChatMessage } from '../../types';
 import { colors } from '../../utils/theme';
-import UIComponentRenderer, { type UIComponentData } from '../legal/chat-components/ComponentRegistry';
+import UIComponentRenderer, { type UIComponentRef } from '../legal/chat-components/ComponentRegistry';
 
 interface ChatMessageProps {
   message: ChatMessage;
@@ -72,7 +72,7 @@ const ChatMessageComponent: React.FC<ChatMessageProps> = ({ message }) => {
             '& h1, & h2, & h3, & h4, & h5, & h6': {
               margin: '1em 0 0.5em 0',
               fontWeight: 600,
-              '&:first-child': {
+              '&:first-of-type': {
                 marginTop: 0,
               },
             },
@@ -119,7 +119,7 @@ const ChatMessageComponent: React.FC<ChatMessageProps> = ({ message }) => {
           }}
         >
           {message.metadata?.isUIComponent && message.metadata?.uiComponentData ? (
-            <UIComponentRenderer data={message.metadata.uiComponentData as UIComponentData} />
+            <UIComponentRenderer data={message.metadata.uiComponentData as UIComponentRef} />
           ) : (
             <ReactMarkdown>
               {message.content}

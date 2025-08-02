@@ -51,7 +51,7 @@ const WorkLogMessageGroup: React.FC<WorkLogMessageGroupProps> = ({
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'flex-start',
-          mb: 1,
+          mb: 0.5,
           px: 0,
           py: 0,
         }}
@@ -74,15 +74,15 @@ const WorkLogMessageGroup: React.FC<WorkLogMessageGroupProps> = ({
           
           <Box
             sx={{
-              px: 3,
-              py: 2,
+              px: 2.5,
+              py: 1.5,
               backgroundColor: colors.surface.tertiary,
               color: colors.slate[600],
               border: `1px solid ${colors.border.secondary}`,
               borderRadius: 0.5, // Much less rounded than chat bubbles
               maxWidth: '100%',
               fontSize: '0.8rem',
-              lineHeight: 1.5,
+              lineHeight: 1.4,
               opacity: 0.95,
               boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03)',
               position: 'relative',
@@ -97,7 +97,7 @@ const WorkLogMessageGroup: React.FC<WorkLogMessageGroupProps> = ({
                 opacity: 0.3,
               },
               '& p': {
-                margin: '0 0 0.5em 0',
+                margin: '0 0 0.4em 0',
                 '&:last-child': {
                   marginBottom: 0,
                 },
@@ -112,26 +112,30 @@ const WorkLogMessageGroup: React.FC<WorkLogMessageGroupProps> = ({
               },
             }}
           >
-            <ReactMarkdown>
-              {message.content}
-            </ReactMarkdown>
+            <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 2 }}>
+              <Box sx={{ flex: 1 }}>
+                <ReactMarkdown>
+                  {message.content}
+                </ReactMarkdown>
+              </Box>
+              <Typography 
+                variant="caption" 
+                color={colors.text.placeholder}
+                sx={{ 
+                  fontSize: '0.65rem',
+                  flexShrink: 0,
+                  mt: 0.25,
+                  opacity: 0.7,
+                }}
+              >
+                {message.timestamp.toLocaleTimeString([], { 
+                  hour: '2-digit', 
+                  minute: '2-digit' 
+                })}
+              </Typography>
+            </Box>
           </Box>
         </Box>
-        
-        <Typography 
-          variant="caption" 
-          color={colors.text.placeholder}
-          sx={{ 
-            mt: 1,
-            ml: 4,
-            fontSize: '0.7rem',
-          }}
-        >
-          Work Log • {message.timestamp.toLocaleTimeString([], { 
-            hour: '2-digit', 
-            minute: '2-digit' 
-          })}
-        </Typography>
       </ListItem>
     );
   }
@@ -143,7 +147,7 @@ const WorkLogMessageGroup: React.FC<WorkLogMessageGroupProps> = ({
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'flex-start',
-        mb: 1.5,
+        mb: 1,
         px: 0,
         py: 0,
       }}
@@ -222,7 +226,7 @@ const WorkLogMessageGroup: React.FC<WorkLogMessageGroupProps> = ({
                 display: 'flex',
                 alignItems: 'flex-start',
                 gap: 1.5,
-                mb: index === messages.length - 1 ? 0 : 1.5,
+                mb: index === messages.length - 1 ? 0 : 1,
                 position: 'relative',
                 pl: 2, // Add padding to the entire message row
               }}
@@ -243,8 +247,8 @@ const WorkLogMessageGroup: React.FC<WorkLogMessageGroupProps> = ({
               
               <Box
                 sx={{
-                  px: 2.5,
-                  py: 1.5,
+                  px: 2,
+                  py: 1.2,
                   backgroundColor: colors.surface.tertiary,
               color: colors.slate[600],
               border: `1px solid ${colors.border.secondary}`,
@@ -252,7 +256,7 @@ const WorkLogMessageGroup: React.FC<WorkLogMessageGroupProps> = ({
                   maxWidth: 'calc(100% - 40px)', // Adjusted for new layout
                   flex: 1,
                   fontSize: '0.8rem',
-                  lineHeight: 1.5,
+                  lineHeight: 1.4,
                   opacity: 0.95,
                   boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03)',
                   position: 'relative',
@@ -267,7 +271,7 @@ const WorkLogMessageGroup: React.FC<WorkLogMessageGroupProps> = ({
                     opacity: 0.2,
                   },
                   '& p': {
-                    margin: '0 0 0.5em 0',
+                    margin: '0 0 0.4em 0',
                     '&:last-child': {
                       marginBottom: 0,
                     },
@@ -282,24 +286,28 @@ const WorkLogMessageGroup: React.FC<WorkLogMessageGroupProps> = ({
                   },
                 }}
               >
-                <ReactMarkdown>
-                  {message.content}
-                </ReactMarkdown>
-                
-                <Typography 
-                  variant="caption" 
-                  color={colors.text.placeholder}
-                  sx={{ 
-                    mt: 0.5,
-                    display: 'block',
-                    fontSize: '0.7rem',
-                  }}
-                >
-                  {message.timestamp.toLocaleTimeString([], { 
-                    hour: '2-digit', 
-                    minute: '2-digit' 
-                  })}
-                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 2 }}>
+                  <Box sx={{ flex: 1 }}>
+                    <ReactMarkdown>
+                      {message.content}
+                    </ReactMarkdown>
+                  </Box>
+                  <Typography 
+                    variant="caption" 
+                    color={colors.text.placeholder}
+                    sx={{ 
+                      fontSize: '0.65rem',
+                      flexShrink: 0,
+                      mt: 0.15,
+                      opacity: 0.7,
+                    }}
+                  >
+                    {message.timestamp.toLocaleTimeString([], { 
+                      hour: '2-digit', 
+                      minute: '2-digit' 
+                    })}
+                  </Typography>
+                </Box>
               </Box>
             </Box>
           ))}

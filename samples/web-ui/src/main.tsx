@@ -5,9 +5,17 @@ import './index.css'
 import App from './App.tsx'
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode>
+  // Temporarily disable StrictMode in development to prevent double mounting issues
+  // with WebSocket connections causing duplicate history loading
+  process.env.NODE_ENV === 'production' ? (
+    <StrictMode>
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    </StrictMode>
+  ) : (
     <BrowserRouter>
       <App />
     </BrowserRouter>
-  </StrictMode>,
+  ),
 )

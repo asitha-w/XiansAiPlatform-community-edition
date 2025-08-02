@@ -30,6 +30,11 @@ export interface ContractEntity {
 }
 
 export interface ContractEntityData {
+  // Contract-specific data
+  contract?: Contract;
+  validations?: ContractValidation[];
+  
+  // Legacy order data (for backwards compatibility)
   customer?: {
     id: string;
     name: string;
@@ -53,6 +58,61 @@ export interface ContractEntityData {
     total: number;
   }>;
   notes?: string;
+}
+
+// Backend model interfaces matching C# classes exactly
+export interface Contract {
+  id: string; // Guid from backend
+  title: string;
+  createdDate: string; // DateTime from backend
+  effectiveDate?: string | null; // DateTime? from backend
+  description: string;
+  parties: Party[];
+  terms: Term[];
+}
+
+export interface Party {
+  id: string; // Guid from backend
+  role: string;
+  name: string;
+  representatives: Person[];
+  signatories: Person[];
+}
+
+export interface Person {
+  id: string; // Guid from backend
+  name: string;
+  nationalId: string;
+  title: string;
+  email: string;
+  phone: string;
+}
+
+export interface Term {
+  id: string; // Guid from backend
+  category: TermCategory;
+  text: string;
+}
+
+export type TermCategory = 
+  | 'General'
+  | 'Payment' 
+  | 'Delivery'
+  | 'Warranty'
+  | 'Liability'
+  | 'Termination'
+  | 'Confidentiality'
+  | 'Intellectual_Property'
+  | 'Dispute_Resolution'
+  | 'Compliance';
+
+export interface ContractValidation {
+  severity: number; // 0 = error, 1 = warning, 2 = info
+  message: string;
+  fieldPath: string;
+  suggestedAction?: string;
+  priorityIndex: number;
+  command?: string | null;
 }
 
 export type ContractEntityType = 

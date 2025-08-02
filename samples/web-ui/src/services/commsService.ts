@@ -21,6 +21,14 @@ export class CommsService {
   private currentAgent: Agent | null = null;
   private options: CommsServiceOptions;
   private messageCounter = 0;
+  private isLoadingHistory = false;
+  private processedHistoryHashes = new Set<string>();
+  private historyLoadedForAgent: string | null = null;
+
+  // Expose current agent for external checks (read-only)
+  getCurrentAgent(): Agent | null {
+    return this.currentAgent;
+  }
 
   constructor(options: CommsServiceOptions = {}) {
     this.options = options;
@@ -73,18 +81,31 @@ export class CommsService {
   }
 
   async setCurrentAgent(agent: Agent): Promise<void> {
+    // Prevent duplicate agent setup
+    if (this.currentAgent && this.currentAgent.workflow === agent.workflow) {
+      console.log(`[ChatService] Agent ${agent.name} already set, skipping duplicate setup`);
+      return;
+    }
+
     // Unsubscribe from previous agent if any
     if (this.currentAgent && this.isConnected()) {
+      console.log(`[ChatService] Unsubscribing from previous agent: ${this.currentAgent.name}`);
       await this.socketSDK.unsubscribeFromAgent(
         this.currentAgent.workflow,
         this.getParticipantId()
       );
     }
 
+    console.log(`[ChatService] Setting current agent to: ${agent.name}`);
+    
+    // Clear processed history when switching agents to allow fresh history loading
+    this.processedHistoryHashes.clear();
+    this.historyLoadedForAgent = null; // Reset to allow loading for new agent
     this.currentAgent = agent;
 
     // Subscribe to new agent if connected
     if (this.isConnected()) {
+      console.log(`[ChatService] Subscribing to agent: ${agent.name}`);
       await this.socketSDK.subscribeToAgent(
         agent.workflow,
         this.getParticipantId()
@@ -96,10 +117,23 @@ export class CommsService {
   }
 
   private async loadConversationHistory(agent: Agent, retryCount = 0): Promise<void> {
+    // Check if history already loaded for this agent
+    if (this.historyLoadedForAgent === agent.workflow) {
+      console.log(`[ChatService] ✅ History already loaded for ${agent.name}, skipping duplicate request`);
+      return;
+    }
+
+    // Prevent concurrent history loading
+    if (this.isLoadingHistory) {
+      console.log(`[ChatService] ⏸️  History loading already in progress for ${agent.name}, skipping duplicate request`);
+      return;
+    }
+
     const maxRetries = 3;
     const retryDelay = 1000; // 1 second
 
     try {
+      this.isLoadingHistory = true;
       console.log(`[ChatService] Loading conversation history for participant: ${this.getParticipantId()}`);
       
       // Load conversation history - increased page size for better initial load
@@ -111,6 +145,7 @@ export class CommsService {
       );
       
       console.log(`[ChatService] ✅ History loaded successfully for ${agent.name}`);
+      this.historyLoadedForAgent = agent.workflow;
     } catch (error) {
       console.error(`[ChatService] ❌ Failed to load history (attempt ${retryCount + 1}):`, error);
       
@@ -118,12 +153,16 @@ export class CommsService {
       if (retryCount < maxRetries) {
         console.log(`[ChatService] Retrying history load in ${retryDelay}ms...`);
         setTimeout(() => {
+          this.isLoadingHistory = false; // Reset flag before retry
           this.loadConversationHistory(agent, retryCount + 1);
         }, retryDelay);
+        return; // Don't reset flag yet, will be reset in retry
       } else {
         console.error(`[ChatService] 🚨 Failed to load history after ${maxRetries} attempts`);
         this.options.onError?.('Failed to load conversation history');
       }
+    } finally {
+      this.isLoadingHistory = false;
     }
   }
 
@@ -185,7 +224,6 @@ export class CommsService {
     if (this.options.documentId) {
       data.documentId = this.options.documentId;
     }
-    
     return data;
   }
 
@@ -221,6 +259,16 @@ export class CommsService {
       return;
     }
 
+    // Create a hash of the history to detect duplicates
+    const historyIds = history.map(m => m.id).sort().join(',');
+    const historyHash = `${history.length}-${historyIds}`;
+    
+    if (this.processedHistoryHashes.has(historyHash)) {
+      console.log(`[ChatService] 🔄 Skipping duplicate history batch (${history.length} messages)`);
+      return;
+    }
+    
+    this.processedHistoryHashes.add(historyHash);
     console.log(`[ChatService] Processing ${history.length} history messages`);
     
     // Filter out Data type messages from history
@@ -300,6 +348,12 @@ export class CommsService {
   }
 
   async dispose(): Promise<void> {
+    // Reset any loading state
+    this.isLoadingHistory = false;
+    this.currentAgent = null;
+    this.processedHistoryHashes.clear();
+    this.historyLoadedForAgent = null;
+    
     await this.socketSDK.dispose();
   }
 }

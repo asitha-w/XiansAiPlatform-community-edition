@@ -1,9 +1,9 @@
-using System.Text.Json;
-using LegalContract.Services;
+using Services;
 using XiansAi.Flow.Router.Plugins;
 using XiansAi.Logging;
 using XiansAi.Messaging;
 using Agents.Utils;
+using Repositories;
 
 namespace Agents.LegalContract;
 
@@ -13,6 +13,7 @@ public class GeneralCapabilities
 
     private readonly DocumentContext _documentContext;
     private readonly ContractRepository _contractRepository;
+    private readonly ContractUpdateService _contractUpdateService;
     private static readonly Logger<GeneralCapabilities> _logger =
         Logger<GeneralCapabilities>.For();
 
@@ -21,7 +22,9 @@ public class GeneralCapabilities
         _thread = thread;
         _documentContext = new DocumentContext(_thread);
         _contractRepository = new ContractRepository();
+        _contractUpdateService = new ContractUpdateService(_contractRepository, _thread);
     }
+
 
     [Capability("Create a new legal contract document from scratch - Use when user wants to start a new contract or has no existing contract ID")]
     [Parameter("title", "Descriptive title for the new contract (e.g., 'Software Development Agreement', 'Service Contract')")]
@@ -40,13 +43,9 @@ public class GeneralCapabilities
             var contractId = Guid.NewGuid();
 
             var contract = _contractRepository.CreateNewContract(title, contractId);
-            var saveResult = await _contractRepository.SaveContractAsync(contract);
-            if (!saveResult)
-            {
-                throw new InvalidOperationException("Failed to save the new contract document.");
-            }
+            await _contractRepository.SaveContractAsync(contract);
             await _thread.SendData(new WorkLog($"Contract created with ID `{contractId}`"));
-            await _thread.SendData(new UIComponent("ContractLink", new Dictionary<string, object> { { "id", contractId } }));
+            await _thread.SendData(new UICommand("ContractLink", new Dictionary<string, object> { { "id", contractId } }));
             
             return contractId;
         }
@@ -104,30 +103,6 @@ public class GeneralCapabilities
         }
     }
 
-    [Capability("List all available legal contract documents in the system - Use to show user all contracts or help them find a specific contract by browsing")]
-    [Returns("Complete list of contract objects ordered by creation date (newest first), each containing ID, title, status, and basic metadata")]
-    public async Task<List<Contract>> ListAllContracts()
-    {
-        await _thread.SendData(new WorkLog("Starting ListAllDocuments"));
-
-        try
-        {
-            var contracts = await _contractRepository.GetAllContractsAsync();
-            
-            await _thread.SendData(new WorkLog($"Successfully retrieved {contracts.Count} contract documents"));
-            
-            return contracts;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError($"Error occurred while listing contract documents: {ex.Message}");
-            throw new InvalidOperationException(
-                $"Error retrieving contract documents: {ex.Message}",
-                ex
-            );
-        }
-    }
-
     [Capability("Validate the currently active contract document for legal compliance and completeness - Use when user asks to check or validate the contract they're currently working on")]
     [Returns("Comprehensive validation report with critical issues, warnings, and suggestions organized by contract sections (scope, parties, terms, signatures)")]
     public async Task<ValidationResult> ValidateCurrentContract()
@@ -171,86 +146,170 @@ public class GeneralCapabilities
         }
     }
 
-    [Capability("Validate any specific contract document by its ID - Use when user provides a contract ID or wants to validate a contract different from the current session")]
-    [Parameter("contractId", "The unique GUID identifier of the contract to validate (must be a valid existing contract ID)")]
-    [Returns("Detailed validation report with legal compliance insights, categorized by severity (Critical/Warning/Suggestion) and contract sections")]
-    public async Task<ValidationResult> ValidateContractById(Guid contractId)
+    [Capability("Update the title of the currently active contract document - Use when user wants to change the contract title")]
+    [Parameter("newTitle", "New title for the contract document")]
+    [Returns("True if the contract title was successfully updated, false otherwise")]
+    public async Task<bool> UpdateTitle(string newTitle)
     {
-        if (contractId == Guid.Empty)
+        var contractId = _documentContext.DocumentId;
+
+        if (contractId is null || contractId == Guid.Empty)
         {
-            throw new ArgumentException("Contract ID cannot be empty.", nameof(contractId));
+            throw new ArgumentException("Contract ID cannot be empty. Do you like to create a new document?");
         }
 
-        await _thread.SendData(new WorkLog($"Starting to Validate Contract with ID: {contractId}"));
+        if (string.IsNullOrWhiteSpace(newTitle))
+        {
+            throw new ArgumentException("Contract title cannot be empty or null.", nameof(newTitle));
+        }
+
+        await _thread.SendData(new WorkLog($"Starting to update contract title for ID: {contractId}"));
 
         try
         {
-            // Fetch the contract
-            var contract = await _contractRepository.GetContractAsync(contractId);
+            var contract = await _contractRepository.GetContractAsync(contractId.Value);
             if (contract == null)
             {
                 throw new InvalidOperationException($"No contract found with ID: {contractId}");
             }
 
-            // Validate the contract using ContractValidator
-            var validator = new ContractValidator();
-            var validationResult = validator.ValidateContract(contract);
+            contract.Title = newTitle;
+            var result = await UpdateContract(contract);
 
-            await _thread.SendData(new WorkLog($"Successfully validated contract with ID: {contractId}. " +
-                                 $"Valid: {validationResult.IsValid}, " +
-                                 $"Issues: {validationResult.Insights.Count}, " +
-                                 $"Critical: {validationResult.Insights.Count(i => i.Severity == InsightSeverity.Critical)}, "));
-
-            return validationResult;
+            await _thread.SendData(new WorkLog($"Successfully updated contract title to: {newTitle}"));
+            return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError($"Error occurred while validating contract document: {ex.Message}");
+            _logger.LogError($"Error occurred while updating contract title: {ex.Message}");
             throw new InvalidOperationException(
-                $"Error validating contract document: {ex.Message}",
+                $"Error updating contract title: {ex.Message}",
                 ex
             );
         }
     }
 
-    [Capability("Retrieve any specific contract document by its unique ID - Use when user provides a contract ID or wants to access a contract different from the current session")]
-    [Parameter("contractId", "The unique GUID identifier of the contract to retrieve (must be a valid existing contract ID)")]
-    [Returns("Complete contract object with all sections populated (scope, parties, terms, signatures) or throws exception if contract not found")]
-    public async Task<Contract> GetContractById(Guid contractId)
+    [Capability("Update the created date of the currently active contract document - Use when user wants to change when the contract was originally created")]
+    [Parameter("newCreatedDate", "New created date for the contract document")]
+    [Returns("True if the contract created date was successfully updated, false otherwise")]
+    public async Task<bool> UpdateCreatedDate(DateTime newCreatedDate)
     {
-        if (contractId == Guid.Empty)
+        var contractId = _documentContext.DocumentId;
+
+        if (contractId is null || contractId == Guid.Empty)
         {
-            throw new ArgumentException("Contract ID cannot be empty.", nameof(contractId));
+            throw new ArgumentException("Contract ID cannot be empty. Do you like to create a new document?");
         }
 
-        await _thread.SendData(new WorkLog($"Starting to Fetch Contract with ID: {contractId}"));
+        await _thread.SendData(new WorkLog($"Starting to update contract created date for ID: {contractId}"));
 
         try
         {
-            var contract = await _contractRepository.GetContractAsync(contractId);
+            var contract = await _contractRepository.GetContractAsync(contractId.Value);
             if (contract == null)
             {
                 throw new InvalidOperationException($"No contract found with ID: {contractId}");
             }
 
-            await _thread.SendData(new WorkLog($"Successfully retrieved contract with ID: {contractId}"));
-            
-            return contract;
+            contract.CreatedDate = newCreatedDate;
+            var result = await UpdateContract(contract);
+
+            await _thread.SendData(new WorkLog($"Successfully updated contract created date to: {newCreatedDate:yyyy-MM-dd}"));
+            return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError($"Error occurred while fetching contract document: {ex.Message}");
+            _logger.LogError($"Error occurred while updating contract created date: {ex.Message}");
             throw new InvalidOperationException(
-                $"Error retrieving contract document: {ex.Message}",
+                $"Error updating contract created date: {ex.Message}",
                 ex
             );
         }
     }
 
-    [Capability("Update an existing contract document with new information - Use when user wants to modify an existing contract's content, terms, parties, or other details")]
-    [Parameter("contract", "The complete contract object with updated information including all sections (scope, parties, terms, signatures)")]
-    [Returns("True if the contract was successfully updated, false if the contract doesn't exist or update failed")]
-    public async Task<bool> UpdateContract(Contract contract)
+    [Capability("Update the effective date of the currently active contract document - Use when user wants to change when the contract becomes legally effective")]
+    [Parameter("newEffectiveDate", "New effective date for the contract document (can be null if not yet determined)")]
+    [Returns("True if the contract effective date was successfully updated, false otherwise")]
+    public async Task<bool> UpdateEffectiveDate(DateTime? newEffectiveDate)
+    {
+        var contractId = _documentContext.DocumentId;
+
+        if (contractId is null || contractId == Guid.Empty)
+        {
+            throw new ArgumentException("Contract ID cannot be empty. Do you like to create a new document?");
+        }
+
+        await _thread.SendData(new WorkLog($"Starting to update contract effective date for ID: {contractId}"));
+
+        try
+        {
+            var contract = await _contractRepository.GetContractAsync(contractId.Value);
+            if (contract == null)
+            {
+                throw new InvalidOperationException($"No contract found with ID: {contractId}");
+            }
+
+            contract.EffectiveDate = newEffectiveDate;
+            var result = await UpdateContract(contract);
+
+            var effectiveDateText = newEffectiveDate?.ToString("yyyy-MM-dd") ?? "null";
+            await _thread.SendData(new WorkLog($"Successfully updated contract effective date to: {effectiveDateText}"));
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Error occurred while updating contract effective date: {ex.Message}");
+            throw new InvalidOperationException(
+                $"Error updating contract effective date: {ex.Message}",
+                ex
+            );
+        }
+    }
+
+    [Capability("Update the description of the currently active contract document - Use when user wants to change the contract description or summary")]
+    [Parameter("newDescription", "New description for the contract document")]
+    [Returns("True if the contract description was successfully updated, false otherwise")]
+    public async Task<bool> UpdateDescription(string newDescription)
+    {
+        var contractId = _documentContext.DocumentId;
+
+        if (contractId is null || contractId == Guid.Empty)
+        {
+            throw new ArgumentException("Contract ID cannot be empty. Do you like to create a new document?");
+        }
+
+        if (string.IsNullOrWhiteSpace(newDescription))
+        {
+            throw new ArgumentException("Contract description cannot be empty or null.", nameof(newDescription));
+        }
+
+        await _thread.SendData(new WorkLog($"Starting to update contract description for ID: {contractId}"));
+
+        try
+        {
+            var contract = await _contractRepository.GetContractAsync(contractId.Value);
+            if (contract == null)
+            {
+                throw new InvalidOperationException($"No contract found with ID: {contractId}");
+            }
+
+            contract.Description = newDescription;
+            var result = await UpdateContract(contract);
+
+            await _thread.SendData(new WorkLog($"Successfully updated contract description"));
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Error occurred while updating contract description: {ex.Message}");
+            throw new InvalidOperationException(
+                $"Error updating contract description: {ex.Message}",
+                ex
+            );
+        }
+    }
+
+    private async Task<bool> UpdateContract(Contract contract)
     {
         if (contract == null)
         {
@@ -266,16 +325,9 @@ public class GeneralCapabilities
 
         try
         {
-            var updateResult = await _contractRepository.UpdateContractAsync(contract);
-            
-            if (!updateResult)
-            {
-                await _thread.SendData(new WorkLog($"Failed to update contract with ID: {contract.Id} - Contract may not exist"));
-                return false;
-            }
+            await _contractUpdateService.UpdateContractAsync(contract);
 
             await _thread.SendData(new WorkLog($"Successfully updated contract with ID: {contract.Id}"));
-            
             return true;
         }
         catch (Exception ex)

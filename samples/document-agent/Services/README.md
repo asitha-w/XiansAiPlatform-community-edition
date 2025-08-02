@@ -6,7 +6,7 @@ This validation system provides comprehensive validation for legal contracts wit
 
 ### Core Components
 
-- **ValidationInsight**: Represents a single validation finding with severity, section, and details
+- **ValidationInsight**: Represents a single validation finding with severity, message, field path, and suggested action
 - **ValidationResult**: Contains collection of insights with convenience properties
 - **IContractSectionValidator**: Interface for section-specific validators
 - **ContractValidator**: Main orchestrator for all validations
@@ -80,8 +80,8 @@ Console.WriteLine($"Critical Issues: {result.Insights.Count(i => i.Severity == I
 ### Section-Specific Validation
 
 ```csharp
-// Validate only scope
-var scopeResult = validator.GetInsightsBySection(contract, InsightSection.Scope);
+// Validate only fields related to parties
+var partiesResult = validator.GetInsightsBySection(contract, "parties");
 
 // Validate only critical issues
 var criticalResult = validator.GetInsightsBySeverity(contract, InsightSeverity.Critical);

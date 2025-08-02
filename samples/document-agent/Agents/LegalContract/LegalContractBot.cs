@@ -8,6 +8,9 @@ public class LegalContractBot : FlowBase
 {
     public LegalContractBot(){
         SystemPromptName = "Legal Contract Bot";
+        RouterOptions = new XiansAi.Flow.Router.RouterOptions {
+            ModelName = "o3-mini"
+        };
     }
 
     [WorkflowRun]
