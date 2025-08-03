@@ -15,12 +15,9 @@ bot.AddCapabilities<GeneralCapabilities>();
 bot.AddCapabilities<PersonCapabilities>();
 bot.AddCapabilities<PartyCapabilities>();
 bot.AddCapabilities<TermCapabilities>();
-bot.SetChatInterceptor(new ChatInterceptor());
 
 // Add the flow
 var flow =agent.AddFlow<LegalContractFlow>();
-flow.AddActivities<IFlowActivities,FlowActivities>();
 flow.SetDataProcessor<DataProcessor>();
-
 
 await agent.RunAsync();
