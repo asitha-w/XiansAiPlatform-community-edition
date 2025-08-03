@@ -1,12 +1,14 @@
 import { ThemeProvider, CssBaseline, Box } from '@mui/material';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { useMemo } from 'react';
 import theme from './utils/theme';
 import HomePage from './pages/HomePage';
 import BotPage from './pages/BotPage';
 import Navbar from './components/Navbar';
 import type { Agent } from './types';
-import { ContractEntityWithSteps } from './components/legal/contract-entity/ContractEntityWithSteps';
+import { ContractEntityWithSteps } from './features/legal/contract-entity/ContractEntityWithSteps';
 import { DataMessageProvider } from './context/DataMessageContext';
+
 
 // Mock agents data - centralized for the entire app
 const agents: Agent[] = [
@@ -47,7 +49,15 @@ function App() {
 
   // Determine current agent based on URL
   const currentPath = location.pathname.slice(1); // Remove leading slash
-  const currentAgent = currentPath ? agents.find(agent => agent.slug === currentPath) : undefined;
+  
+  // Memoize currentAgent to prevent unnecessary re-renders when the same agent is selected
+  const currentAgent = useMemo(() => {
+    // Extract agent slug from path (first segment before any /)
+    const agentSlug = currentPath ? currentPath.split('/')[0] : undefined;
+    const agent = agentSlug ? agents.find(agent => agent.slug === agentSlug) : undefined;
+    console.log(`[App] 🎯 Current agent memoized: ${agent?.name} id: ${agent?.id} for path: ${currentPath}`);
+    return agent;
+  }, [currentPath]);
 
   return (
     <ThemeProvider theme={theme}>
@@ -92,7 +102,6 @@ function App() {
                   <BotPage 
                     agents={agents} 
                     onSelectAgent={handleAgentSelect}
-                    mode="new"
                   />
                 } 
               />
@@ -102,7 +111,6 @@ function App() {
                   <BotPage 
                     agents={agents} 
                     onSelectAgent={handleAgentSelect}
-                    mode="document"
                   />
                 } 
               />

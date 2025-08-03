@@ -2,7 +2,7 @@ import React from 'react';
 import { Box } from '@mui/material';
 import ContractEntityPanel from './ContractEntityPanel';
 import ProcessSteps from './ProcessSteps';
-import { useRoute } from '../../../hooks/useRoute';
+import { useParams } from 'react-router-dom';
 import type { ContractEntity, AgentRecommendation } from '../../../types';
 
 interface ContractEntityPanelProps {
@@ -26,7 +26,7 @@ export const ContractEntityWithSteps: React.FC<ContractEntityWithStepsProps> = (
   steps,
   ...entityPanelProps
 }) => {
-  const { mode, documentId } = useRoute();
+  const { mode, documentId } = useParams<{ mode?: string; documentId?: string }>();
   
   // Determine current step and entity based on route mode
   const resolvedCurrentStep = currentStep ?? (mode === 'new' ? 0 : undefined);

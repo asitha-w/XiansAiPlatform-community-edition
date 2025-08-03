@@ -25,7 +25,7 @@ import {
 import type { ContractEntity, ContractValidation, Contract, TermCategory } from '../../../types';
 import type { DataMessagePayload } from '../../../context/context';
 import { useDataMessage } from '../../../hooks/useDataMessage';
-import { useRoute } from '../../../hooks/useRoute';
+import { useParams } from 'react-router-dom';
 
 interface ContractEntityPanelProps {
   entity?: ContractEntity | null;
@@ -50,8 +50,7 @@ const ContractEntityPanel: React.FC<ContractEntityPanelProps> = ({
   const [validations, setValidations] = useState<ContractValidation[]>([]);
   const [entity, setEntity] = useState<ContractEntity | null>(propEntity || null);
   const dataMessageContext = useDataMessage();
-  const { documentId } = useRoute();
-
+  const { documentId } = useParams<{ documentId?: string }>();
   // Listen for DocumentUpdate messages
   useEffect(() => {
     const handleDocumentUpdate = (payload: DataMessagePayload) => {
@@ -87,21 +86,21 @@ const ContractEntityPanel: React.FC<ContractEntityPanelProps> = ({
   // Send chat message when documentId changes
   useEffect(() => {
     if (documentId) {
-      console.log('[ContractEntityPanel] DocumentId changed:', documentId);
+//       console.log('[ContractEntityPanel] DocumentId changed:', documentId);
       
-      const message = `Please retrieve and display the contract document information for document ID: ${documentId}. 
+//       const message = `Please retrieve and display the contract document information for document ID: ${documentId}. 
 
-I need you to show any validation issues or warnings for this document and provide the current status and any recommendations for next steps.`;
+// I need you to show any validation issues or warnings for this document and provide the current status and any recommendations for next steps.`;
 
-      console.log('[ContractEntityPanel] Sending chat message for document:', documentId);
+//       console.log('[ContractEntityPanel] Sending chat message for document:', documentId);
       
-      const sendChatEvent = new CustomEvent('SendChat', {
-        detail: {
-          message: message
-        }
-      });
+      // const sendChatEvent = new CustomEvent('SendChat', {
+      //   detail: {
+      //     message: message
+      //   }
+      // });
       
-      window.dispatchEvent(sendChatEvent);
+      //window.dispatchEvent(sendChatEvent);
     }
   }, [documentId]);
 

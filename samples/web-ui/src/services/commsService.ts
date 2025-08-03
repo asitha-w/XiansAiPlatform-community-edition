@@ -30,6 +30,16 @@ export class CommsService {
     return this.currentAgent;
   }
 
+  // Update document ID for the service (used when navigating between documents)
+  updateDocumentId(documentId?: string): void {
+    console.log(`[ChatService] Updating document ID from ${this.options.documentId} to ${documentId}`);
+    this.options.documentId = documentId;
+    console.log(`[ChatService] 🔍 Document ID updated - current options.documentId: ${this.options.documentId}`);
+    // Reset history loading state when document changes
+    this.historyLoadedForAgent = null;
+    this.processedHistoryHashes.clear();
+  }
+
   constructor(options: CommsServiceOptions = {}) {
     this.options = options;
     
@@ -136,12 +146,17 @@ export class CommsService {
       this.isLoadingHistory = true;
       console.log(`[ChatService] Loading conversation history for participant: ${this.getParticipantId()}`);
       
+      // Ensure scope parameter is never undefined (which might be dropped by SDK)
+      const scope = this.options.documentId || undefined;
+      console.log(`[ChatService] 🔍 GetThreadHistory call - workflow: ${agent.workflow}, participant: ${this.getParticipantId()}, scope: ${scope}`);
+      
       // Load conversation history - increased page size for better initial load
       await this.socketSDK.getThreadHistory(
         agent.workflow,
         this.getParticipantId(),
         1,
-        20 // Load more messages initially
+        20,
+        scope
       );
       
       console.log(`[ChatService] ✅ History loaded successfully for ${agent.name}`);
@@ -181,6 +196,7 @@ export class CommsService {
       participantId: this.getParticipantId(),
       workflow: this.currentAgent.workflow,
       type: 'Chat' as const,
+      scope: this.options.documentId,
       text,
       data: this.getMessageData(),
     };
@@ -205,6 +221,7 @@ export class CommsService {
       participantId: this.getParticipantId(),
       workflow: this.currentAgent.workflow,
       type: 'Data' as const,
+      scope: this.options.documentId,
       data: {
         ...data,
         ...this.getMessageData(),

@@ -12,7 +12,7 @@ import {
 import ReactMarkdown from 'react-markdown';
 import type { ChatMessage } from '../../types';
 import { colors } from '../../utils/theme';
-import UIComponentRenderer, { type UIComponentRef } from '../legal/chat-components/ComponentRegistry';
+import UIComponentRenderer, { type UIComponentRef } from '../../features/legal/chat-components/ComponentRegistry';
 
 interface ChatMessageProps {
   message: ChatMessage;

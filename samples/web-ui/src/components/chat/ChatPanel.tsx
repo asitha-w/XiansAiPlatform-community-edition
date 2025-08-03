@@ -5,7 +5,7 @@ import {
 } from '@mui/material';
 import type { ChatMessage as ChatMessageType, Agent } from '../../types';
 import { CommsService } from '../../services/commsService';
-import { useRoute } from '../../hooks/useRoute';
+
 import ChatMessageComponent from './ChatMessage';
 import WorkLogMessageGroup from './WorkLogMessageGroup';
 import AgentHeader from './AgentHeader';
@@ -15,11 +15,12 @@ import ErrorAlert from './ErrorAlert';
 import TypingIndicator from './TypingIndicator';
 import { useDataMessage } from '../../hooks/useDataMessage';
 import type { DataMessagePayload } from '../../context/context';
-import type { UIComponentRef } from '../legal/chat-components/ComponentRegistry';
+import type { UIComponentRef } from '../../features/legal/chat-components/ComponentRegistry';
 
 interface ChatPanelProps {
   currentAgent?: Agent | null;
   participantId?: string; // Optional - will use SDK config participant ID if not provided
+  documentId?: string; // Optional - document context for chat history
 }
 
 // Helper function to group consecutive worklog messages
@@ -65,8 +66,8 @@ const groupMessages = (messages: ChatMessageType[]) => {
 const ChatPanel: React.FC<ChatPanelProps> = ({
   currentAgent,
   participantId,
+  documentId,
 }) => {
-  // Removed render logging to stop console spam during infinite render loop
   
   const [messageInput, setMessageInput] = useState('');
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
@@ -81,8 +82,10 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<MessageInputRef>(null);
   const loadingHistoryTimeoutRef = useRef<number | null>(null);
-  const { documentId } = useRoute();
+  const previousDocumentIdRef = useRef<string | undefined>(undefined);
   const dataMessageContext = useDataMessage();
+  
+  // DocumentId is now passed directly to CommsService and updated via updateDocumentId method
 
   // Helper function to clear loading history with timeout management
   const clearLoadingHistory = (delay: number = 0) => {
@@ -117,6 +120,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
   // Initialize chat service
   useEffect(() => {
     console.log('[ChatPanel] 🔧 Initialize chat service useEffect triggered');
+    console.log('[ChatPanel] 🔍 Component mount details - agent:', currentAgent?.name, 'participantId:', participantId, 'documentId:', documentId);
     const chatService = new CommsService({
       onMessageReceived: (message: ChatMessageType) => {
         setMessages(prev => {
@@ -205,8 +209,8 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
       },
       // Use provided participantId or let ChatService use the configured one from SDK config
       participantId,
-      // Pass documentId from route context for inclusion in all messages
-      documentId,
+      // Start with undefined documentId - will be set via updateDocumentId when agent is set up
+      documentId: undefined,
     });
 
     chatServiceRef.current = chatService;
@@ -230,11 +234,11 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
     return () => {
       chatService.dispose();
     };
-  }, [participantId, documentId, dataMessageContext]); // Temporarily removed dataMessageContext to test infinite render fix
+  }, [participantId, dataMessageContext]); // documentId is now handled separately to avoid recreating the service
 
-  // Handle agent changes and initial connection
+  // Handle agent changes, initial connection, and documentId changes
   useEffect(() => {
-    console.log('[ChatPanel] 🎯 Agent/Connection sync - currentAgent:', currentAgent?.name, 'isConnected:', isConnected, 'chatService:', !!chatServiceRef.current);
+    console.log('[ChatPanel] 🎯 Agent/Connection sync - currentAgent:', currentAgent?.name, 'isConnected:', isConnected, 'documentId:', documentId);
     
     if (!chatServiceRef.current || !currentAgent || !isConnected) {
       console.log('[ChatPanel] ❌ Skipping agent subscription - missing requirements');
@@ -245,16 +249,35 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
       try {
         const existingAgent = chatServiceRef.current!.getCurrentAgent();
         const needsNewAgent = !existingAgent || existingAgent.workflow !== currentAgent.workflow;
+        const documentIdChanged = previousDocumentIdRef.current !== documentId;
         
         if (needsNewAgent) {
           console.log('[ChatPanel] 🚀 Setting up agent:', currentAgent.name);
           
-          // Only clear messages when switching to a different agent (not on reconnection)
+          // Clear messages when switching to a different agent (not on reconnection)
           if (existingAgent && existingAgent.workflow !== currentAgent.workflow) {
             console.log('[ChatPanel] 🧹 Clearing messages for agent switch');
             setMessages([]);
             setPendingRequests(new Set());
           }
+          
+          // Set the document ID for new agent setup
+          chatServiceRef.current!.updateDocumentId(documentId);
+          
+          setIsLoadingHistory(true);
+          await chatServiceRef.current!.setCurrentAgent(currentAgent);
+          // Loading history indicator will be turned off when messages start arriving
+          // Fallback: Clear loading indicator after 3 seconds if no messages arrive
+          clearLoadingHistory(3000);
+        } else if (documentIdChanged) {
+          // Agent is the same, but documentId changed - update document and reload history
+          console.log('[ChatPanel] 🔄 Document ID changed from', previousDocumentIdRef.current, 'to', documentId);
+          console.log('[ChatPanel] 🧹 Clearing messages for document change');
+          setMessages([]);
+          setPendingRequests(new Set());
+          
+          // Update the document ID on the existing service
+          chatServiceRef.current!.updateDocumentId(documentId);
           
           setIsLoadingHistory(true);
           await chatServiceRef.current!.setCurrentAgent(currentAgent);
@@ -262,8 +285,11 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
           // Fallback: Clear loading indicator after 3 seconds if no messages arrive
           clearLoadingHistory(3000);
         } else {
-          console.log('[ChatPanel] ✅ Agent already set:', currentAgent.name);
+          console.log('[ChatPanel] ✅ Agent already set and document unchanged:', currentAgent.name);
         }
+        
+        // Update the previous documentId for next comparison
+        previousDocumentIdRef.current = documentId;
       } catch (err) {
         setError('Failed to set current agent');
         clearLoadingHistory();
@@ -272,7 +298,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
     };
 
     handleAgentSetup();
-  }, [isConnected, currentAgent]); // Depend on both connection state AND agent
+  }, [isConnected, currentAgent, documentId]); // Depend on connection state, agent, AND documentId
 
   // Process pending messages when connection is established and agent is ready
   useEffect(() => {
