@@ -46,12 +46,12 @@ const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(({
   };
   return (
     <Box sx={{ 
-      p: 2, 
+      p: 1, 
               borderTop: `1px solid ${colors.border.primary}`,
       backgroundColor: colors.surface.primary,
       flexShrink: 0 // Prevent input area from shrinking
     }}>
-      <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
+      <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
         <TextField
           fullWidth
           multiline
@@ -67,7 +67,7 @@ const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(({
             '& .MuiOutlinedInput-root': {
               backgroundColor: colors.surface.primary,
               borderRadius: 2,
-              minHeight: 44, // Match send button height
+              minHeight: 36, // Reduced from 44 to 36
               '& fieldset': {
                 borderColor: colors.border.secondary,
               },
@@ -79,7 +79,7 @@ const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(({
               },
             },
             '& .MuiInputBase-input': {
-              padding: '12px 14px', // Ensure proper internal padding
+              padding: '8px 12px', // Reduced from 12px 14px
             }
           }}
         />
@@ -90,8 +90,8 @@ const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(({
             bgcolor: (messageInput.trim() && isConnected && !isLoading) ? colors.slate[700] : colors.slate[100],
             color: (messageInput.trim() && isConnected && !isLoading) ? colors.text.inverse : colors.text.placeholder,
             borderRadius: 2,
-            width: 44,
-            height: 44,
+            width: 36,
+            height: 36,
             '&:hover': {
               bgcolor: (messageInput.trim() && isConnected && !isLoading) ? colors.slate[800] : colors.border.primary,
             },
@@ -101,7 +101,7 @@ const MessageInput = forwardRef<MessageInputRef, MessageInputProps>(({
             }
           }}
         >
-          <SendIcon sx={{ fontSize: 20 }} />
+          <SendIcon sx={{ fontSize: 18 }} />
         </IconButton>
       </Box>
     </Box>

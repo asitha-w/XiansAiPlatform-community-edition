@@ -1,12 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
   Chip,
+  IconButton,
+  Collapse,
 } from '@mui/material';
 import {
   SmartToy as AgentIcon,
   Circle as StatusIcon,
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon,
 } from '@mui/icons-material';
 import type { Agent } from '../../types';
 
@@ -19,6 +23,12 @@ const AgentHeader: React.FC<AgentHeaderProps> = ({
   currentAgent,
   isConnected,
 }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const handleToggleExpanded = () => {
+    setIsExpanded(!isExpanded);
+  };
+
   return (
     <Box sx={{ 
       p: 2, 
@@ -26,7 +36,7 @@ const AgentHeader: React.FC<AgentHeaderProps> = ({
       borderBottom: '1px solid #E5E7EB',
       flexShrink: 0 // Prevent header from shrinking
     }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
         <Box sx={{
           width: 48,
           height: 48,
@@ -38,14 +48,15 @@ const AgentHeader: React.FC<AgentHeaderProps> = ({
           border: '1px solid #E5E7EB',
           boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)'
         }}>
-          <AgentIcon sx={{ fontSize: 24, color: '#6B7280' }} />
+          <AgentIcon sx={{ fontSize: 20, color: '#6B7280' }} />
         </Box>
         
         <Box sx={{ flexGrow: 1 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 0.5 }}>
             <Typography variant="h6" sx={{ 
               fontWeight: 600,
-              color: '#111827'
+              color: '#111827',
+              fontSize: '1.1rem'
             }}>
               {currentAgent.name}
             </Typography>
@@ -65,33 +76,49 @@ const AgentHeader: React.FC<AgentHeaderProps> = ({
           </Box>
           
           <Typography variant="body2" color="#6B7280" sx={{ 
-            mb: 1,
-            lineHeight: 1.4
+            mb: 0.5,
+            lineHeight: 1.3,
+            fontSize: '0.85rem'
           }}>
             {currentAgent.description}
           </Typography>
           
-          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-            {currentAgent.capabilities.map((capability) => (
-              <Chip
-                key={capability}
-                label={capability}
-                size="small"
-                variant="outlined"
-                sx={{ 
-                  height: 24,
-                  borderColor: '#D1D5DB',
-                  color: '#6B7280',
-                  backgroundColor: '#FFFFFF',
-                  fontSize: '0.75rem',
-                  '& .MuiChip-label': {
-                    px: 1.5
-                  }
-                }}
-              />
-            ))}
-          </Box>
+          <Collapse in={isExpanded}>
+            <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mt: 0.5 }}>
+              {currentAgent.capabilities.map((capability) => (
+                <Chip
+                  key={capability}
+                  label={capability}
+                  size="small"
+                  variant="outlined"
+                  sx={{ 
+                    height: 20,
+                    borderColor: '#D1D5DB',
+                    color: '#6B7280',
+                    backgroundColor: '#FFFFFF',
+                    fontSize: '0.7rem',
+                    '& .MuiChip-label': {
+                      px: 1
+                    }
+                  }}
+                />
+              ))}
+            </Box>
+          </Collapse>
         </Box>
+        
+        <IconButton
+          onClick={handleToggleExpanded}
+          size="small"
+          sx={{
+            color: '#6B7280',
+            '&:hover': {
+              backgroundColor: '#F3F4F6',
+            }
+          }}
+        >
+          {isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+        </IconButton>
       </Box>
     </Box>
   );

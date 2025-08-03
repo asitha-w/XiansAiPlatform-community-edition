@@ -69,8 +69,8 @@ function App() {
           <Box sx={{ 
             flexGrow: 1, 
             backgroundColor: '#F9FAFB',
-            height: 'calc(100vh - 92px)', // Account for fixed navbar height
-            overflow: 'auto'
+            overflow: 'auto',
+            paddingTop: '90px' // Push content below fixed navbar (64px toolbar + 48px py:3 + 1px border)
           }}>
             <Routes>
               <Route 
