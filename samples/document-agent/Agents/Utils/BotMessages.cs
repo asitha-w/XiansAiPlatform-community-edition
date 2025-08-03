@@ -1,16 +1,13 @@
 using Services;
 
-public interface IDataMessage
+
+public interface IBotMessage<T>
 {
     string MessageSubject { get; } 
-}
-
-public interface IDataMessage<T> : IDataMessage
-{
     T Data { get; }
 }
 
-public class WorkLog : IDataMessage<string>
+public class WorkLog : IBotMessage<string>
 {
     public string MessageSubject => typeof(WorkLog).Name;
     public string Data { get; set; }
@@ -21,7 +18,7 @@ public class WorkLog : IDataMessage<string>
     }
 }
 
-public class DocumentUpdate : IDataMessage<ContractWithValidations>
+public class DocumentUpdate : IBotMessage<ContractWithValidations>
 {
     public string MessageSubject => typeof(DocumentUpdate).Name;
     public ContractWithValidations Data { get; set; }
@@ -32,12 +29,23 @@ public class DocumentUpdate : IDataMessage<ContractWithValidations>
     }
 }
 
+public class ErrorMessage : IBotMessage<string>
+{
+    public string MessageSubject => typeof(ErrorMessage).Name;
+    public string Data { get; set; }
+
+    public ErrorMessage(string errorMessage)
+    {
+        Data = errorMessage;
+    }
+}
+
 public class ContractWithValidations {
     public required Contract Contract { get; set; }
     public required List<ValidationInsight> Validations { get; set; }
 }
 
-public class UICommand : IDataMessage<ComponentRef> {
+public class UICommand : IBotMessage<ComponentRef> {
 
     public string MessageSubject => typeof(UICommand).Name;
     public ComponentRef Data { get; set; }

@@ -276,8 +276,10 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
 
   // Process pending messages when connection is established and agent is ready
   useEffect(() => {
+    console.log('[ChatPanel] 🔄 Pending message check - isConnected:', isConnected, 'hasAgent:', !!chatServiceRef.current?.getCurrentAgent(), 'pendingCount:', pendingMessages.length);
+    
     if (isConnected && chatServiceRef.current?.getCurrentAgent() && pendingMessages.length > 0) {
-      console.log('[ChatPanel] Processing', pendingMessages.length, 'pending messages');
+      console.log('[ChatPanel] ✅ Processing', pendingMessages.length, 'pending messages');
       
       const messagesToProcess = [...pendingMessages];
       setPendingMessages([]); // Clear the queue immediately to prevent re-processing
@@ -346,7 +348,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
       // Start processing from the first message
       processNextMessage(0);
     }
-  }, [isConnected, pendingMessages]);
+  }, [isConnected, pendingMessages, currentAgent]); // Added currentAgent to ensure it triggers when agent is ready
 
   // Subscribe to WorkLog data messages
   useEffect(() => {

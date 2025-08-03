@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useParams, useLocation } from 'react-router-dom';
 import { RouteContext } from './context';
 import type { RouteContextType } from './context';
@@ -17,12 +17,12 @@ export const RouteProvider: React.FC<RouteProviderProps> = ({ children, mode }) 
     mode === 'document' ? 'document' : 
     'default';
 
-  const value: RouteContextType = {
+  const value: RouteContextType = useMemo(() => ({
     slug,
     documentId,
     mode: routeMode,
     pathname: location.pathname,
-  };
+  }), [slug, documentId, routeMode, location.pathname]);
 
   return (
     <RouteContext.Provider value={value}>

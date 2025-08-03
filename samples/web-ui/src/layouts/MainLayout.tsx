@@ -18,7 +18,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
   if (!agentComponent) {
     return (
       <Box sx={{ 
-        height: '100vh', 
+        height: '100%', 
         display: 'flex', 
         flexDirection: 'column',
         backgroundColor: colors.surface.muted
@@ -37,7 +37,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
             sx={{ 
               width: '100%',
               maxWidth: '1000px', // Increased from 800px to 1000px for wider chat panel
-              height: 'calc(100vh - 200px)', // Adjust height to account for fixed navbar and padding
+              height: 'calc(100% - 100px)', // Adjust height to account for padding
               maxHeight: '700px',
               px: { xs: 2, sm: 4 },
               display: 'flex',
@@ -66,7 +66,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
   // Render full two-column layout
   return (
     <Box sx={{ 
-      height: '100vh', 
+      height: '100%', 
       display: 'flex', 
       flexDirection: 'column',
               backgroundColor: colors.surface.muted

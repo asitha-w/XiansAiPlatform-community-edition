@@ -234,6 +234,9 @@ export class CommsService {
     }
     
     const chatMessage = this.convertToChatMessage(message, 'agent');
+    if (chatMessage.content === '') {
+      return;
+    }
     this.options.onMessageReceived?.(chatMessage);
   }
 
@@ -313,7 +316,7 @@ export class CommsService {
   private convertToChatMessage(message: Message, sender: 'user' | 'agent'): ChatMessage {
     return {
       id: message.id || `msg-${Date.now()}-${Math.random()}`,
-      content: message.text || 'No content',
+      content: message.text || '',
       sender,
       timestamp: message.createdAt ? new Date(message.createdAt) : new Date(),
       type: 'text',

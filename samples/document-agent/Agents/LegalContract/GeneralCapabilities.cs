@@ -4,6 +4,7 @@ using XiansAi.Logging;
 using XiansAi.Messaging;
 using Agents.Utils;
 using Repositories;
+using System.Linq.Expressions;
 
 namespace Agents.LegalContract;
 
@@ -46,6 +47,9 @@ public class GeneralCapabilities
             await _contractRepository.SaveContractAsync(contract);
             await _thread.SendData(new WorkLog($"Contract created with ID `{contractId}`"));
             await _thread.SendData(new UICommand("ContractLink", new Dictionary<string, object> { { "id", contractId } }));
+
+            // Skip the response to the user
+            _thread.SkipResponse = true;
             
             return contractId;
         }

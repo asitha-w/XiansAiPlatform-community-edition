@@ -1,6 +1,7 @@
 ﻿using DotNetEnv;
 using XiansAi.Flow;
 using Agents.LegalContract;
+using Agents.Utils;
 
 // Load the environment variables from the .env file
 Env.Load();
@@ -8,11 +9,18 @@ Console.WriteLine("Starting Legal Contract Agent...\n");
 
 var agent = new Agent("Legal Contract Agent");
 
+// Add the bot
 var bot = agent.AddBot<LegalContractBot>();
-bot.AddCapabilities(typeof(GeneralCapabilities));
-bot.AddCapabilities(typeof(PersonCapabilities));
-bot.AddCapabilities(typeof(PartyCapabilities));
-bot.AddCapabilities(typeof(TermCapabilities));
+bot.AddCapabilities<GeneralCapabilities>();
+bot.AddCapabilities<PersonCapabilities>();
+bot.AddCapabilities<PartyCapabilities>();
+bot.AddCapabilities<TermCapabilities>();
 bot.SetChatInterceptor(new ChatInterceptor());
+
+// Add the flow
+var flow =agent.AddFlow<LegalContractFlow>();
+flow.AddActivities<IFlowActivities,FlowActivities>();
+flow.SetDataProcessor<DataProcessor>();
+
 
 await agent.RunAsync();
