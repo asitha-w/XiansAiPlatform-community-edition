@@ -301,6 +301,10 @@ export class BotService {
   }
 
   private handleChatMessage(message: Message): void {
+    if(message.scope !== this.options.documentId) {
+      console.warn('[BotService] Chat message received but not for this document:', message.id, message.data);
+      return;
+    }
     console.log('🎯 [BotService] INCOMING MESSAGE RECEIVED:', {
       id: message.id,
       text: message.text,
@@ -326,6 +330,11 @@ export class BotService {
   }
 
   private handleDataMessage(message: Message): void {
+    if(message.scope !== this.options.documentId) {
+      console.warn('[BotService] Data message received but not for this document:', message.id, message.data);
+      return;
+    }
+
     console.log('[BotService] Data message received:', message.id, message.data);
     
     // Notify subscribers about the data message

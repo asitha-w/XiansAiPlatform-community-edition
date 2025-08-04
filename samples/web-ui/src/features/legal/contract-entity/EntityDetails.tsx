@@ -2,19 +2,13 @@ import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
-  Chip,
-  IconButton,
-  Button,
-  Divider,
   Alert,
   Card,
   CardContent,
+  Divider,
+  Chip,
 } from '@mui/material';
 import {
-  Refresh as RefreshIcon,
-  Save as SaveIcon,
-  Cancel as CancelIcon,
-  Description as ContractIcon,
   Person as PersonIcon,
   Warning as WarningIcon,
   Error as ErrorIcon,
@@ -23,47 +17,23 @@ import {
   Article as TermsIcon,
 } from '@mui/icons-material';
 import type { ContractEntity, ContractValidation, Contract, TermCategory } from '../../../types';
-import { useParams } from 'react-router-dom';
-import EntityOverview from './EntityOverview';
 
 export interface EntityDetailsProps {
   entity?: ContractEntity | null;
   contractData?: Contract | null;
   validations?: ContractValidation[];
-  onSave?: (entity: ContractEntity) => void;
-  isEditing?: boolean;
-  onRefreshDocument?: () => Promise<void>;
 }
 
 const EntityDetails: React.FC<EntityDetailsProps> = ({
   entity: propEntity,
   contractData: propContractData,
   validations: propValidations = [],
-  onSave,
-  isEditing = false,
-  onRefreshDocument,
 }) => {
   const [entity, setEntity] = useState<ContractEntity | null>(propEntity || null);
-  const { documentId } = useParams<{ documentId?: string }>();
 
   // Use props for contract data and validations, fallback to entity data if props not provided
   const contractData = propContractData || entity?.data?.contract || null;
   const validations = propValidations.length > 0 ? propValidations : entity?.data?.validations || [];
-
-  // Send chat message when documentId changes
-  useEffect(() => {
-    if (documentId) {
-      // const message = `Please retrieve the status of this contract.`;
-
-      // const sendChatEvent = new CustomEvent('SendChat', {
-      //   detail: {
-      //     message: message
-      //   }
-      // });
-
-      // window.dispatchEvent(sendChatEvent);
-    }
-  }, [documentId]);
 
   // Update entity when prop changes
   useEffect(() => {
@@ -71,25 +41,6 @@ const EntityDetails: React.FC<EntityDetailsProps> = ({
       setEntity(propEntity);
     }
   }, [propEntity]);
-
-
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'success';
-      case 'needs_attention':
-        return 'error';
-      case 'review_required':
-        return 'warning';
-      case 'in_progress':
-        return 'info';
-      case 'cancelled':
-        return 'error';
-      default:
-        return 'default';
-    }
-  };
 
   const getValidationsForField = (fieldPath: string): ContractValidation[] => {
     return validations.filter(v => v.fieldPath === fieldPath);
@@ -160,133 +111,18 @@ const EntityDetails: React.FC<EntityDetailsProps> = ({
   };
 
   if (!contractData && !entity) {
-    return (
-      <Box sx={{
-        height: '100%',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        color: 'text.secondary',
-        mt: 10,
-        p: 4
-      }}>
-        <Box sx={{ textAlign: 'center' }}>
-          <ContractIcon sx={{ fontSize: 56, mb: 2, opacity: 0.3 }} />
-          <Typography variant="h6" gutterBottom sx={{ fontWeight: 500 }}>
-            No Contract Selected
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Select a contract to view details or wait for contract data to load
-          </Typography>
-        </Box>
-      </Box>
-    );
+    return null;
   }
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-      <Box sx={{ flexGrow: 1 }}>
-        {/* Contract Header */}
-        <Box sx={{ p: 3, pb: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Box sx={{
-                p: 1.5,
-                borderRadius: 2,
-                backgroundColor: 'grey.50',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                border: '0.5px solid',
-                borderColor: 'grey.100'
-              }}>
-                <ContractIcon />
-              </Box>
-              <Box>
-                <FieldWithValidations fieldPath="title">
-                  <Typography variant="h4" sx={{ fontWeight: 400, mb: 0.5 }}>
-                    {contractData?.title || entity?.title || 'Untitled Contract'}
-                  </Typography>
-                </FieldWithValidations>
-                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                  <Typography variant="body2" color="text.secondary" sx={{ fontFamily: 'monospace' }}>
-                    {contractData?.id || entity?.id}
-                  </Typography>
-                  {entity && (
-                    <Chip
-                      label={entity.status.replace('_', ' ')}
-                      size="small"
-                      color={getStatusColor(entity.status)}
-                      variant="outlined"
-                      sx={{
-                        textTransform: 'capitalize',
-                        borderColor: 'grey.200',
-                        backgroundColor: 'grey.50'
-                      }}
-                    />
-                  )}
-                </Box>
-              </Box>
-            </Box>
-
-            <Box sx={{ display: 'flex', gap: 1.5 }}>
-              {!isEditing ? (
-                <Button
-                  startIcon={<RefreshIcon />}
-                  size="small"
-                  onClick={() => onRefreshDocument?.()}
-                  variant="outlined"
-                  sx={{ minWidth: 80 }}
-                >
-                  Refresh
-                </Button>
-              ) : (
-                <Box sx={{ display: 'flex', gap: 1 }}>
-                  <IconButton size="small" color="success" onClick={() => entity && onSave?.(entity)}>
-                    <SaveIcon />
-                  </IconButton>
-                  <IconButton size="small" color="error">
-                    <CancelIcon />
-                  </IconButton>
-                </Box>
-              )}
-            </Box>
-          </Box>
-
-          <Box sx={{ display: 'flex', gap: 4, color: 'text.secondary' }}>
-            <Typography variant="caption" sx={{ opacity: 0.8 }}>
-              Created: {contractData?.createdDate ? new Date(contractData.createdDate).toLocaleDateString() : 'Unknown'}
-            </Typography>
-            {entity?.lastModified && (
-              <Typography variant="caption" sx={{ opacity: 0.8 }}>
-                Last modified: {entity.lastModified.toLocaleDateString()}
-              </Typography>
-            )}
-            {entity?.assignedTo && (
-              <Typography variant="caption" sx={{ opacity: 0.8 }}>
-                Assigned to: {entity.assignedTo}
-              </Typography>
-            )}
-          </Box>
-        </Box>
-
-        <Divider sx={{ mx: 3, borderColor: 'grey.50' }} />
-
-        {/* Entity Overview - Document Insights */}
-        {contractData && (
-          <Box sx={{ p: 3, pb: 2 }}>
-            <EntityOverview
-              validations={validations}
-            />
-          </Box>
-        )}
-
-        {contractData && (
-          <Divider sx={{ mx: 3, borderColor: 'grey.50' }} />
-        )}
-
-        {/* Contract Content */}
-        {contractData && (
+    <Box sx={{ 
+      backgroundColor: '#FFFFFF',
+      borderRadius: 2,
+      border: '1px solid #E5E7EB',
+      boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)'
+    }}>
+      {/* Contract Content */}
+      {contractData && (
           <Box sx={{ p: 3, pt: 4 }}>
             {/* Contract Description */}
             <Box sx={{ mb: 4 }}>
@@ -479,7 +315,6 @@ const EntityDetails: React.FC<EntityDetailsProps> = ({
             )}
           </Box>
         )}
-      </Box>
     </Box>
   );
 };

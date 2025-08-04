@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Box } from '@mui/material';
+import { Box, Typography } from '@mui/material';
+import { Description as ContractIcon } from '@mui/icons-material';
 import EntityDetails from './EntityDetails';
+import EntityOverview from './EntityOverview';
 import { useParams } from 'react-router-dom';
 import { useDataService } from '../../../hooks/useDataService';
 import { useDataMessage } from '../../../hooks/useDataMessage';
@@ -18,7 +20,7 @@ interface DocumentUpdateData {
 }
 
 // Wrapper component for ContractEntityPanel with routing support
-// Note: EntityOverview (validation insights) is now integrated directly into ContractEntityPanel
+// Now renders EntityOverview (header + validation insights) and EntityDetails (document content) as separate components
 interface ContractEntityPanelProps extends EntityDetailsProps {
   // Legacy props for backwards compatibility - no longer used since validation insights 
   // are shown automatically based on DocumentUpdate messages
@@ -94,12 +96,10 @@ export const ContractEntityPanel: React.FC<ContractEntityPanelProps> = ({
         setValidations(validations);
         
         // Create or update the entity
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const contractAny = contract as any; // Handle property casing flexibility
         const updatedEntity: ContractEntity = {
-          id: contractAny.id || contractAny.Id,
+          id: contract.id,
           type: 'contract',
-          title: contractAny.title || contractAny.Title || '',
+          title: contract.title || '',
           status: getContractStatus(validations),
           data: {
             contract: contract,
@@ -110,7 +110,7 @@ export const ContractEntityPanel: React.FC<ContractEntityPanelProps> = ({
         };
         
         setEntity(updatedEntity);
-        console.log('[ContractEntityWithSteps] ✅ Entity updated successfully with contract:', contractAny.title || contractAny.Title);
+        console.log('[ContractEntityWithSteps] ✅ Entity updated successfully with contract:', contract.title);
       } else {
         console.warn('[ContractEntityWithSteps] ⚠️  DocumentUpdate payload missing contract data:', data);
         console.warn('[ContractEntityWithSteps] Available data keys:', data ? Object.keys(data) : 'no data');
@@ -311,25 +311,51 @@ export const ContractEntityPanel: React.FC<ContractEntityPanelProps> = ({
   
   console.log('ContractEntityWithSteps - mode:', mode, 'documentId:', documentId, 'currentFlow:', currentFlow, 'isConnected:', isConnected, 'hasContract:', !!contractData);
   
-  return (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      {/* Contract Entity Panel now includes EntityOverview internally */}
-      <Box sx={{ 
-        backgroundColor: '#FFFFFF',
-        borderRadius: 2,
-        border: '1px solid #E5E7EB',
+  // Show "No Contract Selected" message when there's no contract data or entity
+  if (!contractData && !resolvedEntity) {
+    return (
+      <Box sx={{
+        height: '100%',
         display: 'flex',
-        flexDirection: 'column',
-        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)'
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: 'text.secondary',
+        p: 4
       }}>
-        <EntityDetails 
-          {...entityPanelProps} 
-          entity={resolvedEntity}
-          contractData={contractData}
-          validations={validations}
-          onRefreshDocument={refreshDocument}
-        />
+        <Box sx={{ textAlign: 'center' }}>
+          <ContractIcon sx={{ fontSize: 80, mb: 3, opacity: 0.3 }} />
+          <Typography variant="h5" gutterBottom sx={{ fontWeight: 400, mb: 2 }}>
+            No Contract Selected
+          </Typography>
+          <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
+            Select a contract to view details or wait for contract data to load
+          </Typography>
+          {documentId && (
+            <Typography variant="body2" color="text.secondary" sx={{ opacity: 0.7, fontFamily: 'monospace' }}>
+              Document ID: {documentId}
+            </Typography>
+          )}
+        </Box>
       </Box>
+    );
+  }
+  
+  return (
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', gap: 1 }}>
+      {/* Entity Overview - Header and Validation Summary */}
+      <EntityOverview
+        entity={resolvedEntity}
+        contractData={contractData}
+        validations={validations}
+        onRefreshDocument={refreshDocument}
+      />
+      
+      {/* Entity Details - Document Content */}
+      <EntityDetails 
+        entity={resolvedEntity}
+        contractData={contractData}
+        validations={validations}
+      />
     </Box>
   );
 };

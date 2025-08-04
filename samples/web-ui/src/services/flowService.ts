@@ -191,6 +191,10 @@ export class FlowService {
 
   private handleDataMessage(message: Message): void {
     console.log('[FlowService] Data message received:', message.id, message.data);
+    if(message.scope !== this.options.documentId) {
+      console.warn('[FlowService] Data message received but not for this document:', message.id, message.data);
+      return;
+    }
     this.options.onDataMessageReceived?.(message);
   }
 
