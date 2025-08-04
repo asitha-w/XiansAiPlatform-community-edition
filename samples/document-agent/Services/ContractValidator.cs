@@ -237,9 +237,6 @@ public class TermsValidator : IContractSectionValidator
             ValidateIndividualTerm(result, terms[i], i);
         }
 
-        // Check for essential term categories
-        CheckEssentialCategories(result, terms);
-
         return result;
     }
 
@@ -269,29 +266,6 @@ public class TermsValidator : IContractSectionValidator
             result.AddInsight(InsightSeverity.Suggestion,
                 "Consider adding obligation terms - Obligation terms clarify responsibilities of each party",
                 "terms", "Add terms defining obligations and responsibilities");
-        }
-    }
-
-    private void CheckEssentialCategories(ValidationResult result, List<Term> terms)
-    {
-        var categories = terms.Select(t => t.Category).ToHashSet();
-
-        // Check for essential categories
-        var essentialCategories = new[]
-        {
-            TermCategory.Duration,
-            TermCategory.Termination,
-            TermCategory.Liability
-        };
-
-        foreach (var category in essentialCategories)
-        {
-            if (!categories.Contains(category))
-            {
-                result.AddInsight(InsightSeverity.Suggestion,
-                    $"Consider adding {category} terms - {category} terms provide important contract structure",
-                    "terms", $"Add {category.ToString().ToLower()} terms to the contract");
-            }
         }
     }
 
@@ -371,15 +345,6 @@ public class SignaturesValidator : IContractSectionValidator
             }
         }
 
-        // Check for signatories from unknown parties (optional warning)
-        var partySignatoryNames = parties.SelectMany(p => p.Signatories.Select(s => s.Name?.ToLower())).ToHashSet();
-        if (partySignatoryNames.Count == 0)
-        {
-            result.AddInsight(InsightSeverity.Critical,
-                "No signatories found across all parties - Contract requires authorized signatories",
-                "signatories", "Designate authorized signatories for each party");
-        }
-
         // Validate individual signatures
         for (int i = 0; i < signatures.Count; i++)
         {
@@ -407,21 +372,6 @@ public class SignaturesValidator : IContractSectionValidator
                 $"signatories[{index}].title", "Provide the signatory's title or position");
         }
 
-        // Verify signatory appears in party representatives (if representatives exist)
-        if (!string.IsNullOrWhiteSpace(signatory.Name))
-        {
-            var isRepresentative = parties.Any(p => 
-                p.Representatives.Any(r => 
-                    r.Name?.Equals(signatory.Name, StringComparison.OrdinalIgnoreCase) == true));
-
-            if (!isRepresentative && parties.Any(p => p.Representatives.Any()))
-            {
-                result.AddInsight(InsightSeverity.Suggestion,
-                    $"Signatory '{signatory.Name}' is not listed as a representative for any party - Consider verifying signatory authority or adding them as a representative",
-                    $"signatories[{index}].name",
-                    "Verify signatory authority or add them to the appropriate party's representatives list");
-            }
-        }
     }
 }
 

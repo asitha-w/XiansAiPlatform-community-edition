@@ -1,8 +1,8 @@
 import React from 'react';
 import ContractLink from './ContractLink';
 import ContractParty from './ContractParty';
+import ContractTerms from './ContractTerms';
 import Calendar from './Calendar';
-import TermsConditions from './TermsConditions';
 
 export interface UIComponentRef {
   name: string;
@@ -17,8 +17,8 @@ export interface UIComponentProps {
 const componentRegistry: Record<string, React.FC<UIComponentProps>> = {
   ContractLink,
   ContractParty,
+  ContractTerms,
   Calendar,
-  TermsConditions,
   // Add more components here as needed
   // ExampleComponent: ExampleComponent,
 };

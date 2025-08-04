@@ -15,7 +15,7 @@ public class UserAcquaintances
 }
 
 /// <summary>
-/// Repository for managing person/acquaintance data with file-per-user storage
+/// Repository for managing person/acquaintance data with hardcoded sample data
 /// </summary>
 public class PersonRepository
 {
@@ -24,6 +24,7 @@ public class PersonRepository
 
     public PersonRepository()
     {
+        // Keep temp directory setup for compatibility, though not used with hardcoded data
         _tempDirectory = Path.Combine(Path.GetTempPath(), "PersonAcquaintances");
         Directory.CreateDirectory(_tempDirectory);
         
@@ -46,54 +47,80 @@ public class PersonRepository
     }
 
     /// <summary>
-    /// Loads user acquaintances from file, or creates a new instance if file doesn't exist
+    /// Returns hardcoded sample acquaintances instead of loading from file
     /// </summary>
     /// <param name="userId">The user ID</param>
-    /// <returns>UserAcquaintances instance</returns>
+    /// <returns>UserAcquaintances instance with 5 sample acquaintances</returns>
     private async Task<UserAcquaintances> LoadUserAcquaintancesAsync(string userId)
     {
-        var filePath = GetUserFilePath(userId);
+        await Task.CompletedTask; // Maintain async signature
         
-        if (!File.Exists(filePath))
-        {
-            return new UserAcquaintances { UserId = userId };
-        }
-
-        try
-        {
-            var jsonContent = await File.ReadAllTextAsync(filePath);
-            var userAcquaintances = JsonSerializer.Deserialize<UserAcquaintances>(jsonContent, _jsonOptions);
-            return userAcquaintances ?? new UserAcquaintances { UserId = userId };
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error reading acquaintances for user {userId}: {ex.Message}");
-            return new UserAcquaintances { UserId = userId };
-        }
+        return new UserAcquaintances 
+        { 
+            UserId = userId,
+            CreatedDate = DateTime.UtcNow.AddDays(-30),
+            LastModified = DateTime.UtcNow.AddDays(-5),
+            Acquaintances = new List<Person>
+            {
+                new Person
+                {
+                    Id = Guid.Parse("11111111-1111-1111-1111-111111111111"),
+                    Name = "Sarah Johnson",
+                    NationalId = "123456789",
+                    Title = "Senior Software Engineer",
+                    Email = "sarah.johnson@techcorp.com",
+                    Phone = "+1-555-0101"
+                },
+                new Person
+                {
+                    Id = Guid.Parse("22222222-2222-2222-2222-222222222222"),
+                    Name = "Michael Chen",
+                    NationalId = "987654321",
+                    Title = "Legal Counsel",
+                    Email = "m.chen@lawfirm.com",
+                    Phone = "+1-555-0202"
+                },
+                new Person
+                {
+                    Id = Guid.Parse("33333333-3333-3333-3333-333333333333"),
+                    Name = "Dr. Emma Rodriguez",
+                    NationalId = "456789123",
+                    Title = "Chief Medical Officer",
+                    Email = "e.rodriguez@healthsys.org",
+                    Phone = "+1-555-0303"
+                },
+                new Person
+                {
+                    Id = Guid.Parse("44444444-4444-4444-4444-444444444444"),
+                    Name = "James Patterson",
+                    NationalId = "789123456",
+                    Title = "Business Development Manager",
+                    Email = "j.patterson@business.co",
+                    Phone = "+1-555-0404"
+                },
+                new Person
+                {
+                    Id = Guid.Parse("55555555-5555-5555-5555-555555555555"),
+                    Name = "Lisa Thompson",
+                    NationalId = "321654987",
+                    Title = "Financial Advisor",
+                    Email = "lisa.thompson@finance.net",
+                    Phone = "+1-555-0505"
+                }
+            }
+        };
     }
 
     /// <summary>
-    /// Saves user acquaintances to file
+    /// No-op save method since we're using hardcoded data instead of file handling
     /// </summary>
     /// <param name="userAcquaintances">The user acquaintances to save</param>
-    /// <returns>True if successful, false otherwise</returns>
+    /// <returns>Always returns true since no actual saving is performed</returns>
     private async Task<bool> SaveUserAcquaintancesAsync(UserAcquaintances userAcquaintances)
     {
-        var filePath = GetUserFilePath(userAcquaintances.UserId);
-        
-        try
-        {
-            userAcquaintances.LastModified = DateTime.UtcNow;
-            var jsonContent = JsonSerializer.Serialize(userAcquaintances, _jsonOptions);
-            await File.WriteAllTextAsync(filePath, jsonContent);
-            Console.WriteLine($"Acquaintances saved for user {userAcquaintances.UserId} to {filePath}");
-            return true;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error saving acquaintances for user {userAcquaintances.UserId}: {ex.Message}");
-            return false;
-        }
+        await Task.CompletedTask; // Maintain async signature
+        Console.WriteLine($"Simulated save for user {userAcquaintances.UserId} (using hardcoded data, no actual file save)");
+        return true;
     }
 
     /// <summary>
@@ -166,7 +193,7 @@ public class PersonRepository
     }
 
     /// <summary>
-    /// Gets a specific acquaintance by their GUID
+    /// Gets a specific acquaintance by their GUID from hardcoded sample data
     /// </summary>
     /// <param name="personId">The GUID of the person</param>
     /// <returns>The person if found, null otherwise</returns>
@@ -177,32 +204,10 @@ public class PersonRepository
             throw new ArgumentException("Person ID cannot be empty", nameof(personId));
         }
 
-        // Search through all user files to find the person
-        var files = Directory.GetFiles(_tempDirectory, "*-acquaintances.json");
-        
-        foreach (var file in files)
-        {
-            try
-            {
-                var jsonContent = await File.ReadAllTextAsync(file);
-                var userAcquaintances = JsonSerializer.Deserialize<UserAcquaintances>(jsonContent, _jsonOptions);
-                
-                if (userAcquaintances?.Acquaintances != null)
-                {
-                    var person = userAcquaintances.Acquaintances.FirstOrDefault(p => p.Id == personId);
-                    if (person != null)
-                    {
-                        return person;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error reading acquaintances file {file}: {ex.Message}");
-            }
-        }
-
-        return null;
+        // Search through hardcoded sample data (same for all users)
+        var sampleData = await LoadUserAcquaintancesAsync("sample-user");
+        var person = sampleData.Acquaintances.FirstOrDefault(p => p.Id == personId);
+        return person;
     }
 
     /// <summary>
@@ -272,32 +277,20 @@ public class PersonRepository
     }
 
     /// <summary>
-    /// Gets all users who have acquaintances stored
+    /// Gets all users who have acquaintances stored (returns sample user for hardcoded data)
     /// </summary>
     /// <returns>List of user IDs</returns>
     public List<string> GetAllUserIds()
     {
-        var files = Directory.GetFiles(_tempDirectory, "*-acquaintances.json");
-        var userIds = new List<string>();
-
-        foreach (var file in files)
-        {
-            var fileName = Path.GetFileNameWithoutExtension(file);
-            if (fileName.EndsWith("-acquaintances"))
-            {
-                var userId = fileName.Substring(0, fileName.Length - "-acquaintances".Length);
-                userIds.Add(userId);
-            }
-        }
-
-        return userIds.OrderBy(u => u).ToList();
+        // Since we're using hardcoded data, return a sample user ID
+        return new List<string> { "sample-user", "demo-user", "test-user" };
     }
 
     /// <summary>
-    /// Clears all acquaintances for a specific user
+    /// Simulates clearing all acquaintances for a specific user (no-op for hardcoded data)
     /// </summary>
     /// <param name="userId">The user ID</param>
-    /// <returns>True if successful, false otherwise</returns>
+    /// <returns>Always returns true since using hardcoded data</returns>
     public async Task<bool> ClearUserAcquaintancesAsync(string userId)
     {
         await Task.CompletedTask;
@@ -306,44 +299,17 @@ public class PersonRepository
             throw new ArgumentException("User ID cannot be null or empty", nameof(userId));
         }
 
-        var filePath = GetUserFilePath(userId);
-        
-        try
-        {
-            if (File.Exists(filePath))
-            {
-                File.Delete(filePath);
-                Console.WriteLine($"Cleared all acquaintances for user {userId}");
-            }
-            return true;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error clearing acquaintances for user {userId}: {ex.Message}");
-            return false;
-        }
+        Console.WriteLine($"Simulated clear all acquaintances for user {userId} (using hardcoded data, no actual clearing)");
+        return true;
     }
 
     /// <summary>
-    /// Clears all acquaintances for all users (for testing/cleanup)
+    /// Simulates clearing all acquaintances for all users (no-op for hardcoded data)
     /// </summary>
-    /// <returns>True if successful, false otherwise</returns>
+    /// <returns>Always returns true since using hardcoded data</returns>
     public bool ClearAllAcquaintances()
     {
-        try
-        {
-            var files = Directory.GetFiles(_tempDirectory, "*-acquaintances.json");
-            foreach (var file in files)
-            {
-                File.Delete(file);
-            }
-            Console.WriteLine("Cleared all acquaintances for all users");
-            return true;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error clearing all acquaintances: {ex.Message}");
-            return false;
-        }
+        Console.WriteLine("Simulated clear all acquaintances for all users (using hardcoded data, no actual clearing)");
+        return true;
     }
 }

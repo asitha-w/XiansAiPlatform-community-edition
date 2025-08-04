@@ -32,12 +32,26 @@ export class CommsService {
 
   // Update document ID for the service (used when navigating between documents)
   updateDocumentId(documentId?: string): void {
-    console.log(`[ChatService] Updating document ID from ${this.options.documentId} to ${documentId}`);
+    const previousDocumentId = this.options.documentId;
+    console.log(`[ChatService] 🔧 UPDATEID: Updating document ID from "${previousDocumentId}" to "${documentId}"`);
+    console.log(`[ChatService] 🔧 UPDATEID: Comparison result - equal: ${previousDocumentId === documentId}, type prev: ${typeof previousDocumentId}, type new: ${typeof documentId}`);
+    
+    // Always update the document ID
     this.options.documentId = documentId;
-    console.log(`[ChatService] 🔍 Document ID updated - current options.documentId: ${this.options.documentId}`);
-    // Reset history loading state when document changes
-    this.historyLoadedForAgent = null;
-    this.processedHistoryHashes.clear();
+    
+    // Only reset state if document actually changed
+    if (previousDocumentId !== documentId) {
+      console.log(`[ChatService] 🔧 UPDATEID: Document changed - forcing complete state reset`);
+      
+      // Complete state reset for document changes (mimics page refresh behavior)
+      this.historyLoadedForAgent = null;
+      this.processedHistoryHashes.clear();
+      this.isLoadingHistory = false;
+      
+      console.log(`[ChatService] 🔧 UPDATEID: State reset complete - historyLoadedForAgent: ${this.historyLoadedForAgent}`);
+    } else {
+      console.log(`[ChatService] 🔧 UPDATEID: Document ID unchanged, skipping reset`);
+    }
   }
 
   constructor(options: CommsServiceOptions = {}) {
@@ -91,14 +105,41 @@ export class CommsService {
   }
 
   async setCurrentAgent(agent: Bot): Promise<void> {
-    // Prevent duplicate agent setup
-    if (this.currentAgent && this.currentAgent.workflow === agent.workflow) {
-      console.log(`[ChatService] Agent ${agent.name} already set, skipping duplicate setup`);
+    const isAgentChange = !this.currentAgent || this.currentAgent.workflow !== agent.workflow;
+    const isDocumentChange = this.historyLoadedForAgent === null; // This is set to null when updateDocumentId is called
+    
+    console.log(`[ChatService] 🔧 SETAGENT: Agent setup check - currentAgent: ${this.currentAgent?.name}, newAgent: ${agent.name}`);
+    console.log(`[ChatService] 🔧 SETAGENT: Change detection - isAgentChange: ${isAgentChange}, isDocumentChange: ${isDocumentChange}, historyLoadedForAgent: ${this.historyLoadedForAgent}`);
+    
+    // Skip setup only if it's the same agent AND no document change
+    if (this.currentAgent && this.currentAgent.workflow === agent.workflow && !isDocumentChange) {
+      console.log(`[ChatService] 🔧 SETAGENT: SKIPPING - Agent ${agent.name} already set with same document context`);
       return;
     }
 
-    // Unsubscribe from previous agent if any
-    if (this.currentAgent && this.isConnected()) {
+    // Log the reason for the setup
+    if (isAgentChange) {
+      console.log(`[ChatService] Agent change detected: ${this.currentAgent?.name} -> ${agent.name}`);
+    } else if (isDocumentChange) {
+      console.log(`[ChatService] Document change detected for agent: ${agent.name}`);
+    }
+
+    // For document changes with same agent, force a complete reset to ensure clean state
+    if (!isAgentChange && isDocumentChange) {
+      console.log(`[ChatService] 🔄 Forcing complete reset for document change`);
+      
+      // Temporarily unsubscribe and resubscribe to force fresh state
+      if (this.currentAgent && this.isConnected()) {
+        console.log(`[ChatService] Temporarily unsubscribing for document change reset`);
+        await this.socketSDK.unsubscribeFromAgent(
+          this.currentAgent.workflow,
+          this.getParticipantId()
+        );
+      }
+    }
+
+    // Unsubscribe from previous agent if it's a different agent
+    if (this.currentAgent && this.isConnected() && isAgentChange) {
       console.log(`[ChatService] Unsubscribing from previous agent: ${this.currentAgent.name}`);
       await this.socketSDK.unsubscribeFromAgent(
         this.currentAgent.workflow,
@@ -108,20 +149,21 @@ export class CommsService {
 
     console.log(`[ChatService] Setting current agent to: ${agent.name}`);
     
-    // Clear processed history when switching agents to allow fresh history loading
+    // Clear processed history when switching agents or documents to allow fresh history loading
     this.processedHistoryHashes.clear();
-    this.historyLoadedForAgent = null; // Reset to allow loading for new agent
+    this.historyLoadedForAgent = null; // Reset to allow loading for new agent/document
+    this.isLoadingHistory = false; // Reset loading state
     this.currentAgent = agent;
 
-    // Subscribe to new agent if connected
+    // Always subscribe/resubscribe to ensure fresh state
     if (this.isConnected()) {
-      console.log(`[ChatService] Subscribing to agent: ${agent.name}`);
+      console.log(`[ChatService] Subscribing to agent: ${agent.name} (force: ${isDocumentChange && !isAgentChange})`);
       await this.socketSDK.subscribeToAgent(
         agent.workflow,
         this.getParticipantId()
       );
       
-      // Load conversation history with retry mechanism for URL route access
+      // Always load conversation history for new context
       await this.loadConversationHistory(agent);
     }
   }

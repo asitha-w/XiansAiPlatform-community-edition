@@ -13,7 +13,7 @@ public class TermCapabilities
     private readonly DocumentContext _documentContext;
     private readonly ContractRepository _contractRepository;
     private readonly TermRepository _termRepository;
-    private readonly ContractUpdateService _contractUpdateService;
+    private readonly ContractUpdateCommand _contractUpdateService;
     private static readonly Logger<TermCapabilities> _logger =
         Logger<TermCapabilities>.For();
 
@@ -23,7 +23,7 @@ public class TermCapabilities
         _documentContext = new DocumentContext(_thread);
         _contractRepository = new ContractRepository();
         _termRepository = new TermRepository();
-        _contractUpdateService = new ContractUpdateService(_contractRepository, _thread);
+        _contractUpdateService = new ContractUpdateCommand(_contractRepository, _thread);
     }
 
     [Capability("Add a predefined term to the currently active contract by its GUID - Use when user wants to add a specific term from the term repository")]
@@ -77,7 +77,7 @@ public class TermCapabilities
             };
 
             contract.Terms.Add(contractTerm);
-            await _contractUpdateService.UpdateContractAsync(contract);
+            await _contractUpdateService.ExecuteAsync(contract);
             
 
             await _thread.SendData(new WorkLog($"Successfully added {contractTerm.Category} term (ID: {termId}) to contract"));
@@ -128,7 +128,7 @@ public class TermCapabilities
             }
 
             contract.Terms.Remove(termToRemove);
-            await _contractUpdateService.UpdateContractAsync(contract);
+            await _contractUpdateService.ExecuteAsync(contract);
 
             await _thread.SendData(new WorkLog($"Successfully removed {termToRemove.Category} term (ID: {termId}) from contract"));
             return true;
@@ -185,7 +185,7 @@ public class TermCapabilities
             var oldText = termToEdit.Text;
             termToEdit.Text = newText;
 
-            await _contractUpdateService.UpdateContractAsync(contract);
+            await _contractUpdateService.ExecuteAsync(contract);
 
             await _thread.SendData(new WorkLog($"Successfully updated {termToEdit.Category} term (ID: {termId}) text"));
             await _thread.SendData(new WorkLog($"Previous text: {oldText}"));

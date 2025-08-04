@@ -98,11 +98,17 @@ export const useChatService = ({
     }
 
     try {
-      // Update document ID if provided
+      // Update document ID if provided and ensure state is properly reset
       if (documentId !== undefined) {
+        console.log(`[useChatService] Updating document ID to: ${documentId}`);
         chatServiceRef.current.updateDocumentId(documentId);
+        
+        // Small delay to ensure document state reset is complete before agent setup
+        // This mimics the timing of a page refresh where everything is reset cleanly
+        await new Promise(resolve => setTimeout(resolve, 10));
       }
       
+      console.log(`[useChatService] Setting current agent: ${agent.name}`);
       await chatServiceRef.current.setCurrentAgent(agent);
     } catch (err) {
       const errorMessage = 'Failed to set current agent';

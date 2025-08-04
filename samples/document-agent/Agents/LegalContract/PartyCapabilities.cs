@@ -13,7 +13,7 @@ public class PartyCapabilities
     private readonly DocumentContext _documentContext;
     private readonly ContractRepository _contractRepository;
     private readonly PersonRepository _personRepository;
-    private readonly ContractUpdateService _contractUpdateService;
+    private readonly ContractUpdateCommand _contractUpdateService;
     private static readonly Logger<PartyCapabilities> _logger =
         Logger<PartyCapabilities>.For();
 
@@ -23,13 +23,16 @@ public class PartyCapabilities
         _documentContext = new DocumentContext(_thread);
         _contractRepository = new ContractRepository();
         _personRepository = new PersonRepository();
-        _contractUpdateService = new ContractUpdateService(_contractRepository, _thread);
+        _contractUpdateService = new ContractUpdateCommand(_contractRepository, _thread);
     }
 
     [Capability("Add a new party to the currently active contract document - Use when user wants to add a contracting party")]
-    [Parameter("party", "The party object containing name, role, and address information")]
+    [Parameter("role", "The role of the party in the contract")]
+    [Parameter("name", "The name of the party")]
+    [Parameter("representativeIds", "Array of person IDs who will act as representatives for this party")]
+    [Parameter("signatoryIds", "Array of person IDs who will act as signatories for this party")]
     [Returns("The party object with generated ID if successful")]
-    public async Task<Party> AddParty(Party party)
+    public async Task<Party> AddParty(string role, string name, Guid[] representativeIds, Guid[] signatoryIds)
     {
         var contractId = _documentContext.DocumentId;
 
@@ -38,17 +41,20 @@ public class PartyCapabilities
             throw new ArgumentException("Contract ID cannot be empty. Do you like to create a new document?");
         }
 
-        if (party == null)
+        if (string.IsNullOrWhiteSpace(name))
         {
-            throw new ArgumentNullException(nameof(party));
+            throw new ArgumentException("Party name is required", nameof(name));
         }
 
-        if (string.IsNullOrWhiteSpace(party.Name))
+        if (string.IsNullOrWhiteSpace(role))
         {
-            throw new ArgumentException("Party name is required", nameof(party));
+            throw new ArgumentException("Party role is required", nameof(role));
         }
 
-        await _thread.SendData(new WorkLog($"Starting to add party '{party.Name}' to contract ID: {contractId}"));
+        representativeIds ??= Array.Empty<Guid>();
+        signatoryIds ??= Array.Empty<Guid>();
+
+        await _thread.SendData(new WorkLog($"Starting to add party '{name}' with role '{role}' to contract ID: {contractId}"));
 
         try
         {
@@ -58,22 +64,48 @@ public class PartyCapabilities
                 throw new InvalidOperationException($"No contract found with ID: {contractId}");
             }
 
-            // Generate ID if not provided
-            if (party.Id == Guid.Empty)
+            // Create new party
+            var party = new Party
             {
-                party.Id = Guid.NewGuid();
-            }
+                Id = Guid.NewGuid(),
+                Name = name,
+                Role = role
+            };
 
-            // Check if party with same ID already exists
+            // Check if party with same ID already exists (very unlikely with new GUID)
             if (contract.Parties.Any(p => p.Id == party.Id))
             {
                 throw new InvalidOperationException($"Party with ID {party.Id} already exists in the contract");
             }
 
-            contract.Parties.Add(party);
-            await _contractUpdateService.UpdateContractAsync(contract);
+            // Fetch and add representatives
+            foreach (var representativeId in representativeIds)
+            {
+                var representative = await _personRepository.GetAcquaintanceAsync(representativeId);
+                if (representative == null)
+                {
+                    throw new InvalidOperationException($"No person found with ID: {representativeId}");
+                }
+                party.Representatives.Add(representative);
+            }
 
-            await _thread.SendData(new WorkLog($"Successfully added party '{party.Name}' (ID: {party.Id}) to contract"));
+            // Fetch and add signatories
+            foreach (var signatoryId in signatoryIds)
+            {
+                var signatory = await _personRepository.GetAcquaintanceAsync(signatoryId);
+                if (signatory == null)
+                {
+                    throw new InvalidOperationException($"No person found with ID: {signatoryId}");
+                }
+                party.Signatories.Add(signatory);
+            }
+
+            contract.Parties.Add(party);
+            await _contractUpdateService.ExecuteAsync(contract);
+
+            var representativesLog = party.Representatives.Any() ? $" with {party.Representatives.Count} representative(s)" : "";
+            var signatoriesLog = party.Signatories.Any() ? $" and {party.Signatories.Count} signatory(ies)" : "";
+            await _thread.SendData(new WorkLog($"Successfully added party '{party.Name}' (ID: {party.Id}) to contract{representativesLog}{signatoriesLog}"));
             return party;
         }
         catch (Exception ex)
@@ -138,7 +170,7 @@ public class PartyCapabilities
             }
 
             party.Representatives.Add(person);
-            await _contractUpdateService.UpdateContractAsync(contract);
+            await _contractUpdateService.ExecuteAsync(contract);
 
             await _thread.SendData(new WorkLog($"Successfully added {person.Name} as representative for party {party.Name}"));
             return true;
@@ -200,7 +232,7 @@ public class PartyCapabilities
             }
 
             party.Representatives.Remove(representative);
-            await _contractUpdateService.UpdateContractAsync(contract);
+            await _contractUpdateService.ExecuteAsync(contract);
 
             await _thread.SendData(new WorkLog($"Successfully removed {representative.Name} as representative from party {party.Name}"));
             return true;
@@ -267,7 +299,7 @@ public class PartyCapabilities
             }
 
             party.Signatories.Add(person);
-            await _contractUpdateService.UpdateContractAsync(contract);
+            await _contractUpdateService.ExecuteAsync(contract);
 
             await _thread.SendData(new WorkLog($"Successfully added {person.Name} as signatory for party {party.Name}"));
             return true;
@@ -329,7 +361,7 @@ public class PartyCapabilities
             }
 
             party.Signatories.Remove(signatory);
-            await _contractUpdateService.UpdateContractAsync(contract);
+            await _contractUpdateService.ExecuteAsync(contract);
 
             await _thread.SendData(new WorkLog($"Successfully removed {signatory.Name} as signatory from party {party.Name}"));
             return true;
@@ -339,6 +371,56 @@ public class PartyCapabilities
             _logger.LogError($"Error occurred while removing signatory: {ex.Message}");
             throw new InvalidOperationException(
                 $"Error removing signatory: {ex.Message}",
+                ex
+            );
+        }
+    }
+
+    [Capability("Remove a party from the currently active contract document - Use when user wants to remove a contracting party")]
+    [Parameter("partyId", "The unique identifier of the party to remove")]
+    [Returns("True if the party was successfully removed, false if not found")]
+    public async Task<bool> RemoveParty(Guid partyId)
+    {
+        var contractId = _documentContext.DocumentId;
+
+        if (contractId is null || contractId == Guid.Empty)
+        {
+            throw new ArgumentException("Contract ID cannot be empty. Do you like to create a new document?");
+        }
+
+        if (partyId == Guid.Empty)
+        {
+            throw new ArgumentException("Party ID cannot be empty", nameof(partyId));
+        }
+
+        await _thread.SendData(new WorkLog($"Starting to remove party with ID: {partyId} from contract ID: {contractId}"));
+
+        try
+        {
+            var contract = await _contractRepository.GetContractAsync(contractId.Value);
+            if (contract == null)
+            {
+                throw new InvalidOperationException($"No contract found with ID: {contractId}");
+            }
+
+            var party = contract.Parties.FirstOrDefault(p => p.Id == partyId);
+            if (party == null)
+            {
+                await _thread.SendData(new WorkLog($"Party with ID {partyId} not found in contract"));
+                return false;
+            }
+
+            contract.Parties.Remove(party);
+            await _contractUpdateService.ExecuteAsync(contract);
+
+            await _thread.SendData(new WorkLog($"Successfully removed party '{party.Name}' (ID: {partyId}) from contract"));
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Error occurred while removing party: {ex.Message}");
+            throw new InvalidOperationException(
+                $"Error removing party from contract: {ex.Message}",
                 ex
             );
         }

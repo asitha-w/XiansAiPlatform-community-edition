@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Button,
   Box,
@@ -9,43 +9,65 @@ import {
   DialogActions,
   TextField,
   MenuItem,
+  IconButton,
+  Stack,
+  Paper,
+  Tooltip,
+  useTheme,
+  Select,
+  FormControl,
+  InputLabel,
 } from '@mui/material';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
 
 interface ContractPartyProps {
+  /**
+   * Additional properties coming from the component registry. The only one we
+   * rely on for now is the `command` (i.e. "Add" | "Edit") so the component
+   * can be reused for both creating and editing a party.
+   */
   properties: Record<string, unknown>;
 }
 
-interface Address {
-  street: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  country: string;
-}
-
-interface Contact {
+/**
+ * Person model mirroring the backend `Person` record.
+ */
+export interface PersonData {
+  id: string;
+  name: string;
+  nationalId: string;
+  title: string;
   email: string;
   phone: string;
 }
 
-interface Representative {
-  name: string;
-  title: string;
-}
-
-interface PartyData {
+/**
+ * Party model mirroring the backend `Party` record.
+ */
+export interface PartyData {
   role: string;
   name: string;
-  address: Address;
-  contact: Contact;
-  representative: Representative;
+  representatives: PersonData[];
+  signatories: PersonData[];
 }
+
+/**
+ * Internal state for the component using person IDs for selection
+ */
+interface PartyFormData {
+  role: string;
+  name: string;
+  representativeIds: string[];
+  signatoryIds: string[];
+}
+
+
 
 const partyRoles = [
   'Client',
   'Service Provider',
-  'Contractor', 
+  'Contractor',
   'Subcontractor',
   'Vendor',
   'Buyer',
@@ -58,126 +80,271 @@ const partyRoles = [
   'Agent',
   'Guarantor',
   'Witness',
-  'Other'
+  'Other',
 ];
 
+/**
+ * A minimalistic contract party editor designed with Nordic aesthetics in mind.
+ * – Clean surfaces, generous whitespace and subtle borders.
+ */
 const ContractParty: React.FC<ContractPartyProps> = ({ properties }) => {
-  const command = properties.command as string;
+  const command = (properties.command as string) ?? 'Add';
   const [open, setOpen] = useState(false);
-  const [partyData, setPartyData] = useState<PartyData>({
+  const theme = useTheme();
+
+  // Extract Acquaintances from properties
+  const acquaintances = useMemo(() => {
+    const acquaintancesData = (properties.Acquaintances as { result?: PersonData[] })?.result;
+    return Array.isArray(acquaintancesData) ? acquaintancesData : [];
+  }, [properties]);
+
+  // Slightly darker border color for inputs
+  const inputBorderColor = theme.palette.grey[400];
+  const inputBg = theme.palette.mode === 'light' ? theme.palette.grey[100] : theme.palette.grey[800];
+
+  // Reusable style object for TextFields
+  const inputSx = {
+    '& .MuiOutlinedInput-root': {
+      backgroundColor: inputBg,
+      '& fieldset': {
+        borderColor: inputBorderColor,
+      },
+      '&:hover fieldset': {
+        borderColor: inputBorderColor,
+      },
+    },
+  };
+
+  const [partyFormData, setPartyFormData] = useState<PartyFormData>({
     role: '',
     name: '',
-    address: {
-      street: '',
-      city: '',
-      state: '',
-      zipCode: '',
-      country: '',
-    },
-    contact: {
-      email: '',
-      phone: '',
-    },
-    representative: {
-      name: '',
-      title: '',
-    },
+    representativeIds: [],
+    signatoryIds: [],
   });
-  
 
-
-  const handleOpen = () => {
-    setOpen(true);
+  // Helper functions to convert between IDs and full person objects
+  const getPersonById = (id: string): PersonData | undefined => {
+    return acquaintances.find(person => person.id === id);
   };
+
+  const getSelectedPersons = (ids: string[]): PersonData[] => {
+    return ids.map(getPersonById).filter(Boolean) as PersonData[];
+  };
+
+  const handleOpen = () => setOpen(true);
 
   const handleClose = () => {
     setOpen(false);
-    // Reset form data
-    setPartyData({
+    setPartyFormData({
       role: '',
       name: '',
-      address: {
-        street: '',
-        city: '',
-        state: '',
-        zipCode: '',
-        country: '',
-      },
-      contact: {
-        email: '',
-        phone: '',
-      },
-      representative: {
-        name: '',
-        title: '',
-      },
+      representativeIds: [],
+      signatoryIds: [],
     });
   };
 
-  const handleInputChange = (field: keyof PartyData) => (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setPartyData(prev => ({
-      ...prev,
-      [field]: event.target.value,
-    }));
-  };
-
-  const handleNestedInputChange = (section: 'address' | 'contact' | 'representative', field: string) => (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setPartyData(prev => ({
-      ...prev,
-      [section]: {
-        ...prev[section],
+  /* ----------------------------------------------------
+   * Basic field handlers
+   * --------------------------------------------------*/
+  const handleInputChange = (field: keyof Omit<PartyFormData, 'representativeIds' | 'signatoryIds'>) =>
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      setPartyFormData(prev => ({
+        ...prev,
         [field]: event.target.value,
-      },
-    }));
-  };
+      }));
+    };
 
-  const handleDone = () => {
-    // Create formatted message for the agent with structured data
-    const message = `${command} Contract Party - Please ${command.toLowerCase()} the following party to the current contract:
-
-**Party Details:**
-- **Name:** ${partyData.name}
-- **Role:** ${partyData.role}
-
-**Address:**
-- **Street:** ${partyData.address.street}
-- **City:** ${partyData.address.city}
-- **State:** ${partyData.address.state}
-- **Zip Code:** ${partyData.address.zipCode}
-- **Country:** ${partyData.address.country}
-
-**Contact Information:**
-- **Email:** ${partyData.contact.email}
-- **Phone:** ${partyData.contact.phone}
-
-**Representative:**
-- **Name:** ${partyData.representative.name}
-- **Title:** ${partyData.representative.title}
-
-Please update the contract document to include this party with their specified role and contact information.`;
-
-    // Send message to chat using generic SendChat event
-    const sendChatEvent = new CustomEvent('SendChat', {
-      detail: {
-        message: message,
-        data: {
-          command,
-          party: partyData
-        }
+  /* ----------------------------------------------------
+   * Person selection handlers (representatives & signatories)
+   * --------------------------------------------------*/
+  const handlePersonSelection = (
+    section: 'representativeIds' | 'signatoryIds',
+    personId: string,
+  ) => {
+    setPartyFormData(prev => {
+      const currentIds = prev[section];
+      const isAlreadySelected = currentIds.includes(personId);
+      
+      if (isAlreadySelected) {
+        // Remove if already selected
+        return {
+          ...prev,
+          [section]: currentIds.filter(id => id !== personId),
+        };
+      } else {
+        // Add if not selected
+        return {
+          ...prev,
+          [section]: [...currentIds, personId],
+        };
       }
     });
-    
-    window.dispatchEvent(sendChatEvent);
+  };
 
+
+
+  const removePerson = (section: 'representativeIds' | 'signatoryIds', personId: string) => () => {
+    setPartyFormData(prev => ({
+      ...prev,
+      [section]: prev[section].filter(id => id !== personId),
+    }));
+  };
+
+  /* ----------------------------------------------------
+   * Submission
+   * --------------------------------------------------*/
+  const handleDone = () => {
+    // Convert form data to final party data
+    const representatives = getSelectedPersons(partyFormData.representativeIds);
+    const signatories = getSelectedPersons(partyFormData.signatoryIds);
+
+    const partyData: PartyData = {
+      role: partyFormData.role,
+      name: partyFormData.name,
+      representatives,
+      signatories,
+    };
+
+    // Compose a human-friendly chat message for the agent
+    const messageLines: string[] = [
+      `${command} Contract Party – Please ${command.toLowerCase()} the following party to the current contract:\n`,
+      '**Party Details:**',
+      `- **Name:** ${partyData.name}`,
+      `- **Role:** ${partyData.role}`,
+      '',
+      '**Representatives:**',
+      ...representatives.map((rep, idx) => {
+        const fields = [`Representative Name: ${rep.name}`];
+        if (rep.id?.trim()) fields.push(`ID: ${rep.id}`);
+        if (rep.name?.trim()) fields.push(`Name: ${rep.name}`);
+        return `   ${idx + 1}. ${fields.join(', ')}`;
+      }),
+      '',
+      '**Signatories:**',
+      ...signatories.map((sig, idx) => {
+        const fields = [`Signatory Name: ${sig.name}`];
+        if (sig.id?.trim()) fields.push(`ID: ${sig.id}`);
+        if (sig.name?.trim()) fields.push(`Name: ${sig.name}`);
+        return `   ${idx + 1}. ${fields.join(', ')}`;
+      }),
+      '',
+      'Please update the contract document to include this party with the specified details.',
+    ];
+
+    const message = messageLines.join('\n');
+
+    const sendChatEvent = new CustomEvent('SendChat', {
+      detail: {
+        message,
+        data: {
+          command,
+          party: partyData,
+        },
+      },
+    });
+
+    window.dispatchEvent(sendChatEvent);
     handleClose();
   };
 
-  const isFormValid = partyData.name.trim() && partyData.role.trim();
+  const isFormValid = partyFormData.name.trim() !== '' && partyFormData.role.trim() !== '';
 
+  /* ----------------------------------------------------
+   * Render helpers
+   * --------------------------------------------------*/
+  const renderPeopleSection = (
+    title: string,
+    section: 'representativeIds' | 'signatoryIds',
+  ) => {
+    const selectedIds = partyFormData[section];
+    const selectedPersons = getSelectedPersons(selectedIds);
+    const availablePersons = acquaintances.filter(person => !selectedIds.includes(person.id));
+
+    return (
+      <Box>
+        <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+          {title}
+        </Typography>
+
+        {/* Dropdown to select from available acquaintances */}
+        {availablePersons.length > 0 && (
+          <FormControl fullWidth size="small" sx={{ mb: 2, ...inputSx }}>
+            <InputLabel>Select {title.slice(0, -1)}</InputLabel>
+            <Select
+              value=""
+              label={`Select ${title.slice(0, -1)}`}
+              onChange={(event) => {
+                const personId = event.target.value as string;
+                if (personId) {
+                  handlePersonSelection(section, personId);
+                }
+              }}
+            >
+              {availablePersons.map((person) => (
+                <MenuItem key={person.id} value={person.id}>
+                  {person.name} - {person.title}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        )}
+
+        {/* Display selected persons */}
+        <Stack spacing={2}>
+          {selectedPersons.map((person) => (
+            <Paper key={person.id} variant="outlined" sx={{ p: 2 }}>
+              <Box display="flex" justifyContent="space-between" alignItems="flex-start">
+                <Box flex={1}>
+                  <Typography variant="body1" sx={{ fontWeight: 600, mb: 0.5 }}>
+                    {person.name}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                    {person.title}
+                  </Typography>
+                  <Stack direction="row" spacing={2} flexWrap="wrap">
+                    {person.email && (
+                      <Typography variant="caption" color="text.secondary">
+                        Email: {person.email}
+                      </Typography>
+                    )}
+                    {person.phone && (
+                      <Typography variant="caption" color="text.secondary">
+                        Phone: {person.phone}
+                      </Typography>
+                    )}
+                    {person.nationalId && (
+                      <Typography variant="caption" color="text.secondary">
+                        ID: {person.nationalId}
+                      </Typography>
+                    )}
+                  </Stack>
+                </Box>
+                <Tooltip title="Remove person">
+                  <IconButton 
+                    color="error" 
+                    onClick={removePerson(section, person.id)} 
+                    sx={{ ml: 1 }}
+                  >
+                    <RemoveCircleOutlineIcon />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            </Paper>
+          ))}
+        </Stack>
+
+        {selectedPersons.length === 0 && (
+          <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', mt: 1 }}>
+            No {title.toLowerCase()} selected. Use the dropdown above to add from available acquaintances.
+          </Typography>
+        )}
+      </Box>
+    );
+  };
+
+  /* ----------------------------------------------------
+   * UI
+   * --------------------------------------------------*/
   return (
     <>
       <Box sx={{ my: 1 }}>
@@ -189,156 +356,66 @@ Please update the contract document to include this party with their specified r
           color="primary"
           startIcon={<PersonAddIcon />}
           onClick={handleOpen}
+          size="small"
         >
           {command} Party
         </Button>
       </Box>
 
-      <Dialog 
-        open={open} 
-        onClose={handleClose}
-        maxWidth="md"
-        fullWidth
-      >
+      <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
         <DialogTitle>{command} Contract Party</DialogTitle>
         <DialogContent>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
             Enter the details for the contract party below. Required fields are marked with *.
           </Typography>
-          
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+
+          <Stack spacing={4}>
             {/* Basic Party Information */}
             <Box>
-              <Typography variant="h6" sx={{ mb: 2 }}>Party Information</Typography>
-              <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                Party Information
+              </Typography>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} flexWrap="wrap">
                 <TextField
-                  fullWidth
                   label="Name *"
-                  value={partyData.name}
+                  fullWidth
+                  value={partyFormData.name}
                   onChange={handleInputChange('name')}
                   margin="dense"
-                  helperText="Full legal name of the party"
+                  size="small"
+                  variant="outlined"
+                  sx={{ flex: '1 1 240px', ...inputSx }}
                 />
                 <TextField
-                  fullWidth
-                  select
                   label="Role *"
-                  value={partyData.role}
+                  select
+                  fullWidth
+                  value={partyFormData.role}
                   onChange={handleInputChange('role')}
                   margin="dense"
-                  helperText="Party's role in the contract"
+                  size="small"
+                  variant="outlined"
+                  sx={{ flex: '1 1 240px', ...inputSx }}
                 >
-                  {partyRoles.map((role) => (
+                  {partyRoles.map(role => (
                     <MenuItem key={role} value={role}>
                       {role}
                     </MenuItem>
                   ))}
                 </TextField>
-              </Box>
+              </Stack>
             </Box>
 
-            {/* Address Information */}
-            <Box>
-              <Typography variant="h6" sx={{ mb: 2 }}>Address</Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <TextField
-                  fullWidth
-                  label="Street"
-                  value={partyData.address.street}
-                  onChange={handleNestedInputChange('address', 'street')}
-                  margin="dense"
-                  helperText="Street address"
-                />
-                <Box sx={{ display: 'flex', gap: 2 }}>
-                  <TextField
-                    fullWidth
-                    label="City"
-                    value={partyData.address.city}
-                    onChange={handleNestedInputChange('address', 'city')}
-                    margin="dense"
-                  />
-                  <TextField
-                    fullWidth
-                    label="State"
-                    value={partyData.address.state}
-                    onChange={handleNestedInputChange('address', 'state')}
-                    margin="dense"
-                  />
-                  <TextField
-                    label="Zip Code"
-                    value={partyData.address.zipCode}
-                    onChange={handleNestedInputChange('address', 'zipCode')}
-                    margin="dense"
-                    sx={{ width: '120px' }}
-                  />
-                </Box>
-                <TextField
-                  fullWidth
-                  label="Country"
-                  value={partyData.address.country}
-                  onChange={handleNestedInputChange('address', 'country')}
-                  margin="dense"
-                />
-              </Box>
-            </Box>
+            {/* Representatives */}
+            {renderPeopleSection('Representatives', 'representativeIds')}
 
-            {/* Contact Information */}
-            <Box>
-              <Typography variant="h6" sx={{ mb: 2 }}>Contact Information</Typography>
-              <Box sx={{ display: 'flex', gap: 2 }}>
-                <TextField
-                  fullWidth
-                  label="Email"
-                  type="email"
-                  value={partyData.contact.email}
-                  onChange={handleNestedInputChange('contact', 'email')}
-                  margin="dense"
-                  helperText="Contact email address"
-                />
-                <TextField
-                  fullWidth
-                  label="Phone"
-                  value={partyData.contact.phone}
-                  onChange={handleNestedInputChange('contact', 'phone')}
-                  margin="dense"
-                  helperText="Contact phone number"
-                />
-              </Box>
-            </Box>
-
-            {/* Representative Information */}
-            <Box>
-              <Typography variant="h6" sx={{ mb: 2 }}>Representative</Typography>
-              <Box sx={{ display: 'flex', gap: 2 }}>
-                <TextField
-                  fullWidth
-                  label="Representative Name"
-                  value={partyData.representative.name}
-                  onChange={handleNestedInputChange('representative', 'name')}
-                  margin="dense"
-                  helperText="Name of the authorized representative"
-                />
-                <TextField
-                  fullWidth
-                  label="Title"
-                  value={partyData.representative.title}
-                  onChange={handleNestedInputChange('representative', 'title')}
-                  margin="dense"
-                  helperText="Representative's title or position"
-                />
-              </Box>
-            </Box>
-          </Box>
+            {/* Signatories */}
+            {renderPeopleSection('Signatories', 'signatoryIds')}
+          </Stack>
         </DialogContent>
         <DialogActions sx={{ p: 3, pt: 1 }}>
-          <Button onClick={handleClose}>
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleDone} 
-            variant="contained"
-            disabled={!isFormValid}
-          >
+          <Button onClick={handleClose}>Cancel</Button>
+          <Button onClick={handleDone} variant="contained" disabled={!isFormValid}>
             Done
           </Button>
         </DialogActions>

@@ -4,7 +4,6 @@ using XiansAi.Logging;
 using XiansAi.Messaging;
 using Agents.Utils;
 using Repositories;
-using System.Linq.Expressions;
 
 namespace Agents.LegalContract;
 
@@ -14,7 +13,7 @@ public class GeneralCapabilities
 
     private readonly DocumentContext _documentContext;
     private readonly ContractRepository _contractRepository;
-    private readonly ContractUpdateService _contractUpdateService;
+    private readonly ContractUpdateCommand _contractUpdateService;
     private static readonly Logger<GeneralCapabilities> _logger =
         Logger<GeneralCapabilities>.For();
 
@@ -23,7 +22,7 @@ public class GeneralCapabilities
         _thread = thread;
         _documentContext = new DocumentContext(_thread);
         _contractRepository = new ContractRepository();
-        _contractUpdateService = new ContractUpdateService(_contractRepository, _thread);
+        _contractUpdateService = new ContractUpdateCommand(_contractRepository, _thread);
     }
 
 
@@ -150,7 +149,7 @@ public class GeneralCapabilities
     [Capability("Update the title of the currently active contract document - Use when user wants to change the contract title")]
     [Parameter("newTitle", "New title for the contract document")]
     [Returns("True if the contract title was successfully updated, false otherwise")]
-    public async Task<bool> UpdateTitle(string newTitle)
+    public async Task<ContractWithValidations> UpdateTitle(string newTitle)
     {
         var contractId = _documentContext.DocumentId;
 
@@ -193,7 +192,7 @@ public class GeneralCapabilities
     [Capability("Update the created date of the currently active contract document - Use when user wants to change when the contract was originally created")]
     [Parameter("newCreatedDate", "New created date for the contract document")]
     [Returns("True if the contract created date was successfully updated, false otherwise")]
-    public async Task<bool> UpdateCreatedDate(DateTime newCreatedDate)
+    public async Task<ContractWithValidations> UpdateCreatedDate(DateTime newCreatedDate)
     {
         var contractId = _documentContext.DocumentId;
 
@@ -231,7 +230,7 @@ public class GeneralCapabilities
     [Capability("Update the effective date of the currently active contract document - Use when user wants to change when the contract becomes legally effective")]
     [Parameter("newEffectiveDate", "New effective date for the contract document (can be null if not yet determined)")]
     [Returns("True if the contract effective date was successfully updated, false otherwise")]
-    public async Task<bool> UpdateEffectiveDate(DateTime? newEffectiveDate)
+    public async Task<ContractWithValidations> UpdateEffectiveDate(DateTime? newEffectiveDate)
     {
         var contractId = _documentContext.DocumentId;
 
@@ -270,7 +269,7 @@ public class GeneralCapabilities
     [Capability("Update the description of the currently active contract document - Use when user wants to change the contract description or summary")]
     [Parameter("newDescription", "New description for the contract document")]
     [Returns("True if the contract description was successfully updated, false otherwise")]
-    public async Task<bool> UpdateDescription(string newDescription)
+    public async Task<ContractWithValidations> UpdateDescription(string newDescription)
     {
         var contractId = _documentContext.DocumentId;
 
@@ -310,7 +309,7 @@ public class GeneralCapabilities
         }
     }
 
-    private async Task<bool> UpdateContract(Contract contract)
+    private async Task<ContractWithValidations> UpdateContract(Contract contract)
     {
         if (contract == null)
         {
@@ -326,10 +325,14 @@ public class GeneralCapabilities
 
         try
         {
-            await _contractUpdateService.UpdateContractAsync(contract);
+            await _contractUpdateService.ExecuteAsync(contract);
 
             await _thread.SendData(new WorkLog($"Successfully updated contract with ID: {contract.Id}"));
-            return true;
+
+            var validator = new ContractValidator();
+            var validationResult = validator.ValidateContract(contract);
+
+            return new ContractWithValidations { Contract = contract, Validations = validationResult.Insights };
         }
         catch (Exception ex)
         {

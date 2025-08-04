@@ -3,12 +3,12 @@ using XiansAi.Messaging;
 
 namespace Repositories;
 
-public class ContractUpdateService
+public class ContractUpdateCommand
 {
     private readonly ContractRepository _contractRepository;
     private readonly MessageThread _thread;
 
-    public ContractUpdateService(ContractRepository contractRepository, MessageThread thread)
+    public ContractUpdateCommand(ContractRepository contractRepository, MessageThread thread)
     {
         _contractRepository = contractRepository;
         _thread = thread;
@@ -19,7 +19,7 @@ public class ContractUpdateService
     /// </summary>
     /// <param name="contract">The contract to update</param>
     /// <returns>Task representing the async operation</returns>
-    public async Task UpdateContractAsync(Contract contract)
+    public async Task ExecuteAsync(Contract contract)
     {
         // Update the contract in the repository
         await _contractRepository.UpdateContractAsync(contract);
