@@ -4,6 +4,13 @@ import type { Message } from '@99xio/xians-sdk-typescript';
 import type { DataMessagePayload, DataMessageHandler, DataMessageContextType } from './context';
 import { DataMessageContext } from './context';
 
+// Type for message data with camelCase properties
+interface MessageDataWithSubject {
+  messageSubject?: string;
+  data?: unknown;
+  [key: string]: unknown;
+}
+
 interface DataMessageProviderProps {
   children: ReactNode;
 }
@@ -31,32 +38,39 @@ export const DataMessageProvider: React.FC<DataMessageProviderProps> = ({ childr
   }, []);
 
   const publish = useCallback((message: Message) => {
-    // Extract messageSubject from message data
-    if (message.data && typeof message.data === 'object' && 'messageSubject' in message.data) {
-      const messageSubject = message.data.messageSubject as string;
-      const handlers = subscriptionsRef.current.get(messageSubject);
+    // Extract messageSubject from message data (camelCase)
+    if (message.data && typeof message.data === 'object') {
+      const messageData = message.data as MessageDataWithSubject;
+      const messageSubject = messageData.messageSubject;
       
-      if (handlers) {
-        const payload: DataMessagePayload = {
-          messageSubject,
-          data: message.data.data || message.data,
-          message
-        };
+      if (messageSubject) {
+        const handlers = subscriptionsRef.current.get(messageSubject);
         
-        console.log(`[DataMessageProvider] Publishing ${messageSubject} to ${handlers.size} handler(s)`);
-        
-        handlers.forEach(handler => {
-          try {
-            handler(payload);
-          } catch (error) {
-            console.error(`[DataMessageProvider] Error in handler for ${messageSubject}:`, error);
-          }
-        });
+        if (handlers) {
+          const payload: DataMessagePayload = {
+            messageSubject,
+            data: messageData.data || message.data,
+            message
+          };
+          
+          console.log(`[DataMessageProvider] Publishing ${messageSubject} to ${handlers.size} handler(s)`);
+          
+          handlers.forEach(handler => {
+            try {
+              handler(payload);
+            } catch (error) {
+              console.error(`[DataMessageProvider] Error in handler for ${messageSubject}:`, error);
+            }
+          });
+        } else {
+          console.log(`[DataMessageProvider] No handlers for messageSubject: ${messageSubject}`);
+        }
       } else {
-        console.log(`[DataMessageProvider] No handlers for messageSubject: ${messageSubject}`);
+        console.log(`[DataMessageProvider] Data message received but no messageSubject found:`, message);
+        console.log(`[DataMessageProvider] Message data structure:`, message.data);
       }
     } else {
-      console.log(`[DataMessageProvider] Data message received but no messageSubject found:`, message);
+      console.log(`[DataMessageProvider] Data message received but no data object found:`, message);
     }
   }, []);
 

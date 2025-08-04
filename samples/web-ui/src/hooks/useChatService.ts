@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import type { Bot, ChatMessage as ChatMessageType } from '../types';
-import { CommsService } from '../services/commsService';
+import { BotService } from '../services/botService';
 import type { Message } from '@99xio/xians-sdk-typescript';
 
 interface UseChatServiceProps {
@@ -14,7 +14,7 @@ interface UseChatServiceProps {
 }
 
 interface UseChatServiceReturn {
-  chatService: CommsService | null;
+  chatService: BotService | null;
   isConnected: boolean;
   isLoading: boolean;
   error: string | null;
@@ -39,13 +39,13 @@ export const useChatService = ({
   const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const chatServiceRef = useRef<CommsService | null>(null);
+  const chatServiceRef = useRef<BotService | null>(null);
 
   // Initialize chat service
   useEffect(() => {
     console.log('[useChatService] Initializing chat service');
     
-    const chatService = new CommsService({
+    const chatService = new BotService({
       onMessageReceived,
       onConnectionStateChanged: (connected: boolean) => {
         console.log('[useChatService] Connection state changed:', connected);

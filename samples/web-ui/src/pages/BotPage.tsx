@@ -23,11 +23,11 @@ const BotPage: React.FC<BotPageProps> = ({ agents }) => {
   }
   
   // Direct access to route params, no RouteProvider needed
-  return <BotPageContent currentAgent={currentAgent} documentId={documentId} />;
+  return <BotPageContent currentAgent={currentAgent} documentId={documentId} agents={agents} />;
 };
 
 // Separate component that has access to route context  
-const BotPageContent: React.FC<{ currentAgent: Bot; documentId?: string }> = React.memo(({ currentAgent, documentId }) => {
+const BotPageContent: React.FC<{ currentAgent: Bot; documentId?: string; agents: Bot[] }> = React.memo(({ currentAgent, documentId, agents }) => {
   console.log(`[BotPageContent] 🔄 Render - agent: ${currentAgent?.name} id: ${currentAgent?.id} docId: ${documentId}`);
   console.log(`[BotPageContent] 🧪 React.memo wrapped component rendering`);
   
@@ -52,8 +52,8 @@ const BotPageContent: React.FC<{ currentAgent: Bot; documentId?: string }> = Rea
   
   let agentComponent: React.ReactNode = undefined;
   if (shouldShowAgentComponent && currentAgent.mainComponent) {
-    const MainComponent = currentAgent.mainComponent;
-    agentComponent = <MainComponent />;
+    const MainComponent = currentAgent.mainComponent as React.ComponentType<{ agents: Bot[] }>;
+    agentComponent = <MainComponent agents={agents} />;
   }
 
   return (
@@ -63,10 +63,11 @@ const BotPageContent: React.FC<{ currentAgent: Bot; documentId?: string }> = Rea
     />
   );
 }, (prevProps, nextProps) => {
-  // Re-render if agent changes OR if documentId changes (including to/from /new route)
+  // Re-render if agent changes OR if documentId changes OR if agents array changes
   const agentChanged = prevProps.currentAgent !== nextProps.currentAgent;
   const documentChanged = prevProps.documentId !== nextProps.documentId;
-  const shouldSkipRender = !agentChanged && !documentChanged;
+  const agentsChanged = prevProps.agents !== nextProps.agents;
+  const shouldSkipRender = !agentChanged && !documentChanged && !agentsChanged;
   console.log(`[BotPageContent] 🔍 React.memo comparison - prev agent: ${prevProps.currentAgent?.id} next agent: ${nextProps.currentAgent?.id} prev doc: ${prevProps.documentId} next doc: ${nextProps.documentId} shouldSkip: ${shouldSkipRender}`);
   console.log(`[BotPageContent] 🔍 React.memo comparison function called!`);
   return shouldSkipRender;

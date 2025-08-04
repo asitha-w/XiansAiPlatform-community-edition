@@ -5,19 +5,20 @@ import theme from './utils/theme';
 import HomePage from './pages/HomePage';
 import BotPage from './pages/BotPage';
 import Navbar from './components/Navbar';
-import type { Bot } from './types';
+import type { Bot as Agent } from './types';
 import { ContractEntityWithSteps } from './features/legal/contract-entity/ContractEntityWithSteps';
 import { DataMessageProvider } from './context/DataMessageContext';
 
 
 // Mock agents data - centralized for the entire app
-const agents: Bot[] = [
+const agents: Agent[] = [
   {
     id: '1',
     name: 'Legal Assistant',
     description: 'Legal analysis and contract management',
     capabilities: ['Contract Creation', 'Legal Analysis'],
-    workflow: 'Legal Contract Agent:Legal Contract Bot',
+    bot: 'Legal Contract Agent:Legal Contract Bot',
+    flow: 'Legal Contract Agent:Legal Contract Flow',
     slug: 'legal',
     mainComponent: ContractEntityWithSteps,
   },
@@ -26,7 +27,7 @@ const agents: Bot[] = [
     name: 'Sales Assistant',
     description: 'Helps with orders and customer management',
     capabilities: ['Order Processing', 'Customer Analysis'],
-    workflow: 'Sales Agent:Sales Bot',
+    bot: 'Sales Agent:Sales Bot',
     slug: 'sales',
   },
   {
@@ -34,7 +35,7 @@ const agents: Bot[] = [
     name: 'Finance Advisor',
     description: 'Financial analysis and invoice management',
     capabilities: ['Invoice Review', 'Financial Analysis'],
-    workflow: 'Finance Agent:Finance Bot',
+    bot: 'Finance Agent:Finance Bot',
     slug: 'finance',
   },
 ];
@@ -43,13 +44,13 @@ function App() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const handleAgentSelect = (agent: Bot) => {
+  const handleAgentSelect = (agent: Agent) => {
     navigate(`/${agent.slug}`);
   };
 
   // Determine current agent based on URL
   const currentPath = location.pathname.slice(1); // Remove leading slash
-  
+
   // Memoize currentAgent to prevent unnecessary re-renders when the same agent is selected
   const currentAgent = useMemo(() => {
     // Extract agent slug from path (first segment before any /)
@@ -63,56 +64,56 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <DataMessageProvider>
-        <Box sx={{ 
-          height: '100vh', 
-          display: 'flex', 
+        <Box sx={{
+          height: '100vh',
+          display: 'flex',
           flexDirection: 'column',
           backgroundColor: '#FAFAFA'
         }}>
-          <Navbar 
+          <Navbar
             currentAgent={currentAgent}
             availableAgents={agents}
             onSelectAgent={handleAgentSelect}
           />
 
           {/* Main Content */}
-          <Box sx={{ 
-            flexGrow: 1, 
+          <Box sx={{
+            flexGrow: 1,
             backgroundColor: '#F9FAFB',
             overflow: 'auto',
             paddingTop: '90px' // Push content below fixed navbar (64px toolbar + 48px py:3 + 1px border)
           }}>
             <Routes>
-              <Route 
-                path="/" 
-                element={<HomePage agents={agents} />} 
+              <Route
+                path="/"
+                element={<HomePage agents={agents} />}
               />
-              <Route 
-                path="/:slug" 
+              <Route
+                path="/:slug"
                 element={
-                  <BotPage 
-                    agents={agents} 
+                  <BotPage
+                    agents={agents}
                     onSelectAgent={handleAgentSelect}
                   />
-                } 
+                }
               />
-              <Route 
-                path="/:slug/new" 
+              <Route
+                path="/:slug/new"
                 element={
-                  <BotPage 
-                    agents={agents} 
+                  <BotPage
+                    agents={agents}
                     onSelectAgent={handleAgentSelect}
                   />
-                } 
+                }
               />
-              <Route 
-                path="/:slug/:documentId" 
+              <Route
+                path="/:slug/:documentId"
                 element={
-                  <BotPage 
-                    agents={agents} 
+                  <BotPage
+                    agents={agents}
                     onSelectAgent={handleAgentSelect}
                   />
-                } 
+                }
               />
             </Routes>
           </Box>

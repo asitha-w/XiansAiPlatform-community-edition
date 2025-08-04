@@ -332,7 +332,15 @@ public class GeneralCapabilities
             var validator = new ContractValidator();
             var validationResult = validator.ValidateContract(contract);
 
-            return new ContractWithValidations { Contract = contract, Validations = validationResult.Insights };
+            var contractWithValidations = new ContractWithValidations { 
+                Contract = contract, 
+                Validations = validationResult.Insights
+            };
+
+            await _thread.SendData(new DocumentUpdate(contractWithValidations));
+
+            return contractWithValidations;
+
         }
         catch (Exception ex)
         {

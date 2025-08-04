@@ -7,19 +7,16 @@ export interface User {
   avatar?: string;
   roles: string[];
 }
-
-export interface Flow {
+export interface Bot {
   id: string;
-  workflow: string;
-}
-
-export interface Bot extends Flow {
+  bot: string;
+  flow?: string;
   name: string;
   description: string;
   avatar?: string;
   capabilities: string[];
   slug: string;
-  mainComponent?: React.ComponentType;
+  mainComponent?: React.ComponentType<{ agents: Bot[] }>;
 }
 
 export interface ContractEntity {

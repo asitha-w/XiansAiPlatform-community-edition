@@ -16,7 +16,6 @@ public class ValidationInsight
     public string Message { get; set; } = string.Empty;
     public string? FieldPath { get; set; }
     public string? SuggestedAction { get; set; }
-    public int PriorityIndex { get; set; }
     public UICommand? Command { get; set; }
 }
 
@@ -29,21 +28,12 @@ public class ValidationResult
 
     public void AddInsight(InsightSeverity severity, string message, string? fieldPath = null, string? suggestedAction = null)
     {
-        var priorityIndex = severity switch
-        {
-            InsightSeverity.Critical => 1,
-            InsightSeverity.Warning => 2,
-            InsightSeverity.Suggestion => 3,
-            _ => 2
-        };
-
         Insights.Add(new ValidationInsight
         {
             Severity = severity,
             Message = message,
             FieldPath = fieldPath,
             SuggestedAction = suggestedAction,
-            PriorityIndex = priorityIndex,
             Command = null
         });
     }

@@ -11,7 +11,7 @@ import {
   CardContent,
 } from '@mui/material';
 import {
-  Edit as EditIcon,
+  Refresh as RefreshIcon,
   Save as SaveIcon,
   Cancel as CancelIcon,
   Description as ContractIcon,
@@ -23,65 +23,32 @@ import {
   Article as TermsIcon,
 } from '@mui/icons-material';
 import type { ContractEntity, ContractValidation, Contract, TermCategory } from '../../../types';
-import type { DataMessagePayload } from '../../../context/context';
-import { useDataMessage } from '../../../hooks/useDataMessage';
 import { useParams } from 'react-router-dom';
+import EntityOverview from './EntityOverview';
 
-interface ContractEntityPanelProps {
+export interface ContractEntityPanelProps {
   entity?: ContractEntity | null;
-  onEdit?: (entity: ContractEntity) => void;
+  contractData?: Contract | null;
+  validations?: ContractValidation[];
   onSave?: (entity: ContractEntity) => void;
   isEditing?: boolean;
-}
-
-// Interface for DocumentUpdate message data structure
-interface DocumentUpdateData {
-  contract: Contract;
-  validations: ContractValidation[];
+  onRefreshDocument?: () => Promise<void>;
 }
 
 const ContractEntityPanel: React.FC<ContractEntityPanelProps> = ({
   entity: propEntity,
-  onEdit,
+  contractData: propContractData,
+  validations: propValidations = [],
   onSave,
   isEditing = false,
+  onRefreshDocument,
 }) => {
-  const [contractData, setContractData] = useState<Contract | null>(null);
-  const [validations, setValidations] = useState<ContractValidation[]>([]);
   const [entity, setEntity] = useState<ContractEntity | null>(propEntity || null);
-  const dataMessageContext = useDataMessage();
   const { documentId } = useParams<{ documentId?: string }>();
-  // Listen for DocumentUpdate messages
-  useEffect(() => {
-    const handleDocumentUpdate = (payload: DataMessagePayload) => {
-      console.log('[ContractEntityPanel] Received DocumentUpdate:', payload);
-      
-      const data = payload.data as DocumentUpdateData;
-      if (data && data.contract) {
-        setContractData(data.contract);
-        setValidations(data.validations || []);
-        
-        // Create or update the entity
-        const updatedEntity: ContractEntity = {
-          id: data.contract.id,
-          type: 'contract',
-          title: data.contract.title,
-          status: getContractStatus(data.validations || []),
-          data: {
-            contract: data.contract,
-            validations: data.validations || [],
-          },
-          lastModified: new Date(),
-          assignedTo: 'admin@example.com',
-        };
-        
-        setEntity(updatedEntity);
-      }
-    };
-
-    const unsubscribe = dataMessageContext.subscribe('DocumentUpdate', handleDocumentUpdate);
-    return unsubscribe;
-  }, [dataMessageContext]);
+  
+  // Use props for contract data and validations, fallback to entity data if props not provided
+  const contractData = propContractData || entity?.data?.contract || null;
+  const validations = propValidations.length > 0 ? propValidations : entity?.data?.validations || [];
 
   // Send chat message when documentId changes
   useEffect(() => {
@@ -108,21 +75,10 @@ const ContractEntityPanel: React.FC<ContractEntityPanelProps> = ({
   useEffect(() => {
     if (propEntity) {
       setEntity(propEntity);
-      if (propEntity.data?.contract) {
-        setContractData(propEntity.data.contract);
-        setValidations(propEntity.data.validations || []);
-      }
     }
   }, [propEntity]);
 
-  const getContractStatus = (validations: ContractValidation[]): string => {
-    const hasErrors = validations.some(v => v.severity === 0);
-    const hasWarnings = validations.some(v => v.severity === 1);
-    
-    if (hasErrors) return 'needs_attention';
-    if (hasWarnings) return 'review_required';
-    return 'in_progress';
-  };
+
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -282,13 +238,13 @@ const ContractEntityPanel: React.FC<ContractEntityPanelProps> = ({
             <Box sx={{ display: 'flex', gap: 1.5 }}>
               {!isEditing ? (
                 <Button
-                  startIcon={<EditIcon />}
+                  startIcon={<RefreshIcon />}
                   size="small"
-                  onClick={() => entity && onEdit?.(entity)}
+                  onClick={() => onRefreshDocument?.()}
                   variant="outlined"
                   sx={{ minWidth: 80 }}
                 >
-                  Edit
+                  Refresh
                 </Button>
               ) : (
                 <Box sx={{ display: 'flex', gap: 1 }}>
@@ -321,6 +277,19 @@ const ContractEntityPanel: React.FC<ContractEntityPanelProps> = ({
         </Box>
 
         <Divider sx={{ mx: 3, borderColor: 'grey.50' }} />
+
+        {/* Entity Overview - Document Insights */}
+        {contractData && (
+          <Box sx={{ p: 3, pb: 2 }}>
+            <EntityOverview 
+              validations={validations}
+            />
+          </Box>
+        )}
+
+        {contractData && (
+          <Divider sx={{ mx: 3, borderColor: 'grey.50' }} />
+        )}
 
         {/* Contract Content */}
         {contractData && (

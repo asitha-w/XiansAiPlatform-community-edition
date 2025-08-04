@@ -23,23 +23,24 @@ public class DataProcessor {
         _messageThread = messageThread;
     }
 
-    public async Task<ContractWithValidations> ProcessDocumentRequest(DocumentRequest documentRequest) {
+    public async Task<DocumentUpdate> GetValidatedDocument(DocumentRequest documentRequest) {
         _logger.LogDebug($"Processing document request: {documentRequest}");
         var contract = await _contractRepository.GetContractByIdAsync(documentRequest.DocumentId);
         _logger.LogDebug($"Contract found: {contract?.Id}");
 
         if (contract == null) {
-            throw new Exception("Contract not found");
+            throw new Exception($"Contract not found for document ID: {documentRequest.DocumentId}");
         }
 
         // Validate the updated contract
         var validationResult = _validator.ValidateContract(contract);
         _logger.LogDebug($"Validation result has {validationResult.Insights.Count} insights");
 
-        return new ContractWithValidations {
+        var contractWithValidations = new ContractWithValidations {
             Contract = contract,
             Validations = validationResult.Insights
         };
+        return new DocumentUpdate(contractWithValidations);
     }
 
 }
