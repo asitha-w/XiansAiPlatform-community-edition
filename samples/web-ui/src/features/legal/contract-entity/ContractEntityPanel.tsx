@@ -1,490 +1,334 @@
-import React, { useState, useEffect } from 'react';
-import {
-  Box,
-  Typography,
-  Chip,
-  IconButton,
-  Button,
-  Divider,
-  Alert,
-  Card,
-  CardContent,
-} from '@mui/material';
-import {
-  Refresh as RefreshIcon,
-  Save as SaveIcon,
-  Cancel as CancelIcon,
-  Description as ContractIcon,
-  Person as PersonIcon,
-  Warning as WarningIcon,
-  Error as ErrorIcon,
-  Info as InfoIcon,
-  CalendarToday as CalendarIcon,
-  Article as TermsIcon,
-} from '@mui/icons-material';
-import type { ContractEntity, ContractValidation, Contract, TermCategory } from '../../../types';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Box } from '@mui/material';
+import EntityDetails from './EntityDetails';
 import { useParams } from 'react-router-dom';
-import EntityOverview from './EntityOverview';
+import { useDataService } from '../../../hooks/useDataService';
+import { useDataMessage } from '../../../hooks/useDataMessage';
+import type { EntityDetailsProps } from './EntityDetails';
+import type { Bot, ContractEntity, ContractValidation, Contract } from '../../../types';
+import type { DataMessagePayload } from '../../../context/context';
+import type { Message } from '@99xio/xians-sdk-typescript';
 
-export interface ContractEntityPanelProps {
-  entity?: ContractEntity | null;
-  contractData?: Contract | null;
+// Interface for DocumentUpdate message data structure (handles both casing variants)
+interface DocumentUpdateData {
+  contract?: Contract;
+  Contract?: Contract;
   validations?: ContractValidation[];
-  onSave?: (entity: ContractEntity) => void;
-  isEditing?: boolean;
-  onRefreshDocument?: () => Promise<void>;
+  Validations?: ContractValidation[];
 }
 
-const ContractEntityPanel: React.FC<ContractEntityPanelProps> = ({
-  entity: propEntity,
-  contractData: propContractData,
-  validations: propValidations = [],
-  onSave,
-  isEditing = false,
-  onRefreshDocument,
-}) => {
-  const [entity, setEntity] = useState<ContractEntity | null>(propEntity || null);
-  const { documentId } = useParams<{ documentId?: string }>();
+// Wrapper component for ContractEntityPanel with routing support
+// Note: EntityOverview (validation insights) is now integrated directly into ContractEntityPanel
+interface ContractEntityPanelProps extends EntityDetailsProps {
+  // Legacy props for backwards compatibility - no longer used since validation insights 
+  // are shown automatically based on DocumentUpdate messages
+  currentStep?: number;
+  steps?: string[];
   
-  // Use props for contract data and validations, fallback to entity data if props not provided
-  const contractData = propContractData || entity?.data?.contract || null;
-  const validations = propValidations.length > 0 ? propValidations : entity?.data?.validations || [];
+  // Required for data service functionality
+  agents: Bot[];
+}
 
-  // Send chat message when documentId changes
+export const ContractEntityPanel: React.FC<ContractEntityPanelProps> = ({
+  currentStep, // Deprecated - validation insights are now shown automatically
+  steps,       // Deprecated - validation insights are now shown automatically
+  agents,
+  ...entityPanelProps
+}) => {
+  const { mode, documentId } = useParams<{ mode?: string; documentId?: string }>();
+  
+  // State management for contract data and validations
+  const [contractData, setContractData] = useState<Contract | null>(null);
+  const [validations, setValidations] = useState<ContractValidation[]>([]);
+  const [entity, setEntity] = useState<ContractEntity | null>(entityPanelProps.entity || null);
+  
+  // Data message context for subscribing to DocumentUpdate messages
+  const dataMessageContext = useDataMessage();
+  
+  // Helper function to determine contract status based on validations
+  const getContractStatus = useCallback((validations: ContractValidation[]): string => {
+    const hasErrors = validations.some(v => v.severity === 0);
+    const hasWarnings = validations.some(v => v.severity === 1);
+    
+    if (hasErrors) return 'needs_attention';
+    if (hasWarnings) return 'review_required';
+    return 'in_progress';
+  }, []);
+  
+  // Memoize callback functions to prevent dataService recreation
+  const onDataMessageReceived = useCallback((message: Message) => {
+    console.log('[ContractEntityWithSteps] Data message received:', message);
+    // Handle incoming data messages (e.g., document updates, validation results)
+  }, []);
+
+  const onConnectionStateChanged = useCallback((connected: boolean) => {
+    console.log('[ContractEntityWithSteps] Data service connected:', connected);
+  }, []);
+
+  const onError = useCallback((error: string) => {
+    console.error('[ContractEntityWithSteps] Data service error:', error);
+  }, []);
+
+  // Initialize data service with current context
+  const dataService = useDataService({
+    agents,
+    documentId,
+    onDataMessageReceived,
+    onConnectionStateChanged,
+    onError,
+  });
+  
+  // Subscribe to DocumentUpdate messages from both flow and bot
   useEffect(() => {
-    if (documentId) {
-//       console.log('[ContractEntityPanel] DocumentId changed:', documentId);
+    const handleDocumentUpdate = (payload: DataMessagePayload) => {
+      console.log('[ContractEntityWithSteps] 🎯 DocumentUpdate handler called with payload:', payload);
       
-//       const message = `Please retrieve and display the contract document information for document ID: ${documentId}. 
+      const data = payload.data as DocumentUpdateData;
+      // Handle both possible casing variants
+      const contract = data?.contract || data?.Contract;
+      const validations = data?.validations || data?.Validations || [];
+      
+      if (data && contract) {
+        console.log('[ContractEntityWithSteps] ✅ Valid contract data found, updating state');
+        setContractData(contract);
+        setValidations(validations);
+        
+        // Create or update the entity
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const contractAny = contract as any; // Handle property casing flexibility
+        const updatedEntity: ContractEntity = {
+          id: contractAny.id || contractAny.Id,
+          type: 'contract',
+          title: contractAny.title || contractAny.Title || '',
+          status: getContractStatus(validations),
+          data: {
+            contract: contract,
+            validations: validations,
+          },
+          lastModified: new Date(),
+          assignedTo: 'admin@example.com',
+        };
+        
+        setEntity(updatedEntity);
+        console.log('[ContractEntityWithSteps] ✅ Entity updated successfully with contract:', contractAny.title || contractAny.Title);
+      } else {
+        console.warn('[ContractEntityWithSteps] ⚠️  DocumentUpdate payload missing contract data:', data);
+        console.warn('[ContractEntityWithSteps] Available data keys:', data ? Object.keys(data) : 'no data');
+      }
+    };
 
-// I need you to show any validation issues or warnings for this document and provide the current status and any recommendations for next steps.`;
-
-//       console.log('[ContractEntityPanel] Sending chat message for document:', documentId);
-      
-      // const sendChatEvent = new CustomEvent('SendChat', {
-      //   detail: {
-      //     message: message
-      //   }
-      // });
-      
-      //window.dispatchEvent(sendChatEvent);
-    }
-  }, [documentId]);
+    console.log('[ContractEntityWithSteps] 📝 Subscribing to DocumentUpdate messages');
+    const unsubscribe = dataMessageContext.subscribe('DocumentUpdate', handleDocumentUpdate);
+    return () => {
+      console.log('[ContractEntityWithSteps] 🗑️ Unsubscribing from DocumentUpdate messages');
+      unsubscribe();
+    };
+  }, [dataMessageContext, getContractStatus]);
 
   // Update entity when prop changes
   useEffect(() => {
-    if (propEntity) {
-      setEntity(propEntity);
+    if (entityPanelProps.entity) {
+      setEntity(entityPanelProps.entity);
+      if (entityPanelProps.entity.data?.contract) {
+        setContractData(entityPanelProps.entity.data.contract);
+        setValidations(entityPanelProps.entity.data.validations || []);
+      }
     }
-  }, [propEntity]);
+  }, [entityPanelProps.entity]);
+  
+  // Determine entity based on route mode  
+  const resolvedEntity = mode === 'new' ? null : entity;
 
-
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'success';
-      case 'needs_attention':
-        return 'error';
-      case 'review_required':
-        return 'warning';
-      case 'in_progress':
-        return 'info';
-      case 'cancelled':
-        return 'error';
-      default:
-        return 'default';
-    }
-  };
-
-  const getValidationsForField = (fieldPath: string): ContractValidation[] => {
-    return validations.filter(v => v.fieldPath === fieldPath);
-  };
-
-  const getSeverityIcon = (severity: number) => {
-    switch (severity) {
-      case 0: return <ErrorIcon color="error" sx={{ fontSize: 16 }} />;
-      case 1: return <WarningIcon color="warning" sx={{ fontSize: 16 }} />;
-      case 2: return <InfoIcon color="info" sx={{ fontSize: 16 }} />;
-      default: return <InfoIcon color="info" sx={{ fontSize: 16 }} />;
-    }
-  };
-
-  const getTermCategoryLabel = (category: TermCategory): string => {
-    switch (category) {
-      case 'General': return 'General';
-      case 'Payment': return 'Payment';
-      case 'Delivery': return 'Delivery';
-      case 'Warranty': return 'Warranty';
-      case 'Liability': return 'Liability';
-      case 'Termination': return 'Termination';
-      case 'Confidentiality': return 'Confidentiality';
-      case 'Intellectual_Property': return 'Intellectual Property';
-      case 'Dispute_Resolution': return 'Dispute Resolution';
-      case 'Compliance': return 'Compliance';
-      default: return 'General';
-    }
-  };
-
-  const ValidationAlert: React.FC<{ validation: ContractValidation }> = ({ validation }) => (
-    <Alert 
-      severity={validation.severity === 0 ? 'error' : validation.severity === 1 ? 'warning' : 'info'}
-      sx={{ 
-        mt: 1, 
-        fontSize: '0.875rem',
-        '& .MuiAlert-message': { fontSize: '0.875rem' }
-      }}
-      icon={getSeverityIcon(validation.severity)}
-    >
-      <Box>
-        <Typography variant="body2" sx={{ fontWeight: 500 }}>
-          {validation.message}
-        </Typography>
-        {validation.suggestedAction && (
-          <Typography variant="caption" sx={{ display: 'block', mt: 0.5, opacity: 0.8 }}>
-            Suggestion: {validation.suggestedAction}
-          </Typography>
-        )}
-      </Box>
-    </Alert>
-  );
-
-  const FieldWithValidations: React.FC<{
-    fieldPath: string;
-    children: React.ReactNode;
-  }> = ({ fieldPath, children }) => {
-    const fieldValidations = getValidationsForField(fieldPath);
-    
-    return (
-      <Box>
-        {children}
-        {fieldValidations.map((validation, index) => (
-          <ValidationAlert key={index} validation={validation} />
-        ))}
-      </Box>
-    );
-  };
-
-  if (!contractData && !entity) {
-    return (
-      <Box sx={{ 
-        height: '100%', 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center',
-        color: 'text.secondary',
-        mt: 10,
-        p: 4
-      }}>
-        <Box sx={{ textAlign: 'center' }}>
-          <ContractIcon sx={{ fontSize: 56, mb: 2, opacity: 0.3 }} />
-          <Typography variant="h6" gutterBottom sx={{ fontWeight: 500 }}>
-            No Contract Selected
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Select a contract to view details or wait for contract data to load
-          </Typography>
-        </Box>
-      </Box>
-    );
+  // Extract dataService properties to avoid ESLint dependency warnings
+  const { isConnected, currentFlow, sendDataMessage } = dataService;
+  
+  // Log deprecated usage for backwards compatibility tracking
+  if (currentStep !== undefined || steps !== undefined) {
+    console.warn('ContractEntityWithSteps: currentStep and steps props are deprecated. Validation insights are now shown automatically based on DocumentUpdate messages.');
   }
+  
+  // Add loading state and track fetched documents to prevent multiple simultaneous requests
+  const [isLoadingDocument, setIsLoadingDocument] = useState(false);
+  const hasInitialFetchRef = useRef<string | null>(null);
+  const prevConnectionStateRef = useRef<boolean>(false);
 
+  // Function to get/refresh validated document
+  const getValidatedDocument = React.useCallback(async () => {
+    if (!documentId) {
+      console.warn('[ContractEntityWithSteps] Cannot get document: no document ID');
+      return;
+    }
+    
+    if (isLoadingDocument) {
+      console.log('[ContractEntityWithSteps] GetValidatedDocument already in progress, skipping');
+      return;
+    }
+    
+    try {
+      setIsLoadingDocument(true);
+      await dataService.sendDataMessage('GetValidatedDocument', {
+        documentId,
+      });
+      console.log('[ContractEntityWithSteps] GetValidatedDocument request sent for:', documentId);
+    } catch (error) {
+      console.error('[ContractEntityWithSteps] Failed to send GetValidatedDocument request:', error);
+    } finally {
+      // Reset loading state after a short delay to prevent immediate re-triggers
+      setTimeout(() => setIsLoadingDocument(false), 1000);
+    }
+  }, [dataService, documentId, isLoadingDocument]);
+
+  // Alias for backward compatibility
+  const refreshDocument = getValidatedDocument;
+  
+  // Update document ID in data service when it changes and clear fetched tracking
+  React.useEffect(() => {
+    dataService.updateDocumentId(documentId);
+    // Reset the ref when documentId changes so we can fetch the new document
+    hasInitialFetchRef.current = null;
+    
+    // Clear existing data when documentId changes to avoid showing stale data
+    if (documentId) {
+      console.log('[ContractEntityWithSteps] Document ID changed, clearing existing data:', documentId);
+      setContractData(null);
+      setValidations([]);
+      setEntity(null);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [documentId]); // Only depend on documentId, not dataService
+
+  // Automatically fetch validated document when conditions are met
+  React.useEffect(() => {
+    const shouldFetch = (
+      documentId && // We have a document ID
+      hasInitialFetchRef.current !== documentId && // Haven't fetched this document yet
+      isConnected && // Service is connected
+      currentFlow && // Flow is available (means subscription is likely ready)
+      !isLoadingDocument // Not currently loading
+    );
+
+    if (shouldFetch) {
+      console.log('[ContractEntityWithSteps] Auto-fetching validated document for:', documentId, 'flow:', currentFlow);
+      hasInitialFetchRef.current = documentId; // Mark as fetched immediately to prevent duplicates
+      
+      // Add a small delay to ensure flow subscription is fully established
+      const fetchTimeout = setTimeout(async () => {
+        try {
+          setIsLoadingDocument(true);
+          // Request the document from the bot
+          await sendDataMessage('GetValidatedDocument', {
+            documentId,
+          });
+          console.log('[ContractEntityWithSteps] GetValidatedDocument request sent for:', documentId);
+
+          // Send a chat message to the bot
+          const message = `Please retrieve the status of this contract.`;
+
+          const sendChatEvent = new CustomEvent('SendChat', {
+            detail: {
+              message: message
+            }
+          });
+    
+          window.dispatchEvent(sendChatEvent);
+        } catch (error) {
+          console.error('[ContractEntityWithSteps] Failed to send GetValidatedDocument request:', error);
+          // Reset the ref so we can retry
+          hasInitialFetchRef.current = null;
+        } finally {
+          setTimeout(() => setIsLoadingDocument(false), 1000);
+        }
+      }, 100); // Small delay to ensure flow subscription is ready
+
+      return () => clearTimeout(fetchTimeout);
+    } else if (documentId && hasInitialFetchRef.current === documentId) {
+      console.log('[ContractEntityWithSteps] Document already fetched, skipping auto-fetch for:', documentId);
+    } else if (documentId && !isConnected) {
+      console.log('[ContractEntityWithSteps] Waiting for data service connection before fetching document:', documentId);
+    } else if (documentId && !currentFlow) {
+      console.log('[ContractEntityWithSteps] Waiting for flow subscription before fetching document:', documentId);
+    }
+  }, [documentId, isConnected, currentFlow, sendDataMessage, isLoadingDocument]);
+
+  // Handle connection state changes - ensure we fetch when service becomes ready
+  React.useEffect(() => {
+    const wasConnected = prevConnectionStateRef.current;
+    const isNowConnected = isConnected;
+    
+    // Only trigger if connection changed from false to true
+    if (isNowConnected && !wasConnected) {
+      console.log('[ContractEntityWithSteps] Service connected, checking if document fetch needed:', documentId);
+      
+      // Don't fetch immediately - let the main effect handle it after flow subscription
+      // This prevents duplicate requests
+      if (documentId && hasInitialFetchRef.current !== documentId) {
+        console.log('[ContractEntityWithSteps] Document fetch will be handled by main effect after flow subscription');
+      }
+    }
+    
+    // Update the previous connection state
+    prevConnectionStateRef.current = isNowConnected;
+  }, [isConnected, documentId]);
+
+  // Failsafe: Retry document loading after a delay if document hasn't been loaded
+  React.useEffect(() => {
+    if (!documentId) return;
+
+    const retryTimeout = setTimeout(() => {
+      // Check if we still need to fetch the document
+      const needsRetry = (
+        documentId &&
+        hasInitialFetchRef.current !== documentId &&
+        isConnected &&
+        currentFlow &&
+        !isLoadingDocument &&
+        !contractData // No contract data loaded yet
+      );
+
+      if (needsRetry) {
+        console.log('[ContractEntityWithSteps] Failsafe: Retrying document fetch for:', documentId);
+        hasInitialFetchRef.current = documentId;
+        
+        (async () => {
+          try {
+            setIsLoadingDocument(true);
+            await sendDataMessage('GetValidatedDocument', {
+              documentId,
+            });
+            console.log('[ContractEntityWithSteps] Failsafe: GetValidatedDocument request sent for:', documentId);
+          } catch (error) {
+            console.error('[ContractEntityWithSteps] Failsafe: Failed to send GetValidatedDocument request:', error);
+            hasInitialFetchRef.current = null; // Allow future retries
+          } finally {
+            setTimeout(() => setIsLoadingDocument(false), 1000);
+          }
+        })();
+      }
+    }, 2000); // Wait 2 seconds before retry
+
+    return () => clearTimeout(retryTimeout);
+  }, [documentId, isConnected, currentFlow, sendDataMessage, isLoadingDocument, contractData]);
+  
+  console.log('ContractEntityWithSteps - mode:', mode, 'documentId:', documentId, 'currentFlow:', currentFlow, 'isConnected:', isConnected, 'hasContract:', !!contractData);
+  
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-      <Box sx={{ flexGrow: 1 }}>
-        {/* Contract Header */}
-        <Box sx={{ p: 3, pb: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Box sx={{ 
-                p: 1.5, 
-                borderRadius: 2, 
-                backgroundColor: 'grey.50',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                border: '0.5px solid',
-                borderColor: 'grey.100'
-              }}>
-                <ContractIcon />
-              </Box>
-              <Box>
-                <FieldWithValidations fieldPath="title">
-                <Typography variant="h4" sx={{ fontWeight: 400, mb: 0.5 }}>
-                    {contractData?.title || entity?.title || 'Untitled Contract'}
-                </Typography>
-                </FieldWithValidations>
-                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                  <Typography variant="body2" color="text.secondary" sx={{ fontFamily: 'monospace' }}>
-                    {contractData?.id || entity?.id}
-                  </Typography>
-                  {entity && (
-                  <Chip 
-                    label={entity.status.replace('_', ' ')} 
-                    size="small" 
-                    color={getStatusColor(entity.status)}
-                    variant="outlined"
-                    sx={{ 
-                      textTransform: 'capitalize',
-                      borderColor: 'grey.200',
-                      backgroundColor: 'grey.50'
-                    }}
-                  />
-                  )}
-                </Box>
-              </Box>
-            </Box>
-            
-            <Box sx={{ display: 'flex', gap: 1.5 }}>
-              {!isEditing ? (
-                <Button
-                  startIcon={<RefreshIcon />}
-                  size="small"
-                  onClick={() => onRefreshDocument?.()}
-                  variant="outlined"
-                  sx={{ minWidth: 80 }}
-                >
-                  Refresh
-                </Button>
-              ) : (
-                <Box sx={{ display: 'flex', gap: 1 }}>
-                  <IconButton size="small" color="success" onClick={() => entity && onSave?.(entity)}>
-                    <SaveIcon />
-                  </IconButton>
-                  <IconButton size="small" color="error">
-                    <CancelIcon />
-                  </IconButton>
-                </Box>
-              )}
-            </Box>
-          </Box>
-          
-          <Box sx={{ display: 'flex', gap: 4, color: 'text.secondary' }}>
-            <Typography variant="caption" sx={{ opacity: 0.8 }}>
-              Created: {contractData?.createdDate ? new Date(contractData.createdDate).toLocaleDateString() : 'Unknown'}
-            </Typography>
-            {entity?.lastModified && (
-              <Typography variant="caption" sx={{ opacity: 0.8 }}>
-                Last modified: {entity.lastModified.toLocaleDateString()}
-              </Typography>
-            )}
-            {entity?.assignedTo && (
-              <Typography variant="caption" sx={{ opacity: 0.8 }}>
-                Assigned to: {entity.assignedTo}
-              </Typography>
-            )}
-          </Box>
-        </Box>
-
-        <Divider sx={{ mx: 3, borderColor: 'grey.50' }} />
-
-        {/* Entity Overview - Document Insights */}
-        {contractData && (
-          <Box sx={{ p: 3, pb: 2 }}>
-            <EntityOverview 
-              validations={validations}
-            />
-          </Box>
-        )}
-
-        {contractData && (
-          <Divider sx={{ mx: 3, borderColor: 'grey.50' }} />
-        )}
-
-        {/* Contract Content */}
-        {contractData && (
-          <Box sx={{ p: 3, pt: 4 }}>
-            {/* Contract Description */}
-            <Box sx={{ mb: 4 }}>
-              <Typography variant="h6" sx={{ mb: 3, fontWeight: 400 }}>
-                Description
-              </Typography>
-              <FieldWithValidations fieldPath="description">
-                {contractData.description ? (
-                  <Typography variant="body1" sx={{ lineHeight: 1.6 }}>
-                    {contractData.description}
-                  </Typography>
-                ) : (
-                  <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                    No description provided
-                      </Typography>
-                    )}
-              </FieldWithValidations>
-            </Box>
-
-            <Divider sx={{ my: 4, borderColor: 'grey.50' }} />
-
-            {/* Effective Date */}
-            <Box sx={{ mb: 4 }}>
-              <Typography variant="h6" sx={{ mb: 3, fontWeight: 400, display: 'flex', alignItems: 'center', gap: 1 }}>
-                <CalendarIcon sx={{ fontSize: 20 }} />
-                Effective Date
-              </Typography>
-              <FieldWithValidations fieldPath="effectiveDate">
-                {contractData.effectiveDate ? (
-                  <Typography variant="body1">
-                    {new Date(contractData.effectiveDate).toLocaleDateString()}
-                  </Typography>
-                ) : (
-                  <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                    No effective date set
-                  </Typography>
-                )}
-              </FieldWithValidations>
-            </Box>
-
-            <Divider sx={{ my: 4, borderColor: 'grey.50' }} />
-
-                        {/* Contract Parties */}
-            <Box sx={{ mb: 4 }}>
-              <Typography variant="h6" sx={{ mb: 3, fontWeight: 400, display: 'flex', alignItems: 'center', gap: 1 }}>
-                <PersonIcon sx={{ fontSize: 20 }} />
-                Parties
-              </Typography>
-              <FieldWithValidations fieldPath="parties">
-                {contractData.parties && contractData.parties.length > 0 ? (
-                  <Box sx={{ display: 'grid', gap: 3 }}>
-                    {contractData.parties.map((party, index) => (
-                      <Card key={party.id || index} variant="outlined" sx={{ backgroundColor: 'grey.50' }}>
-                        <CardContent sx={{ p: 3 }}>
-                          <Typography variant="h6" sx={{ fontWeight: 500, mb: 2 }}>
-                            {party.name}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                            Role: {party.role}
-                          </Typography>
-                          
-                          {/* Representatives */}
-                          {party.representatives && party.representatives.length > 0 && (
-                            <Box sx={{ mb: 2 }}>
-                              <Typography variant="subtitle2" sx={{ fontWeight: 500, mb: 1 }}>
-                                Representatives
-                              </Typography>
-                              {party.representatives.map((person, personIndex) => (
-                                <Box key={person.id || personIndex} sx={{ ml: 2, mb: 1 }}>
-                                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                                    {person.name} {person.title && `(${person.title})`}
-                                  </Typography>
-                                  {person.email && (
-                                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                                      Email: {person.email}
-                                    </Typography>
-                                  )}
-                                  {person.phone && (
-                                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                                      Phone: {person.phone}
-                                    </Typography>
-                                  )}
-                                  {person.nationalId && (
-                                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                                      ID: {person.nationalId}
-                                    </Typography>
-                                  )}
-                                </Box>
-                              ))}
-                            </Box>
-                          )}
-                          
-                          {/* Signatories */}
-                          {party.signatories && party.signatories.length > 0 && (
-                            <Box>
-                              <Typography variant="subtitle2" sx={{ fontWeight: 500, mb: 1 }}>
-                                Signatories
-                              </Typography>
-                              {party.signatories.map((person, personIndex) => (
-                                <Box key={person.id || personIndex} sx={{ ml: 2, mb: 1 }}>
-                                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                                    {person.name} {person.title && `(${person.title})`}
-                                  </Typography>
-                                  {person.email && (
-                                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                                      Email: {person.email}
-                                    </Typography>
-                                  )}
-                                  {person.phone && (
-                                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                                      Phone: {person.phone}
-                                    </Typography>
-                                  )}
-                                  {person.nationalId && (
-                                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                                      ID: {person.nationalId}
-                                    </Typography>
-                                  )}
-                                </Box>
-                              ))}
-                            </Box>
-                          )}
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </Box>
-                ) : (
-                  <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                    No parties defined
-                  </Typography>
-                )}
-              </FieldWithValidations>
-            </Box>
-
-            <Divider sx={{ my: 4, borderColor: 'grey.50' }} />
-
-            {/* Contract Terms */}
-            <Box sx={{ mb: 4 }}>
-              <Typography variant="h6" sx={{ mb: 3, fontWeight: 400, display: 'flex', alignItems: 'center', gap: 1 }}>
-                <TermsIcon sx={{ fontSize: 20 }} />
-                Terms & Conditions
-              </Typography>
-              <FieldWithValidations fieldPath="terms">
-                {contractData.terms && contractData.terms.length > 0 ? (
-                  <Box sx={{ display: 'grid', gap: 3 }}>
-                    {contractData.terms.map((term, index) => (
-                      <Card key={term.id || index} variant="outlined">
-                        <CardContent>
-                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                            <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
-                              Term #{index + 1}
-                            </Typography>
-                            <Chip 
-                              label={getTermCategoryLabel(term.category)} 
-                              size="small" 
-                              variant="outlined" 
-                              color="primary"
-                            />
-                          </Box>
-                          <Typography variant="body2" sx={{ lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
-                            {term.text}
-                          </Typography>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </Box>
-                ) : (
-                  <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
-                    No terms and conditions defined
-                  </Typography>
-                )}
-              </FieldWithValidations>
-            </Box>
-
-            {/* Global Validations (for fields not displayed above) */}
-            {validations.filter(v => !['title', 'description', 'effectiveDate', 'parties', 'terms'].includes(v.fieldPath)).length > 0 && (
-              <>
-                <Divider sx={{ my: 4, borderColor: 'grey.50' }} />
-                <Box sx={{ mb: 4 }}>
-                  <Typography variant="h6" sx={{ mb: 3, fontWeight: 400 }}>
-                    Additional Validations
-                  </Typography>
-                  {validations
-                    .filter(v => !['title', 'description', 'effectiveDate', 'parties', 'terms'].includes(v.fieldPath))
-                    .map((validation, index) => (
-                      <ValidationAlert key={index} validation={validation} />
-                    ))}
-                </Box>
-              </>
-            )}
-          </Box>
-        )}
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      {/* Contract Entity Panel now includes EntityOverview internally */}
+      <Box sx={{ 
+        backgroundColor: '#FFFFFF',
+        borderRadius: 2,
+        border: '1px solid #E5E7EB',
+        display: 'flex',
+        flexDirection: 'column',
+        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)'
+      }}>
+        <EntityDetails 
+          {...entityPanelProps} 
+          entity={resolvedEntity}
+          contractData={contractData}
+          validations={validations}
+          onRefreshDocument={refreshDocument}
+        />
       </Box>
     </Box>
   );

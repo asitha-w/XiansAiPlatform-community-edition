@@ -6,7 +6,7 @@ import HomePage from './pages/HomePage';
 import BotPage from './pages/BotPage';
 import Navbar from './components/Navbar';
 import type { Bot as Agent } from './types';
-import { ContractEntityWithSteps } from './features/legal/contract-entity/ContractEntityWithSteps';
+import { ContractEntityPanel } from './features/legal/contract-entity/ContractEntityPanel';
 import { DataMessageProvider } from './context/DataMessageContext';
 
 
@@ -20,7 +20,7 @@ const agents: Agent[] = [
     bot: 'Legal Contract Agent:Legal Contract Bot',
     flow: 'Legal Contract Agent:Legal Contract Flow',
     slug: 'legal',
-    mainComponent: ContractEntityWithSteps,
+    mainComponent: ContractEntityPanel,
   },
   {
     id: '2',
