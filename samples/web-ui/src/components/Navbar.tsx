@@ -19,13 +19,13 @@ import {
   KeyboardArrowDown as ArrowDownIcon,
   Add as AddIcon,
 } from '@mui/icons-material';
-import type { Agent } from '../types';
+import type { Bot } from '../types';
 import { colors } from '../utils/theme';
 
 interface NavbarProps {
-  currentAgent?: Agent;
-  availableAgents?: Agent[];
-  onSelectAgent?: (agent: Agent) => void;
+  currentAgent?: Bot;
+  availableAgents?: Bot[];
+  onSelectAgent?: (agent: Bot) => void;
 }
 
 const Navbar: React.FC<NavbarProps> = ({
@@ -47,7 +47,7 @@ const Navbar: React.FC<NavbarProps> = ({
     setAgentMenuAnchorEl(null);
   };
 
-  const handleAgentSelect = (agent: Agent) => {
+  const handleAgentSelect = (agent: Bot) => {
     if (onSelectAgent) {
       onSelectAgent(agent);
     }

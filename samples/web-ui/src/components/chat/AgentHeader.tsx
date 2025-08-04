@@ -12,10 +12,10 @@ import {
   ExpandMore as ExpandMoreIcon,
   ExpandLess as ExpandLessIcon,
 } from '@mui/icons-material';
-import type { Agent } from '../../types';
+import type { Bot } from '../../types';
 
 interface AgentHeaderProps {
-  currentAgent: Agent;
+  currentAgent: Bot;
   isConnected: boolean;
 }
 

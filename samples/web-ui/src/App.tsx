@@ -5,15 +5,15 @@ import theme from './utils/theme';
 import HomePage from './pages/HomePage';
 import BotPage from './pages/BotPage';
 import Navbar from './components/Navbar';
-import type { Agent } from './types';
+import type { Bot } from './types';
 import { ContractEntityWithSteps } from './features/legal/contract-entity/ContractEntityWithSteps';
 import { DataMessageProvider } from './context/DataMessageContext';
 
 
 // Mock agents data - centralized for the entire app
-const agents: Agent[] = [
+const agents: Bot[] = [
   {
-    id: '3',
+    id: '1',
     name: 'Legal Assistant',
     description: 'Legal analysis and contract management',
     capabilities: ['Contract Creation', 'Legal Analysis'],
@@ -22,7 +22,7 @@ const agents: Agent[] = [
     mainComponent: ContractEntityWithSteps,
   },
   {
-    id: '1',
+    id: '2',
     name: 'Sales Assistant',
     description: 'Helps with orders and customer management',
     capabilities: ['Order Processing', 'Customer Analysis'],
@@ -30,7 +30,7 @@ const agents: Agent[] = [
     slug: 'sales',
   },
   {
-    id: '2',
+    id: '3',
     name: 'Finance Advisor',
     description: 'Financial analysis and invoice management',
     capabilities: ['Invoice Review', 'Financial Analysis'],
@@ -43,7 +43,7 @@ function App() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const handleAgentSelect = (agent: Agent) => {
+  const handleAgentSelect = (agent: Bot) => {
     navigate(`/${agent.slug}`);
   };
 

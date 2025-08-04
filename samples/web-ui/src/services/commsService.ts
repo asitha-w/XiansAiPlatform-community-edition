@@ -3,7 +3,7 @@ import { SocketSDK } from '@99xio/xians-sdk-typescript';
 import { MessageType } from '@99xio/xians-sdk-typescript';
 import type { Message, EventHandlers } from '@99xio/xians-sdk-typescript';
 import { getSDKConfig } from '../config/sdk';
-import type { Agent, ChatMessage } from '../types';
+import type { Bot, ChatMessage } from '../types';
 
 export interface CommsServiceOptions {
   onMessageReceived?: (message: ChatMessage) => void;
@@ -18,7 +18,7 @@ export interface CommsServiceOptions {
 
 export class CommsService {
   private socketSDK: SocketSDK;
-  private currentAgent: Agent | null = null;
+  private currentAgent: Bot | null = null;
   private options: CommsServiceOptions;
   private messageCounter = 0;
   private isLoadingHistory = false;
@@ -26,7 +26,7 @@ export class CommsService {
   private historyLoadedForAgent: string | null = null;
 
   // Expose current agent for external checks (read-only)
-  getCurrentAgent(): Agent | null {
+  getCurrentAgent(): Bot | null {
     return this.currentAgent;
   }
 
@@ -90,7 +90,7 @@ export class CommsService {
     return this.socketSDK.isConnected();
   }
 
-  async setCurrentAgent(agent: Agent): Promise<void> {
+  async setCurrentAgent(agent: Bot): Promise<void> {
     // Prevent duplicate agent setup
     if (this.currentAgent && this.currentAgent.workflow === agent.workflow) {
       console.log(`[ChatService] Agent ${agent.name} already set, skipping duplicate setup`);
@@ -126,7 +126,7 @@ export class CommsService {
     }
   }
 
-  private async loadConversationHistory(agent: Agent, retryCount = 0): Promise<void> {
+  private async loadConversationHistory(agent: Bot, retryCount = 0): Promise<void> {
     // Check if history already loaded for this agent
     if (this.historyLoadedForAgent === agent.workflow) {
       console.log(`[ChatService] ✅ History already loaded for ${agent.name}, skipping duplicate request`);

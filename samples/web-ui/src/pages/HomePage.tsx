@@ -2,17 +2,17 @@ import React from 'react';
 import { Box, Typography, Card, CardContent, Chip, Button } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { SmartToy as AgentIcon } from '@mui/icons-material';
-import type { Agent } from '../types';
+import type { Bot } from '../types';
 import { colors } from '../utils/theme';
 
 interface HomePageProps {
-  agents: Agent[];
+  agents: Bot[];
 }
 
 const HomePage: React.FC<HomePageProps> = ({ agents }) => {
   const navigate = useNavigate();
 
-  const handleAgentSelect = (agent: Agent) => {
+  const handleAgentSelect = (agent: Bot) => {
     navigate(`/${agent.slug}`);
   };
 

@@ -8,13 +8,16 @@ export interface User {
   roles: string[];
 }
 
-export interface Agent {
+export interface Flow {
   id: string;
+  workflow: string;
+}
+
+export interface Bot extends Flow {
   name: string;
   description: string;
   avatar?: string;
   capabilities: string[];
-  workflow: string;
   slug: string;
   mainComponent?: React.ComponentType;
 }
@@ -155,7 +158,7 @@ export interface AgentRecommendation {
 
 export interface AppState {
   user: User | null;
-  currentAgent: Agent | null;
+  currentAgent: Bot | null;
   currentContractEntity: ContractEntity | null;
   activeChat: Chat | null;
   recommendations: AgentRecommendation[];

@@ -2,11 +2,11 @@ import React, { useMemo } from 'react';
 import { useParams, Navigate } from 'react-router-dom';
 import MainLayout from '../layouts/MainLayout';
 import ChatPanel from '../components/chat/ChatPanel';
-import type { Agent } from '../types';
+import type { Bot } from '../types';
 
 interface BotPageProps {
-  agents: Agent[];
-  onSelectAgent: (agent: Agent) => void;
+  agents: Bot[];
+  onSelectAgent: (agent: Bot) => void;
 }
 
 const BotPage: React.FC<BotPageProps> = ({ agents }) => {
@@ -27,7 +27,7 @@ const BotPage: React.FC<BotPageProps> = ({ agents }) => {
 };
 
 // Separate component that has access to route context  
-const BotPageContent: React.FC<{ currentAgent: Agent; documentId?: string }> = React.memo(({ currentAgent, documentId }) => {
+const BotPageContent: React.FC<{ currentAgent: Bot; documentId?: string }> = React.memo(({ currentAgent, documentId }) => {
   console.log(`[BotPageContent] 🔄 Render - agent: ${currentAgent?.name} id: ${currentAgent?.id} docId: ${documentId}`);
   console.log(`[BotPageContent] 🧪 React.memo wrapped component rendering`);
   

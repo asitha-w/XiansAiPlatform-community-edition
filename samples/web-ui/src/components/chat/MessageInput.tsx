@@ -7,7 +7,7 @@ import {
 import {
   Send as SendIcon,
 } from '@mui/icons-material';
-import type { Agent } from '../../types';
+import type { Bot } from '../../types';
 import { colors } from '../../utils/theme';
 
 interface MessageInputProps {
@@ -17,7 +17,7 @@ interface MessageInputProps {
   onKeyPress: (e: React.KeyboardEvent) => void;
   isLoading: boolean;
   isConnected: boolean;
-  currentAgent?: Agent | null;
+  currentAgent?: Bot | null;
 }
 
 export interface MessageInputRef {
