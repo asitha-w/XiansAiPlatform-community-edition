@@ -28,8 +28,8 @@ public class GeneralCapabilities
 
     [Capability("Create a new legal contract document from scratch - Use when user wants to start a new contract or has no existing contract ID")]
     [Parameter("title", "Descriptive title for the new contract (e.g., 'Software Development Agreement', 'Service Contract')")]
-    [Returns("Unique GUID identifier for the newly created contract document with basic structure initialized")]
-    public async Task<Guid> CreateNewContract(string title)
+    [Returns("Response message hint")]
+    public async Task<string> CreateNewContract(string title)
     {
         await _thread.SendData(new WorkLog($"Starting CreateDocument with title: {title}"));
 
@@ -47,7 +47,7 @@ public class GeneralCapabilities
             await _thread.SendData(new WorkLog($"Contract created with ID `{contractId}`"));
             await _thread.SendData(new UICommand("ContractLink", new Dictionary<string, object> { { "id", contractId } }));
 
-            return contractId;
+            return $"Contract created with ID `{contractId}`. Open the contract to continue working with it. Do not ask user to edit any fields.";
         }
         catch (Exception ex)
         {
@@ -68,8 +68,8 @@ public class GeneralCapabilities
     }
 
     [Capability("Retrieve the currently active contract document from session context - Use when working with a contract already set in the current session")]
-    [Returns("Complete contract object with all sections (scope, parties, terms, signatures) from the current document context")]
-    public async Task<Contract> GetCurrentContract()
+    [Returns("Complete contract object with all sections and validation results")]
+    public async Task<ContractWithValidations> GetCurrentContract()
     {
 
         var contractId = _documentContext.DocumentId;
@@ -91,7 +91,15 @@ public class GeneralCapabilities
 
             await _thread.SendData(new WorkLog($"Successfully retrieved contract with ID: {contractId}"));
             
-            return contract;
+            var validator = new ContractValidator();
+            var validationResult = validator.ValidateContract(contract);
+
+            var contractWithValidations = new ContractWithValidations { 
+                Contract = contract, 
+                Validations = validationResult.Insights
+            };
+
+            return contractWithValidations;
         }
         catch (Exception ex)
         {
@@ -104,7 +112,7 @@ public class GeneralCapabilities
     }
 
     [Capability("Validate the currently active contract document for legal compliance and completeness - Use when user asks to check or validate the contract they're currently working on")]
-    [Returns("Comprehensive validation report with critical issues, warnings, and suggestions organized by contract sections (scope, parties, terms, signatures)")]
+    [Returns("Comprehensive validation report with critical issues, warnings, and suggestions")]
     public async Task<ValidationResult> ValidateCurrentContract()
     {
         var contractId = _documentContext.DocumentId;
@@ -148,7 +156,7 @@ public class GeneralCapabilities
 
     [Capability("Update the title of the currently active contract document - Use when user wants to change the contract title")]
     [Parameter("newTitle", "New title for the contract document")]
-    [Returns("True if the contract title was successfully updated, false otherwise")]
+    [Returns("Contract with updated title and validation results")]
     public async Task<ContractWithValidations> UpdateTitle(string newTitle)
     {
         var contractId = _documentContext.DocumentId;
@@ -191,7 +199,7 @@ public class GeneralCapabilities
 
     [Capability("Update the created date of the currently active contract document - Use when user wants to change when the contract was originally created")]
     [Parameter("newCreatedDate", "New created date for the contract document")]
-    [Returns("True if the contract created date was successfully updated, false otherwise")]
+    [Returns("Contract with updated created date and validation results")]
     public async Task<ContractWithValidations> UpdateCreatedDate(DateTime newCreatedDate)
     {
         var contractId = _documentContext.DocumentId;
@@ -229,7 +237,7 @@ public class GeneralCapabilities
 
     [Capability("Update the effective date of the currently active contract document - Use when user wants to change when the contract becomes legally effective")]
     [Parameter("newEffectiveDate", "New effective date for the contract document (can be null if not yet determined)")]
-    [Returns("True if the contract effective date was successfully updated, false otherwise")]
+    [Returns("Contract with updated effective date and validation results")]
     public async Task<ContractWithValidations> UpdateEffectiveDate(DateTime? newEffectiveDate)
     {
         var contractId = _documentContext.DocumentId;
@@ -268,7 +276,7 @@ public class GeneralCapabilities
 
     [Capability("Update the description of the currently active contract document - Use when user wants to change the contract description or summary")]
     [Parameter("newDescription", "New description for the contract document")]
-    [Returns("True if the contract description was successfully updated, false otherwise")]
+    [Returns("Contract with updated description and validation results")]
     public async Task<ContractWithValidations> UpdateDescription(string newDescription)
     {
         var contractId = _documentContext.DocumentId;
