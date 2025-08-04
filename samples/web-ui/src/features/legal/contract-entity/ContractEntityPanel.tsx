@@ -44,6 +44,10 @@ export const ContractEntityPanel: React.FC<ContractEntityPanelProps> = ({
   const [validations, setValidations] = useState<ContractValidation[]>([]);
   const [entity, setEntity] = useState<ContractEntity | null>(entityPanelProps.entity || null);
   
+  // Edit mode state
+  const [isEditing, setIsEditing] = useState(false);
+  const [editableContract, setEditableContract] = useState<Contract | null>(null);
+  
   // Data message context for subscribing to DocumentUpdate messages
   const dataMessageContext = useDataMessage();
   
@@ -55,6 +59,46 @@ export const ContractEntityPanel: React.FC<ContractEntityPanelProps> = ({
     if (hasErrors) return 'needs_attention';
     if (hasWarnings) return 'review_required';
     return 'in_progress';
+  }, []);
+
+  // Edit mode handlers
+  const handleEditToggle = useCallback(() => {
+    if (!isEditing && contractData) {
+      setEditableContract({ ...contractData });
+    }
+    setIsEditing(!isEditing);
+  }, [isEditing, contractData]);
+
+  const handleSave = useCallback((updatedContract: Contract) => {
+    setContractData(updatedContract);
+    setIsEditing(false);
+    setEditableContract(null);
+    
+    // Update the entity with the new contract data
+    const updatedEntity: ContractEntity = {
+      id: updatedContract.id,
+      type: 'contract',
+      title: updatedContract.title || '',
+      status: getContractStatus(validations),
+      data: {
+        contract: updatedContract,
+        validations: validations,
+      },
+      lastModified: new Date(),
+      assignedTo: 'admin@example.com',
+    };
+    
+    setEntity(updatedEntity);
+    console.log('[ContractEntityPanel] Contract updated:', updatedContract.title);
+  }, [validations, getContractStatus]);
+
+  const handleCancel = useCallback(() => {
+    setIsEditing(false);
+    setEditableContract(null);
+  }, []);
+
+  const handleContractChange = useCallback((updatedContract: Contract) => {
+    setEditableContract(updatedContract);
   }, []);
   
   // Memoize callback functions to prevent dataService recreation
@@ -345,9 +389,13 @@ export const ContractEntityPanel: React.FC<ContractEntityPanelProps> = ({
       {/* Entity Overview - Header and Validation Summary */}
       <EntityOverview
         entity={resolvedEntity}
-        contractData={contractData}
+        contractData={isEditing ? editableContract : contractData}
         validations={validations}
+        isEditing={isEditing}
         onRefreshDocument={refreshDocument}
+        onEditToggle={handleEditToggle}
+        onSave={handleSave}
+        onCancel={handleCancel}
       />
       
       {/* Entity Details - Document Content */}
@@ -355,6 +403,8 @@ export const ContractEntityPanel: React.FC<ContractEntityPanelProps> = ({
         entity={resolvedEntity}
         contractData={contractData}
         validations={validations}
+        isEditing={isEditing}
+        onContractChange={handleContractChange}
       />
     </Box>
   );

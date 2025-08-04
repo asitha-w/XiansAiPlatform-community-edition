@@ -3,7 +3,6 @@ import {
   Box,
   Typography,
   Button,
-  IconButton,
 } from '@mui/material';
 import {
   Error as ErrorIcon,
@@ -13,6 +12,7 @@ import {
   Refresh as RefreshIcon,
   Save as SaveIcon,
   Cancel as CancelIcon,
+  Edit as EditIcon,
 } from '@mui/icons-material';
 import type { ContractValidation, ContractEntity, Contract } from '../../../types';
 
@@ -20,9 +20,11 @@ interface EntityOverviewProps {
   entity?: ContractEntity | null;
   contractData?: Contract | null;
   validations?: ContractValidation[];
-  onSave?: (entity: ContractEntity) => void;
+  onSave?: (contractData: Contract) => void;
   isEditing?: boolean;
   onRefreshDocument?: () => Promise<void>;
+  onEditToggle?: () => void;
+  onCancel?: () => void;
 }
 
 const EntityOverview: React.FC<EntityOverviewProps> = ({
@@ -32,6 +34,8 @@ const EntityOverview: React.FC<EntityOverviewProps> = ({
   onSave,
   isEditing = false,
   onRefreshDocument,
+  onEditToggle,
+  onCancel,
 }) => {
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -130,40 +134,94 @@ const EntityOverview: React.FC<EntityOverviewProps> = ({
             {/* Actions */}
             <Box sx={{ ml: 3 }}>
               {!isEditing ? (
-                <Button
-                  startIcon={<RefreshIcon sx={{ fontSize: 18 }} />}
-                  onClick={() => onRefreshDocument?.()}
-                  sx={{ 
-                    color: '#4a5568',
-                    fontSize: '0.875rem',
-                    fontWeight: 400,
-                    textTransform: 'none',
-                    px: 3,
-                    py: 1,
-                    border: '1px solid #e2e8f0',
-                    backgroundColor: 'transparent',
-                    borderRadius: 1.5,
-                    '&:hover': {
-                      backgroundColor: '#f7fafc',
-                      borderColor: '#cbd5e0'
-                    }
-                  }}
-                >
-                  Refresh
-                </Button>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <Button
+                    startIcon={<EditIcon sx={{ fontSize: 18 }} />}
+                    onClick={() => onEditToggle?.()}
+                    sx={{ 
+                      color: '#4a5568',
+                      fontSize: '0.875rem',
+                      fontWeight: 400,
+                      textTransform: 'none',
+                      px: 3,
+                      py: 1,
+                      border: '1px solid #e2e8f0',
+                      backgroundColor: 'transparent',
+                      borderRadius: 1.5,
+                      '&:hover': {
+                        backgroundColor: '#f7fafc',
+                        borderColor: '#cbd5e0'
+                      }
+                    }}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    startIcon={<RefreshIcon sx={{ fontSize: 18 }} />}
+                    onClick={() => onRefreshDocument?.()}
+                    sx={{ 
+                      color: '#4a5568',
+                      fontSize: '0.875rem',
+                      fontWeight: 400,
+                      textTransform: 'none',
+                      px: 3,
+                      py: 1,
+                      border: '1px solid #e2e8f0',
+                      backgroundColor: 'transparent',
+                      borderRadius: 1.5,
+                      '&:hover': {
+                        backgroundColor: '#f7fafc',
+                        borderColor: '#cbd5e0'
+                      }
+                    }}
+                  >
+                    Refresh
+                  </Button>
+                </Box>
               ) : (
                 <Box sx={{ display: 'flex', gap: 1 }}>
-                  <IconButton 
-                    onClick={() => entity && onSave?.(entity)}
-                    sx={{ color: '#38a169', '&:hover': { backgroundColor: '#f0fff4' } }}
+                  <Button
+                    startIcon={<SaveIcon sx={{ fontSize: 18 }} />}
+                    onClick={() => contractData && onSave?.(contractData)}
+                    sx={{ 
+                      color: '#38a169',
+                      fontSize: '0.875rem',
+                      fontWeight: 400,
+                      textTransform: 'none',
+                      px: 3,
+                      py: 1,
+                      border: '1px solid #38a169',
+                      backgroundColor: 'transparent',
+                      borderRadius: 1.5,
+                      '&:hover': {
+                        backgroundColor: '#f0fff4',
+                        borderColor: '#2f855a'
+                      }
+                    }}
                   >
-                    <SaveIcon sx={{ fontSize: 20 }} />
-                  </IconButton>
-                  <IconButton 
-                    sx={{ color: '#e53e3e', '&:hover': { backgroundColor: '#fed7d7' } }}
+                    Save
+                  </Button>
+                  <Button
+                    startIcon={<CancelIcon sx={{ fontSize: 18 }} />}
+                    onClick={() => onCancel?.()}
+                    sx={{ 
+                      color: '#e53e3e',
+                      fontSize: '0.875rem',
+                      fontWeight: 400,
+                      textTransform: 'none',
+                      px: 3,
+                      py: 1,
+                      border: '1px solid #e53e3e',
+                      backgroundColor: 'transparent',
+                      borderRadius: 1.5,
+                      '&:hover': {
+                        backgroundColor: '#fed7d7',
+                        borderColor: '#c53030'
+                      }
+                    }}
                   >
-                    <CancelIcon sx={{ fontSize: 20 }} />
-                  </IconButton>
+                    Cancel
+                  </Button>
                 </Box>
               )}
             </Box>
