@@ -32,37 +32,36 @@ public class ChatInterceptor : IChatInterceptor
         // contain the actual call-to-action (CTA) directed at the user. This avoids diluting
         // the intent classification with lots of explanatory text that precedes the CTA.
         var messageSnippet = response ?? string.Empty;
-        if (!string.IsNullOrWhiteSpace(messageSnippet))
-        {
-            var sentences = Regex.Split(messageSnippet.Trim(), @"(?<=[\.!\?:])\s+");
-            // Take the last two sentences (or fewer if not available)
-            var lastSentences = sentences.Reverse().Take(2).Reverse();
-            messageSnippet = string.Join(" ", lastSentences);
-        }
-
-        string prompt = @"Analyze the following assistant message and determine if it contains a direct request or suggestion to the user to enter, set, or change exactly one of these contract properties:
+        string prompt = @"Analyze the following assistant message and determine if it contains a direct request to the user to enter, set, or change exactly one of these contract properties:
         - Title
         - Effective Date
         - Parties
         - Contract Terms
+        - Contract Description
 
-        Consider it a direct request when the message:
-        1. Asks a question that expects user action on a specific property
-        2. Gives a clear instruction that expects immediate user input
-        3. Asks for specific details or information related to a property
-        4. Requests information needed to add, create, or modify a property
+        ONLY consider it a direct request when the message:
+        1. Directly asks the user to provide or enter specific information for a property
+        2. Gives a clear instruction that expects immediate user input for a property
+        3. Asks ""What is..."" or ""Please enter..."" or ""Can you provide..."" for a specific property
+
+        DO NOT consider it a direct request when the message:
+        - Asks for confirmation (""Would you like to use..."", ""Is this correct..."", ""Should I..."")
+        - Provides suggestions and asks for approval
+        - Offers options and asks the user to choose or confirm
+        - Contains phrases like ""Would you like"", ""Do you want"", ""Should I"", ""Is this""
 
         Use semantic understanding to map the message intent to the most appropriate property:
         - Title: Contract names, headings, document titles
         - Effective Date: Start dates, commencement, when agreements begin
         - Parties: People, organizations, signatories, contracting entities
         - Contract Terms: Any contractual provisions, clauses, conditions, legal language, terms and conditions, obligations, rights, restrictions, or regulatory requirements
+        - Contract Description: A description of the contract, including the purpose, scope, and key terms.
 
-        If the message contains general validation information without an explicit follow-up suggestion/instruction/request for user action on a specific property, treat that as **no direct request** and return null.
+        Return exactly the property name (one of the above) if and only if there is a direct request for user input. For confirmation requests, suggestions, or any non-direct requests, return null.
 
         Return exactly the property name (one of the above) if and only if there is a direct request. Otherwise, return null. Do not return any additional text.
 
-        Message: " + messageSnippet;
+        --- Message: " + messageSnippet;
 
         try
         {
@@ -94,6 +93,11 @@ public class ChatInterceptor : IChatInterceptor
                             new Dictionary<string, object> { { "terms", _termRepository.GetPotentialTerms() } }
                             )
                         );
+                    break;
+                case "Contract Description":
+                    await messageThread.SendData(
+                        new UICommand("ContractDescription", new Dictionary<string, object> {  })
+                    );
                     break;
             }
 

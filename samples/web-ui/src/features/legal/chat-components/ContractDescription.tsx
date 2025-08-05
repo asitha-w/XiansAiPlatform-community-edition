@@ -50,7 +50,7 @@ const ContractDescription: React.FC<ContractDescriptionProps> = () => {
       return;
     }
 
-    const message = `Please generate a legal contract based on the following keywords and description: "${description.trim()}"`;
+    const message = `Please generate a description for a legal contract based on the following keywords and information: "${description.trim()}"`;
 
     // Send message to chat using the SendChat event
     const sendChatEvent = new CustomEvent('SendChat', {
@@ -78,7 +78,7 @@ const ContractDescription: React.FC<ContractDescriptionProps> = () => {
         </Typography>
         
         <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-          Enter a description or keywords for your contract. You can either set it directly or ask the bot to generate a contract from your keywords.
+          Enter a description or keywords for your contract. 
         </Typography>
 
         <TextField
@@ -102,7 +102,7 @@ const ContractDescription: React.FC<ContractDescriptionProps> = () => {
             disabled={!isFormValid}
             sx={{ flex: 1, minWidth: 120 }}
           >
-            Set Description
+            Set
           </Button>
           
           <Button
@@ -113,7 +113,7 @@ const ContractDescription: React.FC<ContractDescriptionProps> = () => {
             disabled={!isFormValid}
             sx={{ flex: 1, minWidth: 120 }}
           >
-            Generate from Keywords
+            Generate
           </Button>
         </Box>
       </CardContent>

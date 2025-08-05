@@ -3,6 +3,7 @@ import ContractLink from './ContractLink';
 import ContractParty from './ContractParty';
 import ContractTerms from './ContractTerms';
 import Calendar from './Calendar';
+import ContractDescription from './ContractDescription';
 
 export interface UIComponentRef {
   name: string;
@@ -19,6 +20,7 @@ const componentRegistry: Record<string, React.FC<UIComponentProps>> = {
   ContractParty,
   ContractTerms,
   Calendar,
+  ContractDescription,
   // Add more components here as needed
   // ExampleComponent: ExampleComponent,
 };
