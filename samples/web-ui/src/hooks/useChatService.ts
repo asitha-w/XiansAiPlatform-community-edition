@@ -104,14 +104,13 @@ export const useChatService = ({
         chatServiceRef.current.updateDocumentId(documentId);
         
         // Small delay to ensure document state reset is complete before agent setup
-        // This mimics the timing of a page refresh where everything is reset cleanly
         await new Promise(resolve => setTimeout(resolve, 10));
       }
       
-      console.log(`[useChatService] Setting current agent: ${agent.name}`);
-      await chatServiceRef.current.setCurrentAgent(agent);
+      console.log(`[useChatService] Subscribing to current agent: ${agent.name}`);
+      await chatServiceRef.current.subscribeToCurrentAgent();
     } catch (err) {
-      const errorMessage = 'Failed to set current agent';
+      const errorMessage = 'Failed to subscribe to current agent';
       setError(errorMessage);
       onError(errorMessage);
       throw err;

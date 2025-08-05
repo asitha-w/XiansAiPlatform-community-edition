@@ -2,21 +2,6 @@
 
 A React-based web application that enables users to discover and engage with AI agents within the organization. Built with Scandinavian design principles emphasizing simplicity, functionality, and clean aesthetics.
 
-## 🏗️ Architecture
-
-The application follows a three-panel layout:
-
-1. **Agent Chat Panel** (Left) - Interactive chat interface with AI agents
-2. **Business Entity Panel** (Center) - Display and edit business entities (orders, customers, invoices)
-3. **Recommendations Panel** (Right) - AI-powered insights, validations, and suggestions
-
-## 🎨 Design Philosophy
-
-- **Scandinavian Simplicity**: Clean, minimal interface with focus on functionality
-- **Nordic Color Palette**: Muted blues, grays, and whites inspired by Nordic nature
-- **Typography**: Inter font family for excellent readability
-- **Spacing**: Consistent 8px grid system for visual harmony
-
 ## 🛠️ Tech Stack
 
 - **React 18** with TypeScript for type safety
@@ -31,6 +16,7 @@ The application follows a three-panel layout:
 ## 📱 Features
 
 ### Chat Interface
+
 - Agent selection dropdown
 - Real-time message display
 - File and action message support
@@ -38,22 +24,30 @@ The application follows a three-panel layout:
 - Typing indicators
 
 ### Business Entity Management
+
 - Dynamic entity display (orders, customers, invoices)
 - Inline editing capabilities
 - Status tracking with color-coded chips
 - Detailed entity information panels
 
 ### AI Recommendations
+
 - Priority-based recommendation grouping
 - Different recommendation types (validation, warning, suggestion, info)
 - Actionable insights with apply/dismiss options
 - Real-time recommendation updates
+
+### UI Components in AI Chat
+
+- Agent is able to send commands to the UI
+- UI renders different components based on the command
 
 ## 🔌 Socket SDK Integration
 
 The application integrates with XiansAI backend agents using the Socket SDK for real-time bidirectional communication.
 
 ### Features
+
 - **Real-time messaging** with backend agents
 - **Auto-reconnection** with connection state monitoring
 - **Workflow mapping** from agent configuration to SDK workflow property
@@ -74,31 +68,19 @@ VITE_XIANSAI_PARTICIPANT_ID=default-participant
 
 ### Workflow Mapping
 
-Each agent in the application has a `workflow` property that maps directly to the Socket SDK's `sendInboundMessage` workflow parameter:
+Agents are configured in `App.tsx` file. Each agent in the application has a `bot` and `flow` properties that maps directly to the workflow ids of the agent. Backend agent can have a bot and a flow (for data).
 
 ```typescript
 const agents: Agent[] = [
   {
     id: '1',
     name: 'Legal Assistant',
-    workflow: 'Legal Contract Agent:Legal Contract Bot', // Maps to SDK workflow
+    bot: 'Legal Contract Agent:Legal Contract Bot', // Maps to SDK bot
+    flow: 'Legal Contract Agent:Legal Contract Bot', // Maps to SDK flow
     // ... other properties
   }
 ];
 ```
-
-### Architecture
-
-- **ChatService**: Wrapper around Socket SDK with React-friendly callbacks
-- **SocketSDK**: Mock implementation following the official SDK interface
-- **Auto-generated Participant IDs**: Unique per session with optional document context
-- **Real-time Updates**: Immediate message display and agent responses
-
-## 🚀 Getting Started
-
-### Prerequisites
-- Node.js 18+ 
-- npm or yarn
 
 ### Installation
 
@@ -113,133 +95,4 @@ npm install
 npm run dev
 ```
 
-### Development Scripts
-
-```bash
-# Start development server
-npm run dev
-
-# Build for production
-npm run build
-
-# Preview production build
-npm run preview
-
-# Run tests
-npm run test
-
-# Lint code
-npm run lint
-```
-
-## 📁 Project Structure
-
-```
-src/
-├── components/           # Reusable UI components
-│   ├── atoms/           # Basic building blocks
-│   ├── molecules/       # Simple component combinations
-│   └── organisms/       # Complex component groups
-├── layouts/             # Page layout components
-├── pages/               # Route-level components
-├── hooks/               # Custom React hooks
-├── services/            # API service layer
-├── context/             # React context providers
-├── types/               # TypeScript type definitions
-├── utils/               # Helper functions and theme
-└── App.tsx              # Main application component
-```
-
-## 🔧 Configuration
-
-### Environment Variables
-
-Create a `.env` file in the root directory:
-
-```env
-VITE_API_BASE_URL=http://localhost:3000/api
-VITE_OIDC_AUTHORITY=https://your-auth-provider.com
-VITE_OIDC_CLIENT_ID=your-client-id
-```
-
-### Theme Customization
-
-The Scandinavian theme can be customized in `src/utils/theme.ts`:
-
-- Color palette
-- Typography settings
-- Component overrides
-- Spacing and borders
-
-## 🧪 Testing
-
-The application uses Vitest and React Testing Library:
-
-```bash
-# Run unit tests
-npm run test
-
-# Run tests with coverage
-npm run test:coverage
-
-# Run tests in watch mode
-npm run test:watch
-```
-
-## 📦 Building for Production
-
-```bash
-# Create production build
-npm run build
-
-# The build artifacts will be stored in the `dist/` directory
-```
-
-## 🔐 Authentication
-
-The application supports generic OpenID Connect authentication:
-
-- Keycloak
-- Auth0
-- Azure AD
-- Google Identity
-- Custom OIDC providers
-
-Configure your OIDC provider in the environment variables.
-
-## 🎯 Key Components
-
-### MainLayout
-The primary layout component that organizes the three-panel structure.
-
-### ChatPanel
-Interactive chat interface with agent selection and message history.
-
-### ContractEntityPanel
-Dynamic business entity display with edit capabilities.
-
-### RecommendationsPanel
-AI-powered insights and recommendations with priority grouping.
-
-## 📊 Performance
-
-- Code splitting by routes
-- Lazy loading for heavy components
-- Memoization for expensive computations
-- Optimized Material-UI bundle size
-
-## 🤝 Contributing
-
-1. Follow the established component structure
-2. Use TypeScript for all new code
-3. Follow the Scandinavian design principles
-4. Write tests for new components
-5. Update documentation as needed
-
-## 📄 License
-
-This project is part of the Flowmaxer.ai Community Edition.
-
----
-
-Built with ❤️ using React, TypeScript, and Scandinavian design principles.
+Built with ❤️ using React, TypeScript, and Xians.ai.

@@ -23,6 +23,12 @@ public class DataProcessor {
         _messageThread = messageThread;
     }
 
+    public async Task<bool> UpdateDocument(Contract contract) {
+        _logger.LogDebug($"Updating document request: {contract}");
+        await _contractRepository.UpdateContractAsync(contract);
+        return true;
+    }
+
     public async Task<DocumentUpdate> GetValidatedDocument(DocumentRequest documentRequest) {
         _logger.LogDebug($"Processing document request: {documentRequest}");
         var contract = await _contractRepository.GetContractByIdAsync(documentRequest.DocumentId);

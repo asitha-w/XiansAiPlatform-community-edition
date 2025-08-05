@@ -8,7 +8,7 @@ import { useDataService } from '../../../hooks/useDataService';
 import { useDataMessage } from '../../../hooks/useDataMessage';
 import type { EntityDetailsProps } from './EntityDetails';
 import type { Bot, ContractEntity, ContractValidation, Contract } from '../../../types';
-import type { DataMessagePayload } from '../../../context/context';
+import type { DataMessagePayload } from '../../../context/dataMessageTypes';
 import type { Message } from '@99xio/xians-sdk-typescript';
 
 // Interface for DocumentUpdate message data structure (handles both casing variants)

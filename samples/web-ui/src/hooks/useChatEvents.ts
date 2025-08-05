@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import type { ChatMessage as ChatMessageType } from '../types';
 import { useDataMessage } from './useDataMessage';
-import type { DataMessagePayload } from '../context/context';
+import type { DataMessagePayload } from '../context/dataMessageTypes';
 import { createWorkLogMessage, createUIComponentMessage } from '../utils/messageHelpers';
 
 interface UseChatEventsProps {

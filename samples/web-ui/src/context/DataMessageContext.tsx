@@ -1,8 +1,8 @@
 import React, { useRef, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import type { Message } from '@99xio/xians-sdk-typescript';
-import type { DataMessagePayload, DataMessageHandler, DataMessageContextType } from './context';
-import { DataMessageContext } from './context';
+import type { DataMessagePayload, DataMessageHandler, DataMessageContextType } from './dataMessageTypes';
+import { DataMessageContext } from './dataMessageTypes';
 
 // Type for message data with camelCase properties
 interface MessageDataWithSubject {

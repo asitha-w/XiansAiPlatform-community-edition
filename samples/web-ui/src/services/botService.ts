@@ -4,6 +4,8 @@ import { MessageType } from '@99xio/xians-sdk-typescript';
 import type { Message, EventHandlers } from '@99xio/xians-sdk-typescript';
 import { getSDKConfig } from '../config/sdk';
 import type { Bot, ChatMessage } from '../types';
+import { getCurrentAgentGlobal } from '../utils/agentUtils';
+import { getCurrentDocumentIdGlobal } from '../utils/documentUtils';
 
 export interface BotServiceOptions {
   onMessageReceived?: (message: ChatMessage) => void;
@@ -13,12 +15,12 @@ export interface BotServiceOptions {
   onChatRequestSent?: (requestId: string) => void;
   onChatResponseReceived?: (requestId: string) => void;
   participantId?: string;
+  /** Optional document ID override. If not provided, will automatically use document ID from URL context */
   documentId?: string;
 }
 
 export class BotService {
   private socketSDK: SocketSDK;
-  private currentAgent: Bot | null = null;
   private options: BotServiceOptions;
   private messageCounter = 0;
   private isLoadingHistory = false;
@@ -27,30 +29,29 @@ export class BotService {
 
   // Expose current agent for external checks (read-only)
   getCurrentAgent(): Bot | null {
-    return this.currentAgent;
+    return getCurrentAgentGlobal();
   }
 
-  // Update document ID for the service (used when navigating between documents)
+  // Get current document ID from manual override or global context
+  getCurrentDocumentId(): string | undefined {
+    return this.options.documentId || getCurrentDocumentIdGlobal() || undefined;
+  }
+
+  /**
+   * Manually override the document ID (optional - will use URL context by default)
+   * @param documentId - Document ID to override, or undefined to use URL context
+   */
   updateDocumentId(documentId?: string): void {
-    const previousDocumentId = this.options.documentId;
-    console.log(`[BotService] 🔧 UPDATEID: Updating document ID from "${previousDocumentId}" to "${documentId}"`);
-    console.log(`[BotService] 🔧 UPDATEID: Comparison result - equal: ${previousDocumentId === documentId}, type prev: ${typeof previousDocumentId}, type new: ${typeof documentId}`);
-    
-    // Always update the document ID
+    const previousDocumentId = this.getCurrentDocumentId();
     this.options.documentId = documentId;
+    const newDocumentId = this.getCurrentDocumentId();
     
-    // Only reset state if document actually changed
-    if (previousDocumentId !== documentId) {
-      console.log(`[BotService] 🔧 UPDATEID: Document changed - forcing complete state reset`);
-      
-      // Complete state reset for document changes (mimics page refresh behavior)
+    // Reset state if document changed to force fresh history loading
+    if (previousDocumentId !== newDocumentId) {
+      console.log(`[BotService] Document changed: ${previousDocumentId} -> ${newDocumentId}`);
       this.historyLoadedForAgent = null;
       this.processedHistoryHashes.clear();
       this.isLoadingHistory = false;
-      
-      console.log(`[BotService] 🔧 UPDATEID: State reset complete - historyLoadedForAgent: ${this.historyLoadedForAgent}`);
-    } else {
-      console.log(`[BotService] 🔧 UPDATEID: Document ID unchanged, skipping reset`);
     }
   }
 
@@ -104,141 +105,82 @@ export class BotService {
     return this.socketSDK.isConnected();
   }
 
-  async setCurrentAgent(agent: Bot): Promise<void> {
-    const isAgentChange = !this.currentAgent || this.currentAgent.bot !== agent.bot;
-    const isDocumentChange = this.historyLoadedForAgent === null; // This is set to null when updateDocumentId is called
-    
-    console.log(`[BotService] 🔧 SETAGENT: Agent setup check - currentAgent: ${this.currentAgent?.name}, newAgent: ${agent.name}`);
-    console.log(`[BotService] 🔧 SETAGENT: Change detection - isAgentChange: ${isAgentChange}, isDocumentChange: ${isDocumentChange}, historyLoadedForAgent: ${this.historyLoadedForAgent}`);
-    
-    // Skip setup only if it's the same agent AND no document change
-    if (this.currentAgent && this.currentAgent.bot === agent.bot && !isDocumentChange) {
-      console.log(`[BotService] 🔧 SETAGENT: SKIPPING - Agent ${agent.name} already set with same document context`);
+  async subscribeToCurrentAgent(): Promise<void> {
+    const agent = getCurrentAgentGlobal();
+    if (!agent) {
+      console.log(`[BotService] No current agent available`);
       return;
     }
 
-    // Log the reason for the setup
-    if (isAgentChange) {
-      console.log(`[BotService] Agent change detected: ${this.currentAgent?.name} -> ${agent.name}`);
-    } else if (isDocumentChange) {
-      console.log(`[BotService] Document change detected for agent: ${agent.name}`);
+    // Skip if already subscribed to this agent and document
+    if (this.historyLoadedForAgent === agent.bot) {
+      console.log(`[BotService] Already subscribed to ${agent.name}`);
+      return;
     }
 
-    // For document changes with same agent, force a complete reset to ensure clean state
-    if (!isAgentChange && isDocumentChange) {
-      console.log(`[BotService] 🔄 Forcing complete reset for document change`);
-      
-      // Temporarily unsubscribe and resubscribe to force fresh state
-      if (this.currentAgent && this.isConnected()) {
-        console.log(`[BotService] Temporarily unsubscribing for document change reset`);
-        await this.socketSDK.unsubscribeFromAgent(
-          this.currentAgent.bot,
-          this.getParticipantId()
-        );
-      }
-    }
-
-    // Unsubscribe from previous agent if it's a different agent
-    if (this.currentAgent && this.isConnected() && isAgentChange) {
-      console.log(`[BotService] Unsubscribing from previous agent: ${this.currentAgent.name}`);
+    // Unsubscribe from previous agent if different
+    if (this.historyLoadedForAgent && this.isConnected()) {
+      console.log(`[BotService] Unsubscribing from previous agent`);
       await this.socketSDK.unsubscribeFromAgent(
-        this.currentAgent.bot,
+        this.historyLoadedForAgent,
         this.getParticipantId()
       );
     }
 
-    console.log(`[BotService] Setting current agent to: ${agent.name}`);
-    
-    // Clear processed history when switching agents or documents to allow fresh history loading
+    // Reset state for new subscription
     this.processedHistoryHashes.clear();
-    this.historyLoadedForAgent = null; // Reset to allow loading for new agent/document
-    this.isLoadingHistory = false; // Reset loading state
-    this.currentAgent = agent;
+    this.isLoadingHistory = false;
 
-    // Always subscribe/resubscribe to ensure fresh state
+    // Subscribe to current agent
     if (this.isConnected()) {
-      console.log(`[BotService] Subscribing to agent: ${agent.name} (force: ${isDocumentChange && !isAgentChange})`);
-      console.log(`🔗 [BotService] SUBSCRIPTION DETAILS:`, {
-        agentName: agent.name,
-        botId: agent.bot,
-        participantId: this.getParticipantId(),
-        isConnected: this.isConnected()
-      });
+      console.log(`[BotService] Subscribing to ${agent.name}`);
       
       try {
-        // Subscribe to the agent's bot for chat messages
         await this.socketSDK.subscribeToAgent(
           agent.bot,
           this.getParticipantId()
         );
-        console.log(`✅ [BotService] Successfully subscribed to bot: ${agent.bot}`);
+        console.log(`✅ [BotService] Subscribed to ${agent.bot}`);
+        
+        // Load conversation history
+        await this.loadConversationHistory(agent);
       } catch (error) {
-        console.error(`❌ [BotService] Failed to subscribe to agent bot: ${agent.name}`, error);
+        console.error(`❌ [BotService] Failed to subscribe to ${agent.name}`, error);
         throw error;
       }
-      
-      // Always load conversation history for new context
-      await this.loadConversationHistory(agent);
     }
   }
 
-  private async loadConversationHistory(agent: Bot, retryCount = 0): Promise<void> {
-    // Check if history already loaded for this agent
-    if (this.historyLoadedForAgent === agent.bot) {
-      console.log(`[BotService] ✅ History already loaded for ${agent.name}, skipping duplicate request`);
+  private async loadConversationHistory(agent: Bot): Promise<void> {
+    if (this.historyLoadedForAgent === agent.bot || this.isLoadingHistory) {
       return;
     }
-
-    // Prevent concurrent history loading
-    if (this.isLoadingHistory) {
-      console.log(`[BotService] ⏸️  History loading already in progress for ${agent.name}, skipping duplicate request`);
-      return;
-    }
-
-    const maxRetries = 3;
-    const retryDelay = 1000; // 1 second
 
     try {
       this.isLoadingHistory = true;
-      console.log(`[BotService] Loading conversation history for participant: ${this.getParticipantId()}`);
+      console.log(`[BotService] Loading history for ${agent.name}`);
       
-      // Ensure scope parameter is never undefined (which might be dropped by SDK)
-      const scope = this.options.documentId || undefined;
-      console.log(`[BotService] 🔍 GetThreadHistory call - bot: ${agent.bot}, participant: ${this.getParticipantId()}, scope: ${scope}`);
-      
-      // Load conversation history - increased page size for better initial load
       await this.socketSDK.getThreadHistory(
         agent.bot,
         this.getParticipantId(),
         1,
         20,
-        scope
+        this.getCurrentDocumentId()
       );
       
-      console.log(`[BotService] ✅ History loaded successfully for ${agent.name}`);
       this.historyLoadedForAgent = agent.bot;
+      console.log(`[BotService] ✅ History loaded for ${agent.name}`);
     } catch (error) {
-      console.error(`[BotService] ❌ Failed to load history (attempt ${retryCount + 1}):`, error);
-      
-      // Retry loading history if it fails (important for URL route access)
-      if (retryCount < maxRetries) {
-        console.log(`[BotService] Retrying history load in ${retryDelay}ms...`);
-        setTimeout(() => {
-          this.isLoadingHistory = false; // Reset flag before retry
-          this.loadConversationHistory(agent, retryCount + 1);
-        }, retryDelay);
-        return; // Don't reset flag yet, will be reset in retry
-      } else {
-        console.error(`[BotService] 🚨 Failed to load history after ${maxRetries} attempts`);
-        this.options.onError?.('Failed to load conversation history');
-      }
+      console.error(`[BotService] Failed to load history for ${agent.name}:`, error);
+      this.options.onError?.('Failed to load conversation history');
     } finally {
       this.isLoadingHistory = false;
     }
   }
 
   async sendMessage(text: string): Promise<void> {
-    if (!this.currentAgent) {
+    const currentAgent = getCurrentAgentGlobal();
+    if (!currentAgent) {
       throw new Error('No agent selected');
     }
 
@@ -250,9 +192,9 @@ export class BotService {
     const message = {
       requestId,
       participantId: this.getParticipantId(),
-      workflow: this.currentAgent.bot,
+      workflow: currentAgent.bot,
       type: 'Chat' as const,
-      scope: this.options.documentId,
+      scope: this.getCurrentDocumentId(),
       text,
       data: this.getMessageData(),
     };
@@ -264,7 +206,8 @@ export class BotService {
   }
 
   async sendData(data: Record<string, unknown>): Promise<void> {
-    if (!this.currentAgent) {
+    const currentAgent = getCurrentAgentGlobal();
+    if (!currentAgent) {
       throw new Error('No agent selected');
     }
 
@@ -275,9 +218,9 @@ export class BotService {
     const message = {
       requestId: `data-${Date.now()}-${++this.messageCounter}`,
       participantId: this.getParticipantId(),
-      workflow: this.currentAgent.bot,
+      workflow: currentAgent.bot,
       type: 'Data' as const,
-      scope: this.options.documentId,
+      scope: this.getCurrentDocumentId(),
       data: {
         ...data,
         ...this.getMessageData(),
@@ -294,25 +237,18 @@ export class BotService {
   private getMessageData(): Record<string, unknown> {
     const data: Record<string, unknown> = {};
     
-    if (this.options.documentId) {
-      data.documentId = this.options.documentId;
+    const documentId = this.getCurrentDocumentId();
+    if (documentId) {
+      data.documentId = documentId;
     }
     return data;
   }
 
   private handleChatMessage(message: Message): void {
-    if(message.scope !== this.options.documentId) {
-      console.warn('[BotService] Chat message received but not for this document:', message.id, message.data);
+    const currentDocumentId = this.getCurrentDocumentId();
+    if(message.scope !== currentDocumentId) {
       return;
     }
-    console.log('🎯 [BotService] INCOMING MESSAGE RECEIVED:', {
-      id: message.id,
-      text: message.text,
-      messageType: message.messageType,
-      requestId: message.requestId,
-      direction: message.direction,
-      workflowId: message.workflowId
-    });
     
     // Check if this is a Chat response with a requestId
     if (message.requestId && message.messageType === 'Chat') {
@@ -320,24 +256,17 @@ export class BotService {
     }
     
     const chatMessage = this.convertToChatMessage(message, 'agent');
-    if (chatMessage.content === '') {
-      console.log('⚠️ [BotService] Empty message content, skipping');
-      return;
+    if (chatMessage.content) {
+      this.options.onMessageReceived?.(chatMessage);
     }
-    
-    console.log('✅ [BotService] Forwarding message to UI:', chatMessage);
-    this.options.onMessageReceived?.(chatMessage);
   }
 
   private handleDataMessage(message: Message): void {
-    if(message.scope !== this.options.documentId) {
-      console.warn('[BotService] Data message received but not for this document:', message.id, message.data);
+    const currentDocumentId = this.getCurrentDocumentId();
+    if(message.scope !== currentDocumentId) {
       return;
     }
-
-    console.log('[BotService] Data message received:', message.id, message.data);
     
-    // Notify subscribers about the data message
     this.options.onDataMessageReceived?.(message);
   }
 
@@ -351,46 +280,22 @@ export class BotService {
   }
 
   private handleThreadHistory(history: Message[]): void {
-    if (history.length === 0) {
-      console.log('[BotService] No conversation history found');
-      return;
-    }
+    if (history.length === 0) return;
 
-    // Create a hash of the history to detect duplicates
-    const historyIds = history.map(m => m.id).sort().join(',');
-    const historyHash = `${history.length}-${historyIds}`;
-    
+    // Prevent duplicate processing
+    const historyHash = history.map(m => m.id).sort().join(',');
     if (this.processedHistoryHashes.has(historyHash)) {
-      console.log(`[BotService] 🔄 Skipping duplicate history batch (${history.length} messages)`);
       return;
     }
-    
     this.processedHistoryHashes.add(historyHash);
-    console.log(`[BotService] Processing ${history.length} history messages`);
     
-    // Filter out Data type messages from history
-    // Data messages typically have data but minimal or no text content
-    const filteredHistory = history.filter(message => {
-      if (message.messageType === MessageType.Data) {
-        return false;
-      }
-      return true; // Keep all other messages
-    });
-    
-    if (filteredHistory.length < history.length) {
-      console.log(`[BotService] Filtered out ${history.length - filteredHistory.length} Data messages from history`);
-    }
-    
-    // Sort messages by creation date to ensure proper chronological order
-    const sortedHistory = [...filteredHistory].sort((a, b) => {
-      const dateA = new Date(a.createdAt || 0).getTime();
-      const dateB = new Date(b.createdAt || 0).getTime();
-      return dateA - dateB;
-    });
+    // Filter out Data messages and sort chronologically
+    const chatHistory = history
+      .filter(message => message.messageType !== MessageType.Data)
+      .sort((a, b) => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime());
 
-    // Convert history messages and send them in chronological order
-    // Mark them as history messages so UI can handle duplicates
-    sortedHistory.forEach((message, index) => {
+    // Send history messages to UI
+    chatHistory.forEach((message, index) => {
       const sender = message.direction === 'Incoming' ? 'user' : 'agent';
       const chatMessage = this.convertToChatMessage(message, sender);
       chatMessage.metadata = {
@@ -398,13 +303,11 @@ export class BotService {
         isHistoryMessage: true
       };
       
-      // Add a small delay between messages to prevent UI flooding
+      // Small delay to prevent UI flooding
       setTimeout(() => {
         this.options.onMessageReceived?.(chatMessage);
-      }, index * 10); // 10ms delay between each message
+      }, index * 10);
     });
-
-    console.log(`[BotService] ✅ Loaded ${sortedHistory.length} messages from conversation history (${history.length - filteredHistory.length} Data messages filtered out)`);
   }
 
   private convertToChatMessage(message: Message, sender: 'user' | 'agent'): ChatMessage {
@@ -422,11 +325,8 @@ export class BotService {
   }
 
   private handleConnected(): void {
-    console.log('[BotService] ✅ Connected to server - updating UI state');
+    console.log('[BotService] ✅ Connected to server');
     this.options.onConnectionStateChanged?.(true);
-    
-    // Note: Don't re-subscribe here as it will be handled by ChatPanel's useEffect
-    // This prevents double subscription and duplicate history loading
   }
 
   private handleDisconnected(reason?: string): void {
@@ -447,7 +347,6 @@ export class BotService {
   async dispose(): Promise<void> {
     // Reset any loading state
     this.isLoadingHistory = false;
-    this.currentAgent = null;
     this.processedHistoryHashes.clear();
     this.historyLoadedForAgent = null;
     

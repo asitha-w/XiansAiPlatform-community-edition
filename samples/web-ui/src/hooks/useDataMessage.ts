@@ -1,5 +1,5 @@
 import { useContext } from 'react';
-import { DataMessageContext } from '../context/context';
+import { DataMessageContext } from '../context/dataMessageTypes';
 
 export const useDataMessage = () => {
   const context = useContext(DataMessageContext);
