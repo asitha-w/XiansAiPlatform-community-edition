@@ -97,11 +97,12 @@ const MainLayout: React.FC<MainLayoutProps> = ({
             {/* Enhanced Chat Panel */}
             <Box sx={{ 
               flex: { xs: '1', md: '0 0 550px' }, // Increased from 420px to 550px for wider chat panel
-              minHeight: { xs: '400px', md: '600px' },
+              height: { xs: '500px', md: 'calc(100vh - 170px)' }, // Fixed height: 100vh - 90px navbar - 40px top padding - 40px bottom padding
+              maxHeight: { xs: '500px', md: 'calc(100vh - 170px)' }, // Ensure it never exceeds viewport
               display: 'flex',
               flexDirection: 'column',
               position: { md: 'sticky' },
-              top: { md: 0 }
+              top: { md: '40px' } // Negative top padding to immediately stick to navbar edge
             }}>
               <Box sx={{ 
                 flexGrow: 1,

@@ -156,7 +156,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
 
   return (
     <Box sx={{ 
-      height: 'calc(100vh - 175px)', // Full viewport height minus navbar height
+      height: '100%', // Fill the container height provided by MainLayout
       display: 'flex', 
       flexDirection: 'column',
       backgroundColor: '#FFFFFF',
