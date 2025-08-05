@@ -71,7 +71,7 @@ export class FlowRestService {
       console.log(`[FlowRestService] ✅ Request successful:`, responseData);
       return {
         success: true,
-        data: responseData,
+        data: responseData.response.data.data,
         statusCode: response.status,
       };
 

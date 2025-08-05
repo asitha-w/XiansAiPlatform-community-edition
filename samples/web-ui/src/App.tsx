@@ -5,7 +5,7 @@ import HomePage from './pages/HomePage';
 import BotPage from './pages/BotPage';
 import Navbar from './components/Navbar';
 import type { Bot as Agent } from './types';
-import { ContractEntityPanel } from './features/legal/contract-entity/ContractEntityPanel';
+import { ContractEntityPanel } from './features/legal/components/contract-entity/ContractEntityPanel';
 import { DataMessageProvider } from './context/DataMessageContext';
 import { AgentProvider } from './context/AgentContext';
 import { useAgent } from './utils/agentUtils';

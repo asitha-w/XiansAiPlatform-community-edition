@@ -14,7 +14,7 @@ import {
   Cancel as CancelIcon,
   Edit as EditIcon,
 } from '@mui/icons-material';
-import type { ContractValidation, ContractEntity, Contract } from '../../../types';
+import type { ContractValidation, ContractEntity, Contract } from '../../../../types';
 
 interface EntityOverviewProps {
   entity?: ContractEntity | null;
@@ -73,38 +73,46 @@ const EntityOverview: React.FC<EntityOverviewProps> = ({
 
   return (
     <Box sx={{ 
-      backgroundColor: '#fff',
-      border: '1px solid #f0f0f0',
-      borderRadius: 2,
-      mb: 3
+      backgroundColor: '#FEFEFE',
+      border: '1px solid #F1F3F4',
+      borderRadius: 3,
+      mb: 4,
+      boxShadow: '0 2px 12px rgba(46, 52, 64, 0.04)',
+      overflow: 'hidden'
     }}>
       {/* Main Content */}
-      <Box sx={{ p: 4 }}>
+      <Box sx={{ p: 4, pt: 6 }}>
         {/* Contract Title & Basic Info */}
-        <Box sx={{ mb: 4 }}>
-          <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 2 }}>
+        <Box sx={{ mb: 6 }}>
+          <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 4 }}>
             <Box sx={{ flex: 1, minWidth: 0 }}>
               <Typography 
-                variant="h5" 
+                variant="h4" 
                 sx={{ 
-                  fontWeight: 400,
-                  color: '#2d3748',
-                  mb: 1,
-                  lineHeight: 1.3,
-                  letterSpacing: '-0.01em'
+                  fontWeight: 600,
+                  color: '#2E3440',
+                  mb: 2,
+                  lineHeight: 1.2,
+                  letterSpacing: '-0.02em'
                 }}
               >
                 {contractData?.title || entity?.title || 'Untitled Contract'}
               </Typography>
               
-              <Box sx={{ display: 'flex', gap: 3, alignItems: 'center', flexWrap: 'wrap' }}>
+              <Box sx={{ display: 'flex', gap: 4, alignItems: 'center', flexWrap: 'wrap' }}>
                 <Typography 
                   variant="body2" 
                   sx={{ 
                     fontFamily: '"SF Mono", "Monaco", "Inconsolata", "Roboto Mono", monospace',
-                    color: '#718096',
-                    fontSize: '0.875rem',
-                    letterSpacing: '0.025em'
+                    color: '#80868B',
+                    fontSize: '0.8rem',
+                    fontWeight: 400,
+                    letterSpacing: '0.05em',
+                    px: 2,
+                    py: 0.5,
+                    backgroundColor: '#F8F9FA',
+                    borderRadius: 1,
+                    border: '1px solid #F1F3F4'
                   }}
                 >
                   {contractData?.id || entity?.id}
@@ -112,18 +120,23 @@ const EntityOverview: React.FC<EntityOverviewProps> = ({
                 
                 {entity && (
                   <Box sx={{
-                    px: 2,
-                    py: 0.5,
-                    backgroundColor: getStatusColor(entity.status) === 'success' ? '#f0fff4' : 
-                                   getStatusColor(entity.status) === 'warning' ? '#fffdf7' :
-                                   getStatusColor(entity.status) === 'info' ? '#f7faff' : '#fdf2f8',
-                    color: getStatusColor(entity.status) === 'success' ? '#22543d' : 
-                           getStatusColor(entity.status) === 'warning' ? '#744210' :
-                           getStatusColor(entity.status) === 'info' ? '#2a4365' : '#702459',
+                    px: 3,
+                    py: 1,
+                    backgroundColor: getStatusColor(entity.status) === 'success' ? '#F0F8F0' : 
+                                   getStatusColor(entity.status) === 'warning' ? '#FFF9E6' :
+                                   getStatusColor(entity.status) === 'info' ? '#F0F7FF' : '#FFF0F0',
+                    color: getStatusColor(entity.status) === 'success' ? '#A3BE8C' : 
+                           getStatusColor(entity.status) === 'warning' ? '#B8860B' :
+                           getStatusColor(entity.status) === 'info' ? '#5E81AC' : '#BF616A',
                     fontSize: '0.75rem',
-                    fontWeight: 500,
-                    textTransform: 'capitalize',
-                    borderRadius: 1
+                    fontWeight: 600,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    borderRadius: 2,
+                    border: '1px solid',
+                    borderColor: getStatusColor(entity.status) === 'success' ? '#B8CCA3' : 
+                                getStatusColor(entity.status) === 'warning' ? '#F0D49C' :
+                                getStatusColor(entity.status) === 'info' ? '#9BCAD7' : '#CC7B83',
                   }}>
                     {entity.status.replace('_', ' ')}
                   </Box>
@@ -132,25 +145,28 @@ const EntityOverview: React.FC<EntityOverviewProps> = ({
             </Box>
 
             {/* Actions */}
-            <Box sx={{ ml: 3 }}>
+            <Box sx={{ ml: 4 }}>
               {!isEditing ? (
-                <Box sx={{ display: 'flex', gap: 1 }}>
+                <Box sx={{ display: 'flex', gap: 2 }}>
                   <Button
                     startIcon={<EditIcon sx={{ fontSize: 18 }} />}
                     onClick={() => onEditToggle?.()}
+                    variant="outlined"
                     sx={{ 
-                      color: '#4a5568',
+                      color: '#556B7D',
                       fontSize: '0.875rem',
-                      fontWeight: 400,
+                      fontWeight: 500,
                       textTransform: 'none',
-                      px: 3,
-                      py: 1,
-                      border: '1px solid #e2e8f0',
+                      px: 4,
+                      py: 1.5,
+                      borderColor: '#E8EAED',
                       backgroundColor: 'transparent',
-                      borderRadius: 1.5,
+                      borderRadius: 2,
                       '&:hover': {
-                        backgroundColor: '#f7fafc',
-                        borderColor: '#cbd5e0'
+                        backgroundColor: 'rgba(46, 52, 64, 0.02)',
+                        borderColor: '#D1D5DB',
+                        transform: 'translateY(-1px)',
+                        boxShadow: '0 2px 8px rgba(46, 52, 64, 0.08)'
                       }
                     }}
                   >
@@ -159,19 +175,22 @@ const EntityOverview: React.FC<EntityOverviewProps> = ({
                   <Button
                     startIcon={<RefreshIcon sx={{ fontSize: 18 }} />}
                     onClick={() => onRefreshDocument?.()}
+                    variant="outlined"
                     sx={{ 
-                      color: '#4a5568',
+                      color: '#556B7D',
                       fontSize: '0.875rem',
-                      fontWeight: 400,
+                      fontWeight: 500,
                       textTransform: 'none',
-                      px: 3,
-                      py: 1,
-                      border: '1px solid #e2e8f0',
+                      px: 4,
+                      py: 1.5,
+                      borderColor: '#E8EAED',
                       backgroundColor: 'transparent',
-                      borderRadius: 1.5,
+                      borderRadius: 2,
                       '&:hover': {
-                        backgroundColor: '#f7fafc',
-                        borderColor: '#cbd5e0'
+                        backgroundColor: 'rgba(46, 52, 64, 0.02)',
+                        borderColor: '#D1D5DB',
+                        transform: 'translateY(-1px)',
+                        boxShadow: '0 2px 8px rgba(46, 52, 64, 0.08)'
                       }
                     }}
                   >
@@ -179,23 +198,25 @@ const EntityOverview: React.FC<EntityOverviewProps> = ({
                   </Button>
                 </Box>
               ) : (
-                <Box sx={{ display: 'flex', gap: 1 }}>
+                <Box sx={{ display: 'flex', gap: 2 }}>
                   <Button
                     startIcon={<SaveIcon sx={{ fontSize: 18 }} />}
                     onClick={() => contractData && onSave?.(contractData)}
+                    variant="contained"
                     sx={{ 
-                      color: '#38a169',
+                      backgroundColor: '#A3BE8C',
+                      color: '#FFFFFF',
                       fontSize: '0.875rem',
-                      fontWeight: 400,
+                      fontWeight: 500,
                       textTransform: 'none',
-                      px: 3,
-                      py: 1,
-                      border: '1px solid #38a169',
-                      backgroundColor: 'transparent',
-                      borderRadius: 1.5,
+                      px: 4,
+                      py: 1.5,
+                      borderRadius: 2,
+                      boxShadow: '0 2px 8px rgba(163, 190, 140, 0.25)',
                       '&:hover': {
-                        backgroundColor: '#f0fff4',
-                        borderColor: '#2f855a'
+                        backgroundColor: '#8CA176',
+                        transform: 'translateY(-1px)',
+                        boxShadow: '0 4px 16px rgba(163, 190, 140, 0.35)'
                       }
                     }}
                   >
@@ -204,19 +225,22 @@ const EntityOverview: React.FC<EntityOverviewProps> = ({
                   <Button
                     startIcon={<CancelIcon sx={{ fontSize: 18 }} />}
                     onClick={() => onCancel?.()}
+                    variant="outlined"
                     sx={{ 
-                      color: '#e53e3e',
+                      color: '#BF616A',
                       fontSize: '0.875rem',
-                      fontWeight: 400,
+                      fontWeight: 500,
                       textTransform: 'none',
-                      px: 3,
-                      py: 1,
-                      border: '1px solid #e53e3e',
+                      px: 4,
+                      py: 1.5,
+                      borderColor: '#CC7B83',
                       backgroundColor: 'transparent',
-                      borderRadius: 1.5,
+                      borderRadius: 2,
                       '&:hover': {
-                        backgroundColor: '#fed7d7',
-                        borderColor: '#c53030'
+                        backgroundColor: 'rgba(191, 97, 106, 0.08)',
+                        borderColor: '#BF616A',
+                        transform: 'translateY(-1px)',
+                        boxShadow: '0 2px 8px rgba(191, 97, 106, 0.15)'
                       }
                     }}
                   >
@@ -227,67 +251,30 @@ const EntityOverview: React.FC<EntityOverviewProps> = ({
             </Box>
           </Box>
 
-          {/* Meta Information */}
-          <Box sx={{ 
-            display: 'flex', 
-            gap: 4,
-            pt: 2,
-            borderTop: '1px solid #f7fafc'
-          }}>
-            <Typography 
-              variant="body2" 
-              sx={{ 
-                color: '#a0aec0',
-                fontSize: '0.8rem'
-              }}
-            >
-              Created {contractData?.createdDate ? new Date(contractData.createdDate).toLocaleDateString() : 'Unknown'}
-            </Typography>
-            {entity?.lastModified && (
-              <Typography 
-                variant="body2" 
-                sx={{ 
-                  color: '#a0aec0',
-                  fontSize: '0.8rem'
-                }}
-              >
-                Modified {entity.lastModified.toLocaleDateString()}
-              </Typography>
-            )}
-            {entity?.assignedTo && (
-              <Typography 
-                variant="body2" 
-                sx={{ 
-                  color: '#a0aec0',
-                  fontSize: '0.8rem'
-                }}
-              >
-                Assigned to {entity.assignedTo}
-              </Typography>
-            )}
-          </Box>
         </Box>
 
         {/* Document Analysis */}
         <Box>
 
+
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             {/* Overall Status */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               {React.cloneElement(overallStatus.icon, { 
                 sx: { 
                   fontSize: 20, 
-                  color: overallStatus.color === 'success' ? '#38a169' : 
-                         overallStatus.color === 'warning' ? '#d69e2e' :
-                         overallStatus.color === 'error' ? '#e53e3e' : '#3182ce'
+                  color: overallStatus.color === 'success' ? '#A3BE8C' : 
+                         overallStatus.color === 'warning' ? '#EBCB8B' :
+                         overallStatus.color === 'error' ? '#BF616A' : '#88C0D0'
                 } 
               })}
               <Typography 
                 variant="body1" 
                 sx={{ 
-                  color: '#2d3748',
-                  fontWeight: 400,
-                  fontSize: '0.875rem'
+                  color: '#2E3440',
+                  fontWeight: 500,
+                  fontSize: '0.875rem',
+                  letterSpacing: '-0.01em'
                 }}
               >
                 {overallStatus.status}
@@ -301,23 +288,30 @@ const EntityOverview: React.FC<EntityOverviewProps> = ({
                 display: 'flex', 
                 alignItems: 'center', 
                 gap: 1,
-                backgroundColor: criticalCount > 0 ? '#fed7d7' : '#f7fafc',
-                color: criticalCount > 0 ? '#c53030' : '#a0aec0',
+                backgroundColor: criticalCount > 0 ? '#FFF0F0' : '#F8F9FA',
+                color: criticalCount > 0 ? '#BF616A' : '#80868B',
                 px: 2,
                 py: 1,
                 borderRadius: 2,
-                border: `1px solid ${criticalCount > 0 ? '#feb2b2' : '#e2e8f0'}`
+                fontSize: '0.75rem',
+                fontWeight: 500,
+                border: '1px solid',
+                borderColor: criticalCount > 0 ? '#CC7B83' : '#F1F3F4',
+                transition: 'all 0.2s ease-in-out'
               }}>
                 <ErrorIcon sx={{ 
                   fontSize: 14, 
                   color: 'inherit'
                 }} />
                 <Typography 
-                  variant="body2" 
+                  variant="caption" 
                   sx={{ 
                     color: 'inherit',
-                    fontWeight: 500,
-                    fontSize: '0.75rem'
+                    fontWeight: 600,
+                    fontSize: '0.75rem',
+                    lineHeight: 1,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em'
                   }}
                 >
                   {criticalCount} Critical
@@ -329,23 +323,30 @@ const EntityOverview: React.FC<EntityOverviewProps> = ({
                 display: 'flex', 
                 alignItems: 'center', 
                 gap: 1,
-                backgroundColor: warningCount > 0 ? '#faf089' : '#f7fafc',
-                color: warningCount > 0 ? '#b7791f' : '#a0aec0',
+                backgroundColor: warningCount > 0 ? '#FFF9E6' : '#F8F9FA',
+                color: warningCount > 0 ? '#B8860B' : '#80868B',
                 px: 2,
                 py: 1,
                 borderRadius: 2,
-                border: `1px solid ${warningCount > 0 ? '#f6e05e' : '#e2e8f0'}`
+                fontSize: '0.75rem',
+                fontWeight: 500,
+                border: '1px solid',
+                borderColor: warningCount > 0 ? '#F0D49C' : '#F1F3F4',
+                transition: 'all 0.2s ease-in-out'
               }}>
                 <WarningIcon sx={{ 
                   fontSize: 14, 
                   color: 'inherit'
                 }} />
                 <Typography 
-                  variant="body2" 
+                  variant="caption" 
                   sx={{ 
                     color: 'inherit',
-                    fontWeight: 500,
-                    fontSize: '0.75rem'
+                    fontWeight: 600,
+                    fontSize: '0.75rem',
+                    lineHeight: 1,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em'
                   }}
                 >
                   {warningCount} Warnings
@@ -357,23 +358,30 @@ const EntityOverview: React.FC<EntityOverviewProps> = ({
                 display: 'flex', 
                 alignItems: 'center', 
                 gap: 1,
-                backgroundColor: suggestionCount > 0 ? '#bee3f8' : '#f7fafc',
-                color: suggestionCount > 0 ? '#2c5282' : '#a0aec0',
+                backgroundColor: suggestionCount > 0 ? '#F0F7FF' : '#F8F9FA',
+                color: suggestionCount > 0 ? '#5E81AC' : '#80868B',
                 px: 2,
                 py: 1,
                 borderRadius: 2,
-                border: `1px solid ${suggestionCount > 0 ? '#90cdf4' : '#e2e8f0'}`
+                fontSize: '0.75rem',
+                fontWeight: 500,
+                border: '1px solid',
+                borderColor: suggestionCount > 0 ? '#9BCAD7' : '#F1F3F4',
+                transition: 'all 0.2s ease-in-out'
               }}>
                 <InfoIcon sx={{ 
                   fontSize: 14, 
                   color: 'inherit'
                 }} />
                 <Typography 
-                  variant="body2" 
+                  variant="caption" 
                   sx={{ 
                     color: 'inherit',
-                    fontWeight: 500,
-                    fontSize: '0.75rem'
+                    fontWeight: 600,
+                    fontSize: '0.75rem',
+                    lineHeight: 1,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em'
                   }}
                 >
                   {suggestionCount} Suggestions

@@ -3,12 +3,13 @@ import { Box, Typography } from '@mui/material';
 import { Description as ContractIcon } from '@mui/icons-material';
 import EntityDetails from './EntityDetails';
 import EntityOverview from './EntityOverview';
+import AddPartyDialog from './AddPartyDialog';
 import { useParams } from 'react-router-dom';
-import { useDataMessage } from '../../../hooks/useDataMessage';
-import { legalDataService } from '../legalDataService';
+import { useDataMessage } from '../../../../hooks/useDataMessage';
+import { legalDataService } from '../../services/legalDataService';
 import type { EntityDetailsProps } from './EntityDetails';
-import type { Bot, ContractValidation, Contract } from '../../../types';
-import type { DataMessagePayload } from '../../../context/dataMessageTypes';
+import type { Bot, ContractValidation, Contract } from '../../../../types';
+import type { DataMessagePayload } from '../../../../context/dataMessageTypes';
 
 // Interface for DocumentUpdate message data structure (handles both casing variants)
 interface DocumentUpdateData {
@@ -59,7 +60,7 @@ export const ContractEntityPanel: React.FC<ContractEntityPanelProps> = ({
     
     try {
       console.log('[ContractEntityPanel] Loading document:', docId);
-      const entityData = await legalDataService.GetValidatedDocument(docId);
+      const entityData = await legalDataService.getCurrentContract();
       
       if (entityData?.contract) {
         console.log('[ContractEntityPanel] Document loaded:', entityData.contract.title);
@@ -233,6 +234,9 @@ export const ContractEntityPanel: React.FC<ContractEntityPanelProps> = ({
         isEditing={isEditing}
         onContractChange={handleContractChange}
       />
+      
+      {/* Add Party Dialog - Always mounted to listen for events */}
+      <AddPartyDialog />
     </Box>
   );
 };

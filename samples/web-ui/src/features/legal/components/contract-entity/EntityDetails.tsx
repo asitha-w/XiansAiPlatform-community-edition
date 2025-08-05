@@ -19,11 +19,12 @@ import {
   Article as TermsIcon,
   Add as AddIcon,
   Delete as DeleteIcon,
+  Warning as WarningIcon,
 } from '@mui/icons-material';
-import type { ContractEntity, ContractValidation, Contract, TermCategory, Party } from '../../../types';
-import { FieldWithValidations } from './components/FieldWithValidations';
-import { ValidationAlert } from './components/ValidationAlert';
-import { sendMessageToAgent } from './utils/chatUtils';
+import type { ContractEntity, ContractValidation, Contract, TermCategory, Party } from '../../../../types';
+import { FieldWithValidations } from './FieldWithValidations';
+import { ValidationAlert } from './ValidationAlert';
+import { sendMessageToAgent } from './chatUtils';
 
 export interface EntityDetailsProps {
   entity?: ContractEntity | null;
@@ -72,21 +73,10 @@ const EntityDetails: React.FC<EntityDetailsProps> = ({
     onContractChange?.(updatedContract);
   };
 
-  // Helper functions for managing parties and terms in edit mode
-  const addParty = () => {
-    if (!editableContract) return;
-    
-    const newParty = {
-      id: crypto.randomUUID(),
-      role: '',
-      name: '',
-      representatives: [],
-      signatories: [],
-    };
-    
-    updateEditableContract({
-      parties: [...editableContract.parties, newParty]
-    });
+  // Helper function to open contract party dialog
+  const handleAddParty = () => {
+    const event = new CustomEvent('OpenContractPartyDialog');
+    window.dispatchEvent(event);
   };
 
   const removeParty = (partyId: string) => {
@@ -170,19 +160,50 @@ const EntityDetails: React.FC<EntityDetailsProps> = ({
 
   return (
     <Box sx={{ 
-      backgroundColor: '#FFFFFF',
-      borderRadius: 2,
-      border: '1px solid #E5E7EB',
-      boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)'
+      backgroundColor: '#FEFEFE',
+      borderRadius: 3,
+      border: '1px solid #F1F3F4',
+      boxShadow: '0 2px 12px rgba(46, 52, 64, 0.04)',
+      overflow: 'hidden'
     }}>
       {/* Contract Content */}
       {displayContract && (
-          <Box sx={{ p: 3, pt: 4 }}>
+          <Box sx={{ p: 4, pt: 6 }}>
             {/* Contract Description */}
-            <Box sx={{ mb: 4 }}>
-              <Typography variant="h6" sx={{ mb: 3, fontWeight: 400 }}>
-                Description
-              </Typography>
+            <Box sx={{ mb: 6 }}>
+              <Box sx={{ 
+                mb: 4,
+                pb: 2,
+                borderBottom: '1px solid #F8F9FA',
+                position: 'relative'
+              }}>
+                <Typography variant="h5" sx={{ 
+                  fontWeight: 600,
+                  color: '#2E3440',
+                  letterSpacing: '-0.02em',
+                  mb: 1
+                }}>
+                  Description
+                </Typography>
+                <Typography variant="body2" sx={{ 
+                  color: '#80868B',
+                  fontWeight: 400,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                  fontSize: '0.7rem'
+                }}>
+                  Contract Overview
+                </Typography>
+                <Box sx={{
+                  position: 'absolute',
+                  bottom: -1,
+                  left: 0,
+                  width: 32,
+                  height: 2,
+                  backgroundColor: '#5E81AC',
+                  borderRadius: 1
+                }} />
+              </Box>
               <FieldWithValidations 
                 fieldPath="description"
                 validations={validations}
@@ -210,14 +231,47 @@ const EntityDetails: React.FC<EntityDetailsProps> = ({
               </FieldWithValidations>
             </Box>
 
-            <Divider sx={{ my: 4, borderColor: 'grey.50' }} />
+            <Divider sx={{ my: 6, borderColor: '#F1F3F4', borderWidth: '1px' }} />
 
             {/* Effective Date */}
-            <Box sx={{ mb: 4 }}>
-              <Typography variant="h6" sx={{ mb: 3, fontWeight: 400, display: 'flex', alignItems: 'center', gap: 1 }}>
-                <CalendarIcon sx={{ fontSize: 20 }} />
-                Effective Date
-              </Typography>
+            <Box sx={{ mb: 6 }}>
+              <Box sx={{ 
+                mb: 4,
+                pb: 2,
+                borderBottom: '1px solid #F8F9FA',
+                position: 'relative'
+              }}>
+                <Typography variant="h5" sx={{ 
+                  fontWeight: 600,
+                  color: '#2E3440',
+                  letterSpacing: '-0.02em',
+                  mb: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1.5
+                }}>
+                  <CalendarIcon sx={{ fontSize: 20, color: '#5E81AC' }} />
+                  Effective Date
+                </Typography>
+                <Typography variant="body2" sx={{ 
+                  color: '#80868B',
+                  fontWeight: 400,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.08em',
+                  fontSize: '0.7rem'
+                }}>
+                  Contract Activation
+                </Typography>
+                <Box sx={{
+                  position: 'absolute',
+                  bottom: -1,
+                  left: 0,
+                  width: 32,
+                  height: 2,
+                  backgroundColor: '#5E81AC',
+                  borderRadius: 1
+                }} />
+              </Box>
               <FieldWithValidations 
                 fieldPath="effectiveDate"
                 validations={validations}
@@ -246,22 +300,67 @@ const EntityDetails: React.FC<EntityDetailsProps> = ({
               </FieldWithValidations>
             </Box>
 
-            <Divider sx={{ my: 4, borderColor: 'grey.50' }} />
+            <Divider sx={{ my: 6, borderColor: '#F1F3F4', borderWidth: '1px' }} />
 
             {/* Contract Parties */}
-            <Box sx={{ mb: 4 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-                <Typography variant="h6" sx={{ fontWeight: 400, display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <PersonIcon sx={{ fontSize: 20 }} />
-                  Parties
-                </Typography>
+            <Box sx={{ mb: 6 }}>
+              <Box sx={{ 
+                mb: 4,
+                pb: 2,
+                borderBottom: '1px solid #F8F9FA',
+                position: 'relative',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-end'
+              }}>
+                <Box>
+                  <Typography variant="h5" sx={{ 
+                    fontWeight: 600,
+                    color: '#2E3440',
+                    letterSpacing: '-0.02em',
+                    mb: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1.5
+                  }}>
+                    <PersonIcon sx={{ fontSize: 20, color: '#5E81AC' }} />
+                    Parties
+                  </Typography>
+                  <Typography variant="body2" sx={{ 
+                    color: '#80868B',
+                    fontWeight: 400,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.08em',
+                    fontSize: '0.7rem'
+                  }}>
+                    Contract Participants
+                  </Typography>
+                  <Box sx={{
+                    position: 'absolute',
+                    bottom: -1,
+                    left: 0,
+                    width: 32,
+                    height: 2,
+                    backgroundColor: '#5E81AC',
+                    borderRadius: 1
+                  }} />
+                </Box>
                 {isEditing && (
                   <Button
                     startIcon={<AddIcon />}
-                    onClick={addParty}
+                    onClick={handleAddParty}
                     variant="outlined"
                     size="small"
-                    sx={{ textTransform: 'none' }}
+                    sx={{ 
+                      textTransform: 'none',
+                      mb: 0.5,
+                      borderColor: '#E8EAED',
+                      color: '#556B7D',
+                      '&:hover': {
+                        borderColor: '#D1D5DB',
+                        backgroundColor: 'rgba(46, 52, 64, 0.02)'
+                      }
+                    }}
                   >
                     Add Party
                   </Button>
@@ -273,10 +372,21 @@ const EntityDetails: React.FC<EntityDetailsProps> = ({
                 onAskAgent={sendMessageToAgent}
               >
                 {displayContract.parties && displayContract.parties.length > 0 ? (
-                  <Box sx={{ display: 'grid', gap: 3 }}>
+                  <Box sx={{ display: 'grid', gap: 4 }}>
                     {displayContract.parties.map((party, index) => (
-                      <Card key={party.id || index} variant="outlined" sx={{ backgroundColor: 'grey.50' }}>
-                        <CardContent sx={{ p: 3 }}>
+                      <Card key={party.id || index} variant="outlined" sx={{ 
+                        backgroundColor: '#FCFCFC',
+                        border: '1px solid #F1F3F4',
+                        borderRadius: 2,
+                        boxShadow: '0 1px 6px rgba(46, 52, 64, 0.03)',
+                        '&:hover': {
+                          border: '1px solid #E8EAED',
+                          boxShadow: '0 2px 12px rgba(46, 52, 64, 0.06)',
+                          transform: 'translateY(-1px)',
+                          transition: 'all 0.2s ease-in-out'
+                        }
+                      }}>
+                        <CardContent sx={{ p: 4 }}>
                           <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 2 }}>
                             <Box sx={{ flex: 1 }}>
                               {isEditing ? (
@@ -300,11 +410,23 @@ const EntityDetails: React.FC<EntityDetailsProps> = ({
                                 </Box>
                               ) : (
                                 <>
-                                  <Typography variant="h6" sx={{ fontWeight: 500, mb: 1 }}>
+                                  <Typography variant="h6" sx={{ 
+                                    fontWeight: 600,
+                                    color: '#2E3440',
+                                    mb: 0.5,
+                                    letterSpacing: '-0.01em'
+                                  }}>
                                     {party.name}
                                   </Typography>
-                                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                                    Role: {party.role}
+                                  <Typography variant="body2" sx={{ 
+                                    color: '#80868B',
+                                    mb: 3,
+                                    fontWeight: 500,
+                                    textTransform: 'uppercase',
+                                    letterSpacing: '0.05em',
+                                    fontSize: '0.75rem'
+                                  }}>
+                                    {party.role}
                                   </Typography>
                                 </>
                               )}
@@ -322,8 +444,15 @@ const EntityDetails: React.FC<EntityDetailsProps> = ({
 
                           {/* Representatives */}
                           {party.representatives && party.representatives.length > 0 && (
-                            <Box sx={{ mb: 2 }}>
-                              <Typography variant="subtitle2" sx={{ fontWeight: 500, mb: 1 }}>
+                            <Box sx={{ mb: 3 }}>
+                              <Typography variant="subtitle2" sx={{ 
+                                fontWeight: 600,
+                                mb: 2,
+                                color: '#374151',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.05em',
+                                fontSize: '0.75rem'
+                              }}>
                                 Representatives
                               </Typography>
                               {party.representatives.map((person, personIndex) => (
@@ -354,7 +483,14 @@ const EntityDetails: React.FC<EntityDetailsProps> = ({
                           {/* Signatories */}
                           {party.signatories && party.signatories.length > 0 && (
                             <Box>
-                              <Typography variant="subtitle2" sx={{ fontWeight: 500, mb: 1 }}>
+                              <Typography variant="subtitle2" sx={{ 
+                                fontWeight: 600,
+                                mb: 2,
+                                color: '#374151',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.05em',
+                                fontSize: '0.75rem'
+                              }}>
                                 Signatories
                               </Typography>
                               {party.signatories.map((person, personIndex) => (
@@ -393,22 +529,67 @@ const EntityDetails: React.FC<EntityDetailsProps> = ({
               </FieldWithValidations>
             </Box>
 
-            <Divider sx={{ my: 4, borderColor: 'grey.50' }} />
+            <Divider sx={{ my: 6, borderColor: '#F1F3F4', borderWidth: '1px' }} />
 
             {/* Contract Terms */}
-            <Box sx={{ mb: 4 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-                <Typography variant="h6" sx={{ fontWeight: 400, display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <TermsIcon sx={{ fontSize: 20 }} />
-                  Terms & Conditions
-                </Typography>
+            <Box sx={{ mb: 6 }}>
+              <Box sx={{ 
+                mb: 4,
+                pb: 2,
+                borderBottom: '1px solid #F8F9FA',
+                position: 'relative',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-end'
+              }}>
+                <Box>
+                  <Typography variant="h5" sx={{ 
+                    fontWeight: 600,
+                    color: '#2E3440',
+                    letterSpacing: '-0.02em',
+                    mb: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1.5
+                  }}>
+                    <TermsIcon sx={{ fontSize: 20, color: '#5E81AC' }} />
+                    Terms & Conditions
+                  </Typography>
+                  <Typography variant="body2" sx={{ 
+                    color: '#80868B',
+                    fontWeight: 400,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.08em',
+                    fontSize: '0.7rem'
+                  }}>
+                    Contract Provisions
+                  </Typography>
+                  <Box sx={{
+                    position: 'absolute',
+                    bottom: -1,
+                    left: 0,
+                    width: 32,
+                    height: 2,
+                    backgroundColor: '#5E81AC',
+                    borderRadius: 1
+                  }} />
+                </Box>
                 {isEditing && (
                   <Button
                     startIcon={<AddIcon />}
                     onClick={addTerm}
                     variant="outlined"
                     size="small"
-                    sx={{ textTransform: 'none' }}
+                    sx={{ 
+                      textTransform: 'none',
+                      mb: 0.5,
+                      borderColor: '#E8EAED',
+                      color: '#556B7D',
+                      '&:hover': {
+                        borderColor: '#D1D5DB',
+                        backgroundColor: 'rgba(46, 52, 64, 0.02)'
+                      }
+                    }}
                   >
                     Add Term
                   </Button>
@@ -420,12 +601,27 @@ const EntityDetails: React.FC<EntityDetailsProps> = ({
                 onAskAgent={sendMessageToAgent}
               >
                 {displayContract.terms && displayContract.terms.length > 0 ? (
-                  <Box sx={{ display: 'grid', gap: 3 }}>
+                  <Box sx={{ display: 'grid', gap: 4 }}>
                     {displayContract.terms.map((term, index) => (
-                      <Card key={term.id || index} variant="outlined">
-                        <CardContent>
-                          <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 2 }}>
-                            <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
+                      <Card key={term.id || index} variant="outlined" sx={{
+                        backgroundColor: '#FCFCFC',
+                        border: '1px solid #F1F3F4',
+                        borderRadius: 2,
+                        boxShadow: '0 1px 6px rgba(46, 52, 64, 0.03)',
+                        '&:hover': {
+                          border: '1px solid #E8EAED',
+                          boxShadow: '0 2px 12px rgba(46, 52, 64, 0.06)',
+                          transform: 'translateY(-1px)',
+                          transition: 'all 0.2s ease-in-out'
+                        }
+                      }}>
+                        <CardContent sx={{ p: 4 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 3 }}>
+                            <Typography variant="h6" sx={{ 
+                              fontWeight: 600,
+                              color: '#2E3440',
+                              letterSpacing: '-0.01em'
+                            }}>
                               Term #{index + 1}
                             </Typography>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -496,9 +692,24 @@ const EntityDetails: React.FC<EntityDetailsProps> = ({
             {/* Global Validations (for fields not displayed above) */}
             {validations.filter(v => !['title', 'description', 'effectiveDate', 'parties', 'terms'].includes(v.fieldPath)).length > 0 && (
               <>
-                <Divider sx={{ my: 4, borderColor: 'grey.50' }} />
-                <Box sx={{ mb: 4 }}>
-                  <Typography variant="h6" sx={{ mb: 3, fontWeight: 400 }}>
+                <Divider sx={{ my: 6, borderColor: '#F1F3F4', borderWidth: '1px' }} />
+                <Box sx={{ 
+                  mb: 4,
+                  p: 3,
+                  backgroundColor: '#FFF9E6',
+                  border: '1px solid #F0D49C',
+                  borderRadius: 2,
+                  borderLeft: '4px solid #EBCB8B'
+                }}>
+                  <Typography variant="subtitle1" sx={{ 
+                    fontWeight: 500,
+                    color: '#B8860B',
+                    mb: 2,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1
+                  }}>
+                    <WarningIcon sx={{ fontSize: 18, color: '#EBCB8B' }} />
                     Additional Validations
                   </Typography>
                   {validations

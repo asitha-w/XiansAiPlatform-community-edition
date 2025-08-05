@@ -1,6 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import {
-  Button,
   Box,
   Typography,
   Dialog,
@@ -17,18 +16,9 @@ import {
   Select,
   FormControl,
   InputLabel,
+  Button,
 } from '@mui/material';
-import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
-
-interface ContractPartyProps {
-  /**
-   * Additional properties coming from the component registry. The only one we
-   * rely on for now is the `command` (i.e. "Add" | "Edit") so the component
-   * can be reused for both creating and editing a party.
-   */
-  properties: Record<string, unknown>;
-}
 
 /**
  * Person model mirroring the backend `Person` record.
@@ -62,8 +52,6 @@ interface PartyFormData {
   signatoryIds: string[];
 }
 
-
-
 const partyRoles = [
   'Client',
   'Service Provider',
@@ -83,20 +71,30 @@ const partyRoles = [
   'Other',
 ];
 
+interface AddPartyDialogProps {
+  acquaintances?: PersonData[];
+}
+
 /**
- * A minimalistic contract party editor designed with Nordic aesthetics in mind.
+ * A minimalistic contract party editor dialog designed with Nordic aesthetics in mind.
  * – Clean surfaces, generous whitespace and subtle borders.
  */
-const ContractParty: React.FC<ContractPartyProps> = ({ properties }) => {
-  const command = (properties.command as string) ?? 'Add';
+const AddPartyDialog: React.FC<AddPartyDialogProps> = ({ acquaintances = [] }) => {
   const [open, setOpen] = useState(false);
   const theme = useTheme();
 
-  // Extract Acquaintances from properties
-  const acquaintances = useMemo(() => {
-    const acquaintancesData = (properties.Acquaintances as { result?: PersonData[] })?.result;
-    return Array.isArray(acquaintancesData) ? acquaintancesData : [];
-  }, [properties]);
+  // Listen for window event to open the dialog
+  React.useEffect(() => {
+    const handleOpenPartyDialog = () => {
+      setOpen(true);
+    };
+
+    window.addEventListener('OpenContractPartyDialog', handleOpenPartyDialog);
+
+    return () => {
+      window.removeEventListener('OpenContractPartyDialog', handleOpenPartyDialog);
+    };
+  }, []);
 
   // Slightly darker border color for inputs
   const inputBorderColor = theme.palette.grey[400];
@@ -130,8 +128,6 @@ const ContractParty: React.FC<ContractPartyProps> = ({ properties }) => {
   const getSelectedPersons = (ids: string[]): PersonData[] => {
     return ids.map(getPersonById).filter(Boolean) as PersonData[];
   };
-
-  const handleOpen = () => setOpen(true);
 
   const handleClose = () => {
     setOpen(false);
@@ -181,8 +177,6 @@ const ContractParty: React.FC<ContractPartyProps> = ({ properties }) => {
     });
   };
 
-
-
   const removePerson = (section: 'representativeIds' | 'signatoryIds', personId: string) => () => {
     setPartyFormData(prev => ({
       ...prev,
@@ -207,7 +201,7 @@ const ContractParty: React.FC<ContractPartyProps> = ({ properties }) => {
 
     // Compose a human-friendly chat message for the agent
     const messageLines: string[] = [
-      `${command} Contract Party – Please ${command.toLowerCase()} the following party to the current contract:\n`,
+      `Add Contract Party – Please add the following party to the current contract:\n`,
       '**Party Details:**',
       `- **Name:** ${partyData.name}`,
       `- **Role:** ${partyData.role}`,
@@ -237,7 +231,7 @@ const ContractParty: React.FC<ContractPartyProps> = ({ properties }) => {
       detail: {
         message,
         data: {
-          command,
+          command: 'Add',
           party: partyData,
         },
       },
@@ -346,82 +340,74 @@ const ContractParty: React.FC<ContractPartyProps> = ({ properties }) => {
    * UI
    * --------------------------------------------------*/
   return (
-    <>
-      <Box sx={{ my: 1 }}>
-        <Typography variant="body1" sx={{ mb: 1 }}>
-          {command} a party to the contract
+    <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
+      <DialogTitle>Add Contract Party</DialogTitle>
+      <DialogContent>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+          Enter the details for the contract party below. Required fields are marked with *.
         </Typography>
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<PersonAddIcon />}
-          onClick={handleOpen}
-          size="small"
+
+        <Stack spacing={4}>
+          {/* Basic Party Information */}
+          <Box>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+              Party Information
+            </Typography>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} flexWrap="wrap">
+              <TextField
+                label="Name *"
+                fullWidth
+                value={partyFormData.name}
+                onChange={handleInputChange('name')}
+                margin="dense"
+                size="small"
+                variant="outlined"
+                sx={{ flex: '1 1 240px', ...inputSx }}
+              />
+              <TextField
+                label="Role *"
+                select
+                fullWidth
+                value={partyFormData.role}
+                onChange={handleInputChange('role')}
+                margin="dense"
+                size="small"
+                variant="outlined"
+                sx={{ flex: '1 1 240px', ...inputSx }}
+              >
+                {partyRoles.map(role => (
+                  <MenuItem key={role} value={role}>
+                    {role}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Stack>
+          </Box>
+
+          {/* Representatives */}
+          {renderPeopleSection('Representatives', 'representativeIds')}
+
+          {/* Signatories */}
+          {renderPeopleSection('Signatories', 'signatoryIds')}
+        </Stack>
+      </DialogContent>
+      <DialogActions sx={{ p: 3, pt: 1 }}>
+        <Button 
+          onClick={handleClose}
+          sx={{
+            '&:hover': {
+              color: '#88C0D0',
+            }
+          }}
         >
-          {command} Party
+          Cancel
         </Button>
-      </Box>
-
-      <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
-        <DialogTitle>{command} Contract Party</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-            Enter the details for the contract party below. Required fields are marked with *.
-          </Typography>
-
-          <Stack spacing={4}>
-            {/* Basic Party Information */}
-            <Box>
-              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
-                Party Information
-              </Typography>
-              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} flexWrap="wrap">
-                <TextField
-                  label="Name *"
-                  fullWidth
-                  value={partyFormData.name}
-                  onChange={handleInputChange('name')}
-                  margin="dense"
-                  size="small"
-                  variant="outlined"
-                  sx={{ flex: '1 1 240px', ...inputSx }}
-                />
-                <TextField
-                  label="Role *"
-                  select
-                  fullWidth
-                  value={partyFormData.role}
-                  onChange={handleInputChange('role')}
-                  margin="dense"
-                  size="small"
-                  variant="outlined"
-                  sx={{ flex: '1 1 240px', ...inputSx }}
-                >
-                  {partyRoles.map(role => (
-                    <MenuItem key={role} value={role}>
-                      {role}
-                    </MenuItem>
-                  ))}
-                </TextField>
-              </Stack>
-            </Box>
-
-            {/* Representatives */}
-            {renderPeopleSection('Representatives', 'representativeIds')}
-
-            {/* Signatories */}
-            {renderPeopleSection('Signatories', 'signatoryIds')}
-          </Stack>
-        </DialogContent>
-        <DialogActions sx={{ p: 3, pt: 1 }}>
-          <Button onClick={handleClose}>Cancel</Button>
-          <Button onClick={handleDone} variant="contained" disabled={!isFormValid}>
-            Done
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </>
+        <Button onClick={handleDone} variant="contained" disabled={!isFormValid}>
+          Done
+        </Button>
+      </DialogActions>
+    </Dialog>
   );
 };
 
-export default ContractParty;
+export default AddPartyDialog;
