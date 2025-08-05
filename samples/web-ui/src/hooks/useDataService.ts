@@ -92,7 +92,6 @@ export function useDataService(options: UseDataServiceOptions): UseDataServiceRe
 
     const serviceOptions: FlowServiceOptions = {
       ...otherOptions,
-      documentId: currentDocumentIdRef.current,
       onDataMessageReceived: (message: Message) => {
         console.log('[useDataService] Data message received:', message);
         setLastDataMessage(message);
@@ -136,7 +135,6 @@ export function useDataService(options: UseDataServiceOptions): UseDataServiceRe
   useEffect(() => {
     if (currentDocumentIdRef.current !== documentId) {
       currentDocumentIdRef.current = documentId;
-      serviceInstanceRef.current?.updateDocumentId(documentId);
     }
   }, [documentId]);
 
@@ -197,7 +195,6 @@ export function useDataService(options: UseDataServiceOptions): UseDataServiceRe
   // Update document ID
   const updateDocumentId = useCallback((newDocumentId?: string) => {
     currentDocumentIdRef.current = newDocumentId;
-    serviceInstanceRef.current?.updateDocumentId(newDocumentId);
   }, []);
 
   return {

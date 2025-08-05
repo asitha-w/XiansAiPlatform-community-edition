@@ -18,10 +18,9 @@ interface UseChatServiceReturn {
   isConnected: boolean;
   isLoading: boolean;
   error: string | null;
-  setCurrentAgent: (agent: Bot, documentId?: string) => Promise<void>;
+  setCurrentAgent: (agent: Bot) => Promise<void>;
   sendMessage: (message: string) => Promise<void>;
   getCurrentAgent: () => Bot | null;
-  updateDocumentId: (documentId?: string) => void;
 }
 
 /**
@@ -62,8 +61,7 @@ export const useChatService = ({
       onDataMessageReceived,
       onChatRequestSent,
       onChatResponseReceived,
-      participantId,
-      documentId: undefined, // Will be set via updateDocumentId when agent is set up
+      participantId
     });
 
     chatServiceRef.current = chatService;
@@ -92,21 +90,12 @@ export const useChatService = ({
     };
   }, [participantId]); // Only recreate when participantId changes
 
-  const setCurrentAgent = useCallback(async (agent: Bot, documentId?: string) => {
+  const setCurrentAgent = useCallback(async (agent: Bot) => {
     if (!chatServiceRef.current) {
       throw new Error('Chat service not initialized');
     }
 
     try {
-      // Update document ID if provided and ensure state is properly reset
-      if (documentId !== undefined) {
-        console.log(`[useChatService] Updating document ID to: ${documentId}`);
-        chatServiceRef.current.updateDocumentId(documentId);
-        
-        // Small delay to ensure document state reset is complete before agent setup
-        await new Promise(resolve => setTimeout(resolve, 10));
-      }
-      
       console.log(`[useChatService] Subscribing to current agent: ${agent.name}`);
       await chatServiceRef.current.subscribeToCurrentAgent();
     } catch (err) {
@@ -140,9 +129,7 @@ export const useChatService = ({
     return chatServiceRef.current?.getCurrentAgent() || null;
   };
 
-  const updateDocumentId = (documentId?: string) => {
-    chatServiceRef.current?.updateDocumentId(documentId);
-  };
+
 
   return {
     chatService: chatServiceRef.current,
@@ -152,6 +139,5 @@ export const useChatService = ({
     setCurrentAgent,
     sendMessage,
     getCurrentAgent,
-    updateDocumentId,
   };
 };

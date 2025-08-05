@@ -2,7 +2,6 @@ import React, { useMemo } from 'react';
 import { useParams, Navigate } from 'react-router-dom';
 import MainLayout from '../layouts/MainLayout';
 import ChatPanel from '../components/chat/ChatPanel';
-import { DocumentProvider } from '../context/DocumentContext';
 import type { Bot } from '../types';
 
 interface BotPageProps {
@@ -23,11 +22,9 @@ const BotPage: React.FC<BotPageProps> = ({ agents }) => {
     return <Navigate to="/" replace />;
   }
   
-  // Direct access to route params, no RouteProvider needed
+  // Direct access to route params, no providers needed
   return (
-    <DocumentProvider>
-      <BotPageContent currentAgent={currentAgent} documentId={documentId} agents={agents} />
-    </DocumentProvider>
+    <BotPageContent currentAgent={currentAgent} documentId={documentId} agents={agents} />
   );
 };
 

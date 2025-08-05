@@ -24,7 +24,6 @@ interface ChatPanelProps {
 const ChatPanel: React.FC<ChatPanelProps> = ({
   currentAgent,
   participantId,
-  documentId,
 }) => {
   const [messageInput, setMessageInput] = useState('');
   const [shouldFocusInput, setShouldFocusInput] = useState(false);
@@ -96,7 +95,6 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
     removePendingRequest,
   } = useChatAgentState({
     currentAgent,
-    documentId,
     isConnected,
     setCurrentAgent,
     clearMessages,

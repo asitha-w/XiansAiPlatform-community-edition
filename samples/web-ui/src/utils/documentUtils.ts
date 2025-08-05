@@ -1,5 +1,5 @@
 import { useContext } from 'react';
-import DocumentContext from '../context/DocumentContext';
+import { DataMessageContext } from '../context/dataMessageTypes';
 
 // Global document context for non-React service access
 export interface DocumentContextType {
@@ -7,7 +7,7 @@ export interface DocumentContextType {
 }
 
 export const useDocument = () => {
-  const context = useContext(DocumentContext);
+  const context = useContext(DataMessageContext);
   if (context === undefined) {
     throw new Error('useDocument must be used within a DocumentProvider');
   }
@@ -34,9 +34,4 @@ export const getCurrentDocumentIdGlobal = (): string | null => {
   }
   
   return null;
-};
-
-// Legacy function kept for backward compatibility - no longer needed
-export const setGlobalDocumentContext = (_context: DocumentContextType) => {
-  // No-op: getCurrentDocumentIdGlobal now reads directly from URL
 };

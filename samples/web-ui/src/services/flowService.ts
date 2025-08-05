@@ -3,13 +3,13 @@ import { SocketSDK } from '@99xio/xians-sdk-typescript';
 import { MessageType } from '@99xio/xians-sdk-typescript';
 import type { Message, EventHandlers } from '@99xio/xians-sdk-typescript';
 import { getSDKConfig } from '../config/sdk';
+import { getCurrentDocumentIdGlobal } from '../utils/documentUtils';
 
 export interface FlowServiceOptions {
   onDataMessageReceived?: (message: Message) => void;
   onConnectionStateChanged?: (connected: boolean) => void;
   onError?: (error: string) => void;
   participantId?: string;
-  documentId?: string;
 }
 
 export interface DataMessagePayload {
@@ -99,7 +99,7 @@ export class FlowService {
       participantId: this.getParticipantId(),
       workflow: flowId,
       type: 'Data' as const,
-      scope: this.options.documentId,
+      scope: getCurrentDocumentIdGlobal() ?? undefined,
       text,
       data,
     };
@@ -176,14 +176,7 @@ export class FlowService {
     return this.currentFlowId;
   }
 
-  /**
-   * Update the document ID for message context
-   * @param documentId - The document ID to use as context
-   */
-  updateDocumentId(documentId?: string): void {
-    console.log(`[FlowService] Updating document ID to: ${documentId}`);
-    this.options.documentId = documentId;
-  }
+
 
   private getParticipantId(): string {
     return this.options.participantId || getSDKConfig().participantId;
@@ -191,7 +184,8 @@ export class FlowService {
 
   private handleDataMessage(message: Message): void {
     console.log('[FlowService] Data message received:', message.id, message.data);
-    if(message.scope !== this.options.documentId) {
+    const currentDocumentId = getCurrentDocumentIdGlobal();
+    if(message.scope !== currentDocumentId) {
       console.warn('[FlowService] Data message received but not for this document:', message.id, message.data);
       return;
     }

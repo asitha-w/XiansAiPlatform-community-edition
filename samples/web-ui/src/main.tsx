@@ -7,7 +7,7 @@ import App from './App.tsx'
 createRoot(document.getElementById('root')!).render(
   // Temporarily disable StrictMode in development to prevent double mounting issues
   // with WebSocket connections causing duplicate history loading
-  process.env.NODE_ENV === 'production' ? (
+  import.meta.env.PROD ? (
     <StrictMode>
       <BrowserRouter>
         <App />

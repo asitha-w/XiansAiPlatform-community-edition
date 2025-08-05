@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import type { Bot } from '../types';
+import { getCurrentDocumentIdGlobal } from '../utils/documentUtils';
 
 interface UseChatAgentStateProps {
   currentAgent?: Bot | null;
-  documentId?: string;
   isConnected: boolean;
-  setCurrentAgent: (agent: Bot, documentId?: string) => Promise<void>;
+  setCurrentAgent: (agent: Bot) => Promise<void>;
   clearMessages: () => void;
   setIsLoadingHistory: (loading: boolean) => void;
   onError: (error: string) => void;
@@ -22,7 +22,6 @@ interface UseChatAgentStateReturn {
  */
 export const useChatAgentState = ({
   currentAgent,
-  documentId,
   isConnected,
   setCurrentAgent,
   clearMessages,
@@ -46,6 +45,8 @@ export const useChatAgentState = ({
 
   // Handle agent changes, initial connection, and documentId changes
   useEffect(() => {
+    // Get current document ID from URL
+    const documentId = getCurrentDocumentIdGlobal();
     console.log('[useChatAgentState] Agent/Connection sync - currentAgent:', currentAgent?.name, 'isConnected:', isConnected, 'documentId:', documentId);
     
     if (!currentAgent || !isConnected) {
@@ -67,14 +68,13 @@ export const useChatAgentState = ({
         console.log('[useChatAgentState] Setting up agent:', currentAgent.name);
         
         setIsLoadingHistory(true);
-        await setCurrentAgent(currentAgent, documentId);
+        await setCurrentAgent(currentAgent);
         
         // Loading history indicator will be turned off when messages start arriving
         // Fallback: Clear loading indicator after 3 seconds if no messages arrive
         clearLoadingHistory(3000);
         
-        // Update the previous documentId for next comparison
-        previousDocumentIdRef.current = documentId;
+
       } catch (err) {
         onError('Failed to set current agent');
         clearLoadingHistory();
@@ -83,7 +83,7 @@ export const useChatAgentState = ({
     };
 
     handleAgentSetup();
-  }, [isConnected, currentAgent, documentId, setCurrentAgent, clearMessages, setIsLoadingHistory, onError, clearLoadingHistory]); // Depend on connection state, agent, AND documentId
+  }, [isConnected, currentAgent, setCurrentAgent, clearMessages, setIsLoadingHistory, onError, clearLoadingHistory]); // Depend on connection state and agent
 
   const addPendingRequest = (requestId: string) => {
     console.log('[useChatAgentState] Chat request sent:', requestId);

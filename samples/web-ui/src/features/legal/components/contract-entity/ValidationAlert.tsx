@@ -6,7 +6,7 @@ import {
   Info as InfoIcon,
   ChatBubbleOutline as ChatIcon,
 } from '@mui/icons-material';
-import type { ContractValidation } from '../../../../../types';
+import type { ContractValidation } from '../../../../types';
 
 interface ValidationAlertProps {
   validation: ContractValidation;

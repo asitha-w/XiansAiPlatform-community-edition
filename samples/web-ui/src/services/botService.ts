@@ -15,8 +15,6 @@ export interface BotServiceOptions {
   onChatRequestSent?: (requestId: string) => void;
   onChatResponseReceived?: (requestId: string) => void;
   participantId?: string;
-  /** Optional document ID override. If not provided, will automatically use document ID from URL context */
-  documentId?: string;
 }
 
 export class BotService {
@@ -32,27 +30,9 @@ export class BotService {
     return getCurrentAgentGlobal();
   }
 
-  // Get current document ID from manual override or global context
+  // Get current document ID directly from URL
   getCurrentDocumentId(): string | undefined {
-    return this.options.documentId || getCurrentDocumentIdGlobal() || undefined;
-  }
-
-  /**
-   * Manually override the document ID (optional - will use URL context by default)
-   * @param documentId - Document ID to override, or undefined to use URL context
-   */
-  updateDocumentId(documentId?: string): void {
-    const previousDocumentId = this.getCurrentDocumentId();
-    this.options.documentId = documentId;
-    const newDocumentId = this.getCurrentDocumentId();
-    
-    // Reset state if document changed to force fresh history loading
-    if (previousDocumentId !== newDocumentId) {
-      console.log(`[BotService] Document changed: ${previousDocumentId} -> ${newDocumentId}`);
-      this.historyLoadedForAgent = null;
-      this.processedHistoryHashes.clear();
-      this.isLoadingHistory = false;
-    }
+    return getCurrentDocumentIdGlobal() || undefined;
   }
 
   constructor(options: BotServiceOptions = {}) {
