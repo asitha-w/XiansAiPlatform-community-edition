@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import {
   Box,
   Typography,
-  Alert,
   Card,
   CardContent,
   Divider,
@@ -16,15 +15,15 @@ import {
 } from '@mui/material';
 import {
   Person as PersonIcon,
-  Warning as WarningIcon,
-  Error as ErrorIcon,
-  Info as InfoIcon,
   CalendarToday as CalendarIcon,
   Article as TermsIcon,
   Add as AddIcon,
   Delete as DeleteIcon,
 } from '@mui/icons-material';
 import type { ContractEntity, ContractValidation, Contract, TermCategory, Party } from '../../../types';
+import { FieldWithValidations } from './components/FieldWithValidations';
+import { ValidationAlert } from './components/ValidationAlert';
+import { sendMessageToAgent } from './utils/chatUtils';
 
 export interface EntityDetailsProps {
   entity?: ContractEntity | null;
@@ -140,18 +139,9 @@ const EntityDetails: React.FC<EntityDetailsProps> = ({
     });
   };
 
-  const getValidationsForField = (fieldPath: string): ContractValidation[] => {
-    return validations.filter(v => v.fieldPath === fieldPath);
-  };
 
-  const getSeverityIcon = (severity: number) => {
-    switch (severity) {
-      case 0: return <ErrorIcon color="error" sx={{ fontSize: 16 }} />;
-      case 1: return <WarningIcon color="warning" sx={{ fontSize: 16 }} />;
-      case 2: return <InfoIcon color="info" sx={{ fontSize: 16 }} />;
-      default: return <InfoIcon color="info" sx={{ fontSize: 16 }} />;
-    }
-  };
+
+
 
   const getTermCategoryLabel = (category: TermCategory): string => {
     switch (category) {
@@ -169,44 +159,7 @@ const EntityDetails: React.FC<EntityDetailsProps> = ({
     }
   };
 
-  const ValidationAlert: React.FC<{ validation: ContractValidation }> = ({ validation }) => (
-    <Alert
-      severity={validation.severity === 0 ? 'error' : validation.severity === 1 ? 'warning' : 'info'}
-      sx={{
-        mt: 1,
-        fontSize: '0.875rem',
-        '& .MuiAlert-message': { fontSize: '0.875rem' }
-      }}
-      icon={getSeverityIcon(validation.severity)}
-    >
-      <Box>
-        <Typography variant="body2" sx={{ fontWeight: 500 }}>
-          {validation.message}
-        </Typography>
-        {validation.suggestedAction && (
-          <Typography variant="caption" sx={{ display: 'block', mt: 0.5, opacity: 0.8 }}>
-            Suggestion: {validation.suggestedAction}
-          </Typography>
-        )}
-      </Box>
-    </Alert>
-  );
 
-  const FieldWithValidations: React.FC<{
-    fieldPath: string;
-    children: React.ReactNode;
-  }> = ({ fieldPath, children }) => {
-    const fieldValidations = getValidationsForField(fieldPath);
-
-    return (
-      <Box>
-        {children}
-        {fieldValidations.map((validation, index) => (
-          <ValidationAlert key={index} validation={validation} />
-        ))}
-      </Box>
-    );
-  };
 
   // Use editable contract in edit mode, otherwise use original contract data
   const displayContract = isEditing ? editableContract : contractData;
@@ -230,7 +183,11 @@ const EntityDetails: React.FC<EntityDetailsProps> = ({
               <Typography variant="h6" sx={{ mb: 3, fontWeight: 400 }}>
                 Description
               </Typography>
-              <FieldWithValidations fieldPath="description">
+              <FieldWithValidations 
+                fieldPath="description"
+                validations={validations}
+                onAskAgent={sendMessageToAgent}
+              >
                 {isEditing ? (
                   <TextField
                     fullWidth
@@ -261,7 +218,11 @@ const EntityDetails: React.FC<EntityDetailsProps> = ({
                 <CalendarIcon sx={{ fontSize: 20 }} />
                 Effective Date
               </Typography>
-              <FieldWithValidations fieldPath="effectiveDate">
+              <FieldWithValidations 
+                fieldPath="effectiveDate"
+                validations={validations}
+                onAskAgent={sendMessageToAgent}
+              >
                 {isEditing ? (
                   <TextField
                     type="date"
@@ -306,7 +267,11 @@ const EntityDetails: React.FC<EntityDetailsProps> = ({
                   </Button>
                 )}
               </Box>
-              <FieldWithValidations fieldPath="parties">
+              <FieldWithValidations 
+                fieldPath="parties"
+                validations={validations}
+                onAskAgent={sendMessageToAgent}
+              >
                 {displayContract.parties && displayContract.parties.length > 0 ? (
                   <Box sx={{ display: 'grid', gap: 3 }}>
                     {displayContract.parties.map((party, index) => (
@@ -449,7 +414,11 @@ const EntityDetails: React.FC<EntityDetailsProps> = ({
                   </Button>
                 )}
               </Box>
-              <FieldWithValidations fieldPath="terms">
+              <FieldWithValidations 
+                fieldPath="terms"
+                validations={validations}
+                onAskAgent={sendMessageToAgent}
+              >
                 {displayContract.terms && displayContract.terms.length > 0 ? (
                   <Box sx={{ display: 'grid', gap: 3 }}>
                     {displayContract.terms.map((term, index) => (
@@ -535,7 +504,11 @@ const EntityDetails: React.FC<EntityDetailsProps> = ({
                   {validations
                     .filter(v => !['title', 'description', 'effectiveDate', 'parties', 'terms'].includes(v.fieldPath))
                     .map((validation, index) => (
-                      <ValidationAlert key={index} validation={validation} />
+                      <ValidationAlert 
+                        key={index} 
+                        validation={validation} 
+                        onAskAgent={sendMessageToAgent}
+                      />
                     ))}
                 </Box>
               </>

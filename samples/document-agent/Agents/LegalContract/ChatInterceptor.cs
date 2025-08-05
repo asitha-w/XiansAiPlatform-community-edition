@@ -28,7 +28,6 @@ public class ChatInterceptor : IChatInterceptor
 
     private async Task SendUICommand(MessageThread messageThread, string? response)
     {
-        var routerHub = new SemanticRouterHub();
         // Extract only the last couple of sentences from the assistant response – these usually
         // contain the actual call-to-action (CTA) directed at the user. This avoids diluting
         // the intent classification with lots of explanatory text that precedes the CTA.
@@ -67,7 +66,7 @@ public class ChatInterceptor : IChatInterceptor
 
         try
         {
-            var propertyName = await routerHub.ChatCompletionAsync(prompt);
+            var propertyName = await SemanticRouterHub.ChatCompletionAsync(prompt);
             _logger.LogInformation($"Property identified: `{propertyName}` for `{messageSnippet}`");
 
             switch (propertyName)

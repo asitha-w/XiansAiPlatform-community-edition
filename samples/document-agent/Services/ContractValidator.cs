@@ -1,4 +1,5 @@
 using System.Text.RegularExpressions;
+using Microsoft.SemanticKernel;
 
 namespace Services;
 
@@ -16,7 +17,7 @@ public class ValidationInsight
     public string Message { get; set; } = string.Empty;
     public string? FieldPath { get; set; }
     public string? SuggestedAction { get; set; }
-    public UICommand? Command { get; set; }
+    public string? Prompt { get; set; }
 }
 
 public class ValidationResult
@@ -26,7 +27,7 @@ public class ValidationResult
     public bool HasWarnings => Insights.Any(i => i.Severity == InsightSeverity.Warning);
     public bool HasSuggestions => Insights.Any(i => i.Severity == InsightSeverity.Suggestion);
 
-    public void AddInsight(InsightSeverity severity, string message, string? fieldPath = null, string? suggestedAction = null)
+    public void AddInsight(InsightSeverity severity, string message, string? fieldPath, string? suggestedAction, string? prompt)
     {
         Insights.Add(new ValidationInsight
         {
@@ -34,8 +35,13 @@ public class ValidationResult
             Message = message,
             FieldPath = fieldPath,
             SuggestedAction = suggestedAction,
-            Command = null
+            Prompt = prompt
         });
+    }
+
+    public void AddInsight(ValidationInsight insight)
+    {
+        Insights.Add(insight);
     }
 }
 
@@ -57,21 +63,21 @@ public class ScopeValidator : IContractSectionValidator
         {
             result.AddInsight(InsightSeverity.Critical,
                 "Contract title is required - A clear contract title is essential for legal identification",
-                "title", "Add a descriptive contract title");
+                "title", "Add a descriptive contract title", "I want to add a descriptive title to the contract.");
         }
 
         if (contract.EffectiveDate == null)
         {
             result.AddInsight(InsightSeverity.Critical,
                 "Effective date is required - All contracts must have a clear start date",
-                "effectiveDate", "Specify when the contract becomes effective");
+                "effectiveDate", "Specify when the contract becomes effective", "I want to add an effective date to the contract.");
         }
 
         if (string.IsNullOrWhiteSpace(contract.Description))
         {
             result.AddInsight(InsightSeverity.Critical,
                 "Contract description is required - A description clarifies the contract's purpose",
-                "description", "Add a clear description of the contract purpose");
+                "description", "Add a clear description of the contract purpose", "I want to add a clear description of the contract's purpose.");
         }
 
         // Warning validations
@@ -79,7 +85,7 @@ public class ScopeValidator : IContractSectionValidator
         {
             result.AddInsight(InsightSeverity.Warning,
                 "Contract effective date is significantly in the past - Backdated contracts may have legal implications",
-                "effectiveDate", "Review if backdating is intentional and legally compliant");
+                "effectiveDate", "Review if backdating is intentional and legally compliant", "I want to review and potentially update the contract's effective date to ensure legal compliance.");
         }
 
         return result;
@@ -101,7 +107,7 @@ public class PartiesValidator : IContractSectionValidator
         {
             result.AddInsight(InsightSeverity.Critical,
                 "Contract must have at least two parties - Legal contracts require minimum two parties",
-                "parties", "Add all parties involved in the contract");
+                "parties", "Add all parties involved in the contract", "I want to add additional parties to the contract to meet the minimum requirement.");
         }
 
         var roles = parties.Select(p => p.Role?.ToLower()).ToList();
@@ -109,7 +115,7 @@ public class PartiesValidator : IContractSectionValidator
         {
             result.AddInsight(InsightSeverity.Critical,
                 "Parties cannot have duplicate roles - Each party should have a unique role",
-                "parties", "Ensure each party has a unique role");
+                "parties", "Ensure each party has a unique role", "I want to update the party roles to ensure each party has a unique role in the contract.");
         }
 
         for (int i = 0; i < parties.Count; i++)
@@ -122,14 +128,14 @@ public class PartiesValidator : IContractSectionValidator
             {
                 result.AddInsight(InsightSeverity.Critical,
                     "Party name is required - All parties must be clearly identified",
-                    $"parties[{i}].name", "Provide the full legal name of the party");
+                    $"parties[{i}].name", "Provide the full legal name of the party", $"I want to add the full legal name for party at position {i + 1}.");
             }
 
             if (string.IsNullOrWhiteSpace(party.Role))
             {
                 result.AddInsight(InsightSeverity.Critical,
                     "Party role is required - Each party's role must be defined",
-                    $"parties[{i}].role", "Specify the party's role (e.g., client, provider, vendor)");
+                    $"parties[{i}].role", "Specify the party's role (e.g., client, provider, vendor)", $"I want to specify the role for party '{party.Name}' at position {i + 1}.");
             }
 
             // Warning validations for representatives
@@ -137,7 +143,7 @@ public class PartiesValidator : IContractSectionValidator
             {
                 result.AddInsight(InsightSeverity.Warning,
                     $"Party '{party.Name}' has no designated representative - Representative clarifies who can act for the party",
-                    $"parties[{i}].representatives", "Designate at least one authorized representative");
+                    $"parties[{i}].representatives", "Designate at least one authorized representative", $"I want to add an authorized representative for party '{party.Name}'.");
             }
             else
             {
@@ -149,20 +155,20 @@ public class PartiesValidator : IContractSectionValidator
                     {
                         result.AddInsight(InsightSeverity.Warning,
                             $"Representative for '{party.Name}' has no name - Representative name is required",
-                            $"parties[{i}].representatives[{repIndex}].name", "Provide the representative's full name");
+                            $"parties[{i}].representatives[{repIndex}].name", "Provide the representative's full name", $"I want to add the full name for the representative of party '{party.Name}'.");
                     }
 
                     if (string.IsNullOrWhiteSpace(rep.Email))
                     {
                         result.AddInsight(InsightSeverity.Warning,
                             $"Representative '{rep.Name}' for party '{party.Name}' has no email contact - Email contact facilitates communication",
-                            $"parties[{i}].representatives[{repIndex}].email", "Add a valid email address");
+                            $"parties[{i}].representatives[{repIndex}].email", "Add a valid email address", $"I want to add an email address for representative '{rep.Name}' of party '{party.Name}'.");
                     }
                     else if (!_emailRegex.IsMatch(rep.Email))
                     {
                         result.AddInsight(InsightSeverity.Warning,
                             $"Representative '{rep.Name}' has invalid email format - Invalid email may cause communication issues",
-                            $"parties[{i}].representatives[{repIndex}].email", "Provide a valid email address");
+                            $"parties[{i}].representatives[{repIndex}].email", "Provide a valid email address", $"I want to correct the email format for representative '{rep.Name}' of party '{party.Name}'.");
                     }
 
                     // Suggestions for representatives
@@ -170,14 +176,14 @@ public class PartiesValidator : IContractSectionValidator
                     {
                         result.AddInsight(InsightSeverity.Suggestion,
                             $"Consider adding phone contact for representative '{rep.Name}' - Phone contact provides alternative communication",
-                            $"parties[{i}].representatives[{repIndex}].phone", "Add a phone number for direct contact");
+                            $"parties[{i}].representatives[{repIndex}].phone", "Add a phone number for direct contact", $"I want to add a phone number for representative '{rep.Name}' of party '{party.Name}'.");
                     }
 
                     if (string.IsNullOrWhiteSpace(rep.Title))
                     {
                         result.AddInsight(InsightSeverity.Suggestion,
                             $"Consider adding title for representative '{rep.Name}' - Title clarifies authority level",
-                            $"parties[{i}].representatives[{repIndex}].title", "Add the representative's title");
+                            $"parties[{i}].representatives[{repIndex}].title", "Add the representative's title", $"I want to add a title for representative '{rep.Name}' of party '{party.Name}'.");
                     }
                 }
             }
@@ -202,7 +208,7 @@ public class TermsValidator : IContractSectionValidator
         {
             result.AddInsight(InsightSeverity.Critical,
                 "Contract must have terms and conditions - Terms define the contract obligations",
-                "terms", "Add contract terms and conditions");
+                "terms", "Add contract terms and conditions", "I want to add terms and conditions to the contract.");
             return result;
         }
 
@@ -214,7 +220,7 @@ public class TermsValidator : IContractSectionValidator
             {
                 result.AddInsight(InsightSeverity.Critical,
                     $"Term at position {i + 1} has no text content - All terms must have meaningful content",
-                    $"terms[{i}].text", "Provide text content for the term");
+                    $"terms[{i}].text", "Provide text content for the term", $"I want to add text content for the term at position {i + 1}.");
             }
         }
 
@@ -239,7 +245,7 @@ public class TermsValidator : IContractSectionValidator
         {
             result.AddInsight(InsightSeverity.Warning,
                 "No financial terms specified - Financial terms clarify monetary obligations",
-                "terms", "Add financial terms such as payment amounts, schedules, and currency");
+                "terms", "Add financial terms such as payment amounts, schedules, and currency", "I want to add financial terms including payment amounts, schedules, and currency details.");
         }
 
         // Check for legal terms
@@ -247,7 +253,7 @@ public class TermsValidator : IContractSectionValidator
         {
             result.AddInsight(InsightSeverity.Warning,
                 "No legal terms specified - Legal terms provide important protections",
-                "terms", "Add legal terms such as governing law, jurisdiction, dispute resolution");
+                "terms", "Add legal terms such as governing law, jurisdiction, dispute resolution", "I want to add legal terms including governing law, jurisdiction, and dispute resolution provisions.");
         }
 
         // Check for obligation terms
@@ -255,7 +261,7 @@ public class TermsValidator : IContractSectionValidator
         {
             result.AddInsight(InsightSeverity.Suggestion,
                 "Consider adding obligation terms - Obligation terms clarify responsibilities of each party",
-                "terms", "Add terms defining obligations and responsibilities");
+                "terms", "Add terms defining obligations and responsibilities", "I want to add obligation terms that define the responsibilities of each party.");
         }
     }
 
@@ -268,7 +274,7 @@ public class TermsValidator : IContractSectionValidator
             {
                 result.AddInsight(InsightSeverity.Warning,
                     $"Term at position {index + 1} is very short - Terms should be descriptive and clear",
-                    $"terms[{index}].text", "Expand the term with more detailed content");
+                    $"terms[{index}].text", "Expand the term with more detailed content", $"I want to expand the term at position {index + 1} with more detailed and descriptive content.");
             }
 
             // Check for common contract term patterns
@@ -277,14 +283,14 @@ public class TermsValidator : IContractSectionValidator
             {
                 result.AddInsight(InsightSeverity.Suggestion,
                     $"Financial term at position {index + 1} may lack clarity - Financial terms should clearly specify amounts, dates, and conditions",
-                    $"terms[{index}].text", "Include specific amounts, payment schedules, or financial conditions");
+                    $"terms[{index}].text", "Include specific amounts, payment schedules, or financial conditions", $"I want to improve the financial term at position {index + 1} by adding specific amounts, payment schedules, or financial conditions.");
             }
 
             if (term.Category == TermCategory.Legal && !ContainsLegalKeywords(text))
             {
                 result.AddInsight(InsightSeverity.Suggestion,
                     $"Legal term at position {index + 1} may lack clarity - Legal terms should specify jurisdiction, governing law, or legal procedures",
-                    $"terms[{index}].text", "Include specific legal provisions, jurisdiction, or governing law references");
+                    $"terms[{index}].text", "Include specific legal provisions, jurisdiction, or governing law references", $"I want to improve the legal term at position {index + 1} by adding specific legal provisions, jurisdiction, or governing law references.");
             }
         }
     }
@@ -316,7 +322,7 @@ public class SignaturesValidator : IContractSectionValidator
         {
             result.AddInsight(InsightSeverity.Critical,
                 "Contract has no signatures - Signatures are required for contract validity",
-                "signatures", "Obtain signatures from all parties");
+                "signatures", "Obtain signatures from all parties", "I want to add signatures from all parties to make the contract valid.");
             return result;
         }
 
@@ -331,7 +337,7 @@ public class SignaturesValidator : IContractSectionValidator
             {
                 result.AddInsight(InsightSeverity.Critical,
                     $"Party '{party.Name}' has no designated signatories - All parties must have authorized signatories",
-                    $"parties[{i}].signatories", $"Add authorized signatories for party '{party.Name}'");
+                    $"parties[{i}].signatories", $"Add authorized signatories for party '{party.Name}'", $"I want to add authorized signatories for party '{party.Name}'.");
             }
         }
 
@@ -351,7 +357,7 @@ public class SignaturesValidator : IContractSectionValidator
         {
             result.AddInsight(InsightSeverity.Critical,
                 "Signatory is missing name - Signatory name is required for signature validity",
-                $"signatories[{index}].name", "Provide the name of the authorized signatory");
+                $"signatories[{index}].name", "Provide the name of the authorized signatory", $"I want to add the name for the signatory at position {index + 1}.");
         }
 
         // Warning validations
@@ -359,7 +365,7 @@ public class SignaturesValidator : IContractSectionValidator
         {
             result.AddInsight(InsightSeverity.Warning,
                 $"Signatory '{signatory.Name}' has no title specified - Title helps establish signatory authority",
-                $"signatories[{index}].title", "Provide the signatory's title or position");
+                $"signatories[{index}].title", "Provide the signatory's title or position", $"I want to add a title or position for signatory '{signatory.Name}'.");
         }
 
     }
@@ -389,7 +395,7 @@ public class ContractValidator
         {
             result.AddInsight(InsightSeverity.Critical,
                 "Contract object is null - Cannot validate a null contract",
-                null, "Provide a valid contract object");
+                null, "Provide a valid contract object", "I want to create a new contract object.");
             return result;
         }
 
@@ -411,7 +417,7 @@ public class ContractValidator
         {
             result.AddInsight(InsightSeverity.Critical,
                 "Contract object is null - Cannot validate a null contract",
-                null, "Provide a valid contract object");
+                null, "Provide a valid contract object", "I want to create a new contract object.");
             return result;
         }
 

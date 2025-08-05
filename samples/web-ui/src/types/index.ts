@@ -113,6 +113,7 @@ export interface ContractValidation {
   suggestedAction?: string;
   priorityIndex: number;
   command?: string | null;
+  prompt?: string; // Optional prompt to send to chat agent
 }
 
 export type ContractEntityType = 
