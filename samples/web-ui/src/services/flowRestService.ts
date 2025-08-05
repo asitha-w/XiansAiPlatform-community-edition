@@ -13,16 +13,18 @@ export class FlowRestService {
 
 
   private getWorkflow(): string {
-    const currentFlow = getCurrentFlowGlobal();
-    if (!currentFlow) {
+    // Get workflow from global context only
+    const workflow = getCurrentFlowGlobal();
+    if (!workflow) {
       throw new Error('No agent is currently selected. Please navigate to an agent page before making REST calls.');
     }
-    return currentFlow;
+    return workflow;
   }
 
   /**
    * Make a REST API call to the converse endpoint
-   * @param request - The request parameters and body
+   * @param methodName - The RPC method name
+   * @param data - The request data
    * @returns Promise<RestConverseResponse>
    */
   async callRPC(methodName: string, data: object): Promise<RestConverseResponse> {
@@ -62,7 +64,7 @@ export class FlowRestService {
           success: false,
           error: errorMessage,
           statusCode: response.status,
-          data: responseData,
+          data: responseData.response.data.data,
         };
       }
 

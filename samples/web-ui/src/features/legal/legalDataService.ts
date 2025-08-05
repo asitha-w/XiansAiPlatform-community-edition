@@ -23,29 +23,39 @@ export class LegalDataService {
   }
   /**
    * Retrieves a validated document from the backend
-   * Uses the current document ID from context or set via updateDocumentId()
+   * @param documentId - Optional document ID to use (overrides context)
    * @returns Promise<ContractEntityData | null> - The contract entity data or null if failed
    */
-  async GetValidatedDocument(): Promise<ContractEntityData | null> {
+  async GetValidatedDocument(documentId?: string): Promise<ContractEntityData | null> {
     try {
-      // Use manually set document ID first, then fall back to global context
-      const documentId = this.currentDocumentId || getCurrentDocumentIdGlobal();
+      // Use parameter first, then manually set document ID, then fall back to global context
+      const resolvedDocumentId = documentId || this.currentDocumentId || getCurrentDocumentIdGlobal();
       
-      if (!documentId) {
+      if (!resolvedDocumentId) {
         console.error(`[LegalDataService] Cannot get validated document: no document ID available from context or manual setting.`);
         return null;
       }
 
-      console.log(`[LegalDataService] Getting validated document with ID: ${documentId}`);
+      console.log(`[LegalDataService] Getting validated document with ID: ${resolvedDocumentId}`);
       
       const response = await flowRestService.callRPC('GetValidatedDocument', {
-        documentId: documentId
+        documentId: resolvedDocumentId
       });
       
       console.log(`[LegalDataService] GetValidatedDocument response:`, response);
       
       if (response.success && response.data) {
-        return response.data as ContractEntityData;
+        // Extract the actual contract data from the nested response structure
+        const responseData = response.data as { response: { data: { data: ContractEntityData } } };
+        const contractData = responseData?.response?.data?.data;
+        
+        if (contractData) {
+          console.log(`[LegalDataService] Successfully extracted contract data:`, contractData);
+          return contractData as ContractEntityData;
+        } else {
+          console.error(`[LegalDataService] No contract data found in response structure:`, responseData);
+          return null;
+        }
       } else {
         console.error(`[LegalDataService] Failed to get validated document:`, response.error);
         return null;

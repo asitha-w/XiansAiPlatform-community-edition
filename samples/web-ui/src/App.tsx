@@ -8,7 +8,6 @@ import type { Bot as Agent } from './types';
 import { ContractEntityPanel } from './features/legal/contract-entity/ContractEntityPanel';
 import { DataMessageProvider } from './context/DataMessageContext';
 import { AgentProvider } from './context/AgentContext';
-import { DocumentProvider } from './context/DocumentContext';
 import { useAgent } from './utils/agentUtils';
 
 
@@ -114,11 +113,9 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <AgentProvider agents={agents}>
-        <DocumentProvider>
-          <DataMessageProvider>
-            <AppContent />
-          </DataMessageProvider>
-        </DocumentProvider>
+        <DataMessageProvider>
+          <AppContent />
+        </DataMessageProvider>
       </AgentProvider>
     </ThemeProvider>
   );
