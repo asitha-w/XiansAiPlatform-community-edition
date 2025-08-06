@@ -24,6 +24,7 @@ export class BotService {
   private isLoadingHistory = false;
   private processedHistoryHashes = new Set<string>();
   private historyLoadedForAgent: string | null = null;
+  private historyLoadedForDocument: string | null = null;
 
   // Expose current bot for external checks (read-only)
   getCurrentBot(): Bot | null {
@@ -110,6 +111,8 @@ export class BotService {
     // Reset state for new subscription
     this.processedHistoryHashes.clear();
     this.isLoadingHistory = false;
+    this.historyLoadedForAgent = null;
+    this.historyLoadedForDocument = null;
 
     // Subscribe to current bot
     if (this.isConnected()) {
@@ -132,24 +135,38 @@ export class BotService {
   }
 
   private async loadConversationHistory(bot: Bot): Promise<void> {
-    if (this.historyLoadedForAgent === bot.workflow || this.isLoadingHistory) {
+    const currentDocumentId = this.getCurrentDocumentId();
+    const botWorkflow = bot.workflow;
+    
+    // Check if we already loaded history for this bot and document combination
+    if (this.historyLoadedForAgent === botWorkflow && 
+        this.historyLoadedForDocument === currentDocumentId && 
+        !this.isLoadingHistory) {
+      console.log(`[BotService] History already loaded for ${bot.name} and document ${currentDocumentId}`);
+      return;
+    }
+    
+    // Check if already loading to prevent duplicate requests
+    if (this.isLoadingHistory) {
+      console.log(`[BotService] History loading already in progress for ${bot.name}`);
       return;
     }
 
     try {
       this.isLoadingHistory = true;
-      console.log(`[BotService] Loading history for ${bot.name}`);
+      console.log(`[BotService] Loading history for ${bot.name}, document: ${currentDocumentId}`);
       
       await this.socketSDK.getThreadHistory(
-        bot.workflow,
+        botWorkflow,
         this.getParticipantId(),
         1,
         20,
-        this.getCurrentDocumentId()
+        currentDocumentId
       );
       
-      this.historyLoadedForAgent = bot.workflow;
-      console.log(`[BotService] ✅ History loaded for ${bot.name}`);
+      this.historyLoadedForAgent = botWorkflow;
+      this.historyLoadedForDocument = currentDocumentId || null;
+      console.log(`[BotService] ✅ History loaded for ${bot.name}, document: ${currentDocumentId}`);
     } catch (error) {
       console.error(`[BotService] Failed to load history for ${bot.name}:`, error);
       this.options.onError?.('Failed to load conversation history');
