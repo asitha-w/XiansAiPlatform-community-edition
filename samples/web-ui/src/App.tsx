@@ -4,7 +4,7 @@ import theme from './utils/theme';
 import HomePage from './pages/HomePage';
 import BotPage from './pages/BotPage';
 import Navbar from './components/Navbar';
-import type { Bot as Agent } from './types';
+import type { Agent } from './types';
 import { ContractEntityPanel } from './features/legal/components/contract-entity/ContractEntityPanel';
 import { DataMessageProvider } from './context/DataMessageContext';
 import { AgentProvider } from './context/AgentContext';
@@ -15,29 +15,66 @@ import { useAgent } from './utils/agentUtils';
 const agents: Agent[] = [
   {
     id: '1',
-    name: 'Legal Assistant',
-    description: 'Legal analysis and contract management',
-    capabilities: ['Contract Creation', 'Legal Analysis'],
-    bot: 'Legal Contract Agent:Legal Contract Bot',
-    flow: 'Legal Contract Agent:Legal Contract Flow',
+    name: 'Legal Department',
     slug: 'legal',
-    mainComponent: ContractEntityPanel,
+    description: 'Legal analysis and contract management',
+    bots: [
+      {
+        id: 'legal-assistant',
+        name: 'Legal Assistant',
+        slug: 'assistant',
+        description: 'Legal analysis and contract management',
+        capabilities: ['Find out the current of the current contract', "Let's work on this contract", "Let's create a new Contract"],
+        workflow: 'Legal Contract Agent:Legal Contract Bot',
+        mainComponent: ContractEntityPanel,
+      },
+      {
+        id: 'legal-analyzer',
+        name: 'Contract Analyzer',
+        slug: 'analyzer',
+        description: 'Advanced contract analysis and risk assessment',
+        capabilities: ['Risk Analysis', 'Compliance Check'],
+        workflow: 'Legal Contract Agent:Legal Analysis Bot',
+      }
+    ],
+    flow: 'Legal Contract Agent:Legal Contract Flow',
+    enabled: true,
   },
   {
     id: '2',
-    name: 'Sales Assistant',
-    description: 'Helps with orders and customer management',
-    capabilities: ['Order Processing', 'Customer Analysis'],
-    bot: 'Sales Agent:Sales Bot',
+    name: 'Sales Department',
     slug: 'sales',
+    description: 'Sales management and customer relations',
+    bots: [
+      {
+        id: 'sales-assistant',
+        name: 'Sales Assistant',
+        slug: 'assistant',
+        description: 'Helps with orders and customer management',
+        capabilities: ['Order Processing', 'Customer Analysis'],
+        workflow: 'Sales Agent:Sales Bot',
+        mainComponent: ContractEntityPanel,
+      }
+    ],
+    enabled: false,
   },
   {
     id: '3',
-    name: 'Finance Advisor',
-    description: 'Financial analysis and invoice management',
-    capabilities: ['Invoice Review', 'Financial Analysis'],
-    bot: 'Finance Agent:Finance Bot',
+    name: 'Finance Department',
     slug: 'finance',
+    description: 'Financial analysis and management',
+    bots: [
+      {
+        id: 'finance-advisor',
+        name: 'Finance Advisor',
+        slug: 'advisor',
+        description: 'Financial analysis and invoice management',
+        capabilities: ['Invoice Review', 'Financial Analysis'],
+        workflow: 'Finance Agent:Finance Bot',
+        mainComponent: ContractEntityPanel,
+      }
+    ],
+    enabled: false,
   },
 ];
 
@@ -47,7 +84,12 @@ function AppContent() {
   const { currentAgent, agents } = useAgent();
 
   const handleAgentSelect = (agent: Agent) => {
-    navigate(`/${agent.slug}`);
+    // Navigate to the agent's first bot if available
+    if (agent.bots.length > 0) {
+      navigate(`/${agent.slug}/${agent.bots[0].slug}`);
+    } else {
+      navigate(`/${agent.slug}`);
+    }
   };
 
   return (
@@ -75,8 +117,9 @@ function AppContent() {
             path="/"
             element={<HomePage agents={agents} />}
           />
+          {/* Agent-level route - shows agent overview or default bot */}
           <Route
-            path="/:slug"
+            path="/:agentSlug"
             element={
               <BotPage
                 agents={agents}
@@ -84,8 +127,9 @@ function AppContent() {
               />
             }
           />
+          {/* Specific bot within an agent */}
           <Route
-            path="/:slug/new"
+            path="/:agentSlug/:botSlug"
             element={
               <BotPage
                 agents={agents}
@@ -93,8 +137,29 @@ function AppContent() {
               />
             }
           />
+          {/* New document creation for specific bot */}
           <Route
-            path="/:slug/:documentId"
+            path="/:agentSlug/:botSlug/new"
+            element={
+              <BotPage
+                agents={agents}
+                onSelectAgent={handleAgentSelect}
+              />
+            }
+          />
+          {/* Document-specific route for bot */}
+          <Route
+            path="/:agentSlug/:botSlug/:documentId"
+            element={
+              <BotPage
+                agents={agents}
+                onSelectAgent={handleAgentSelect}
+              />
+            }
+          />
+          {/* Sub-module route for document */}
+          <Route
+            path="/:agentSlug/:botSlug/:documentId/:subModuleSlug"
             element={
               <BotPage
                 agents={agents}

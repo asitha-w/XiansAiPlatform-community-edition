@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import type { Bot } from '../types';
-import { getCurrentDocumentIdGlobal } from '../utils/documentUtils';
 
 interface UseChatAgentStateProps {
   currentAgent?: Bot | null;
+  documentId?: string;
   isConnected: boolean;
   setCurrentAgent: (agent: Bot) => Promise<void>;
   clearMessages: () => void;
@@ -22,6 +22,7 @@ interface UseChatAgentStateReturn {
  */
 export const useChatAgentState = ({
   currentAgent,
+  documentId,
   isConnected,
   setCurrentAgent,
   clearMessages,
@@ -45,8 +46,6 @@ export const useChatAgentState = ({
 
   // Handle agent changes, initial connection, and documentId changes
   useEffect(() => {
-    // Get current document ID from URL
-    const documentId = getCurrentDocumentIdGlobal();
     console.log('[useChatAgentState] Agent/Connection sync - currentAgent:', currentAgent?.name, 'isConnected:', isConnected, 'documentId:', documentId);
     
     if (!currentAgent || !isConnected) {
@@ -63,6 +62,8 @@ export const useChatAgentState = ({
           console.log('[useChatAgentState] Clearing messages for document change');
           clearMessages();
           setPendingRequests(new Set());
+          // Update the ref to track the new document ID
+          previousDocumentIdRef.current = documentId;
         }
         
         console.log('[useChatAgentState] Setting up agent:', currentAgent.name);
@@ -83,7 +84,7 @@ export const useChatAgentState = ({
     };
 
     handleAgentSetup();
-  }, [isConnected, currentAgent, setCurrentAgent, clearMessages, setIsLoadingHistory, onError, clearLoadingHistory]); // Depend on connection state and agent
+  }, [isConnected, currentAgent, documentId, setCurrentAgent, clearMessages, setIsLoadingHistory, onError, clearLoadingHistory]); // Depend on connection state, agent, and documentId
 
   const addPendingRequest = (requestId: string) => {
     console.log('[useChatAgentState] Chat request sent:', requestId);

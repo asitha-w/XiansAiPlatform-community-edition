@@ -16,7 +16,7 @@ export const useDocument = () => {
 
 /**
  * Extract document ID directly from the current URL
- * URL pattern: /:slug/:documentId
+ * URL pattern: /:agentSlug/:botSlug/:documentId
  * @returns The document ID from the URL or null if not found
  */
 export const getCurrentDocumentIdGlobal = (): string | null => {
@@ -27,10 +27,10 @@ export const getCurrentDocumentIdGlobal = (): string | null => {
   const pathname = window.location.pathname;
   const segments = pathname.split('/').filter(Boolean); // Remove empty segments
   
-  // Expected URL pattern: /:slug/:documentId
-  // segments[0] = slug, segments[1] = documentId
-  if (segments.length >= 2 && segments[1] !== 'new') {
-    return segments[1];
+  // Expected URL pattern: /:agentSlug/:botSlug/:documentId
+  // segments[0] = agentSlug, segments[1] = botSlug, segments[2] = documentId
+  if (segments.length >= 3 && segments[2] !== 'new') {
+    return segments[2];
   }
   
   return null;

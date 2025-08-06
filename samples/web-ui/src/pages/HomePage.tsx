@@ -2,18 +2,23 @@ import React from 'react';
 import { Box, Typography, Card, CardContent, Chip, Button } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { SmartToy as AgentIcon } from '@mui/icons-material';
-import type { Bot } from '../types';
+import type { Agent } from '../types';
 import { colors } from '../utils/theme';
 
 interface HomePageProps {
-  agents: Bot[];
+  agents: Agent[];
 }
 
 const HomePage: React.FC<HomePageProps> = ({ agents }) => {
   const navigate = useNavigate();
 
-  const handleAgentSelect = (agent: Bot) => {
-    navigate(`/${agent.slug}`);
+  const handleAgentSelect = (agent: Agent) => {
+    // Navigate to the agent's first bot if available
+    if (agent.bots.length > 0) {
+      navigate(`/${agent.slug}/${agent.bots[0].slug}`);
+    } else {
+      navigate(`/${agent.slug}`);
+    }
   };
 
   return (
@@ -81,13 +86,13 @@ const HomePage: React.FC<HomePageProps> = ({ agents }) => {
 
                 <Box sx={{ mb: 3, flexGrow: 1 }}>
                   <Typography variant="body2" sx={{ fontWeight: 500, color: '#374151', mb: 2 }}>
-                    Capabilities:
+                    Available Bots:
                   </Typography>
                   <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                    {agent.capabilities.map((capability) => (
+                    {agent.bots.map((bot) => (
                       <Chip
-                        key={capability}
-                        label={capability}
+                        key={bot.id}
+                        label={bot.name}
                         size="small"
                         variant="outlined"
                         sx={{ 

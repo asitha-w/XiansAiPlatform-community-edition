@@ -4,7 +4,7 @@ import { MessageType } from '@99xio/xians-sdk-typescript';
 import type { Message, EventHandlers } from '@99xio/xians-sdk-typescript';
 import { getSDKConfig } from '../config/sdk';
 import type { Bot, ChatMessage } from '../types';
-import { getCurrentAgentGlobal } from '../utils/agentUtils';
+import { getCurrentBotGlobal } from '../utils/agentUtils';
 import { getCurrentDocumentIdGlobal } from '../utils/documentUtils';
 
 export interface BotServiceOptions {
@@ -25,9 +25,9 @@ export class BotService {
   private processedHistoryHashes = new Set<string>();
   private historyLoadedForAgent: string | null = null;
 
-  // Expose current agent for external checks (read-only)
-  getCurrentAgent(): Bot | null {
-    return getCurrentAgentGlobal();
+  // Expose current bot for external checks (read-only)
+  getCurrentBot(): Bot | null {
+    return getCurrentBotGlobal();
   }
 
   // Get current document ID directly from URL
@@ -86,21 +86,21 @@ export class BotService {
   }
 
   async subscribeToCurrentAgent(): Promise<void> {
-    const agent = getCurrentAgentGlobal();
-    if (!agent) {
-      console.log(`[BotService] No current agent available`);
+    const bot = getCurrentBotGlobal();
+    if (!bot) {
+      console.log(`[BotService] No current bot available`);
       return;
     }
 
-    // Skip if already subscribed to this agent and document
-    if (this.historyLoadedForAgent === agent.bot) {
-      console.log(`[BotService] Already subscribed to ${agent.name}`);
+    // Skip if already subscribed to this bot and document
+    if (this.historyLoadedForAgent === bot.workflow) {
+      console.log(`[BotService] Already subscribed to ${bot.name}`);
       return;
     }
 
-    // Unsubscribe from previous agent if different
+    // Unsubscribe from previous bot if different
     if (this.historyLoadedForAgent && this.isConnected()) {
-      console.log(`[BotService] Unsubscribing from previous agent`);
+      console.log(`[BotService] Unsubscribing from previous bot`);
       await this.socketSDK.unsubscribeFromAgent(
         this.historyLoadedForAgent,
         this.getParticipantId()
@@ -111,47 +111,47 @@ export class BotService {
     this.processedHistoryHashes.clear();
     this.isLoadingHistory = false;
 
-    // Subscribe to current agent
+    // Subscribe to current bot
     if (this.isConnected()) {
-      console.log(`[BotService] Subscribing to ${agent.name}`);
+      console.log(`[BotService] Subscribing to ${bot.name}`);
       
       try {
         await this.socketSDK.subscribeToAgent(
-          agent.bot,
+          bot.workflow,
           this.getParticipantId()
         );
-        console.log(`✅ [BotService] Subscribed to ${agent.bot}`);
+        console.log(`✅ [BotService] Subscribed to ${bot.workflow}`);
         
         // Load conversation history
-        await this.loadConversationHistory(agent);
+        await this.loadConversationHistory(bot);
       } catch (error) {
-        console.error(`❌ [BotService] Failed to subscribe to ${agent.name}`, error);
+        console.error(`❌ [BotService] Failed to subscribe to ${bot.name}`, error);
         throw error;
       }
     }
   }
 
-  private async loadConversationHistory(agent: Bot): Promise<void> {
-    if (this.historyLoadedForAgent === agent.bot || this.isLoadingHistory) {
+  private async loadConversationHistory(bot: Bot): Promise<void> {
+    if (this.historyLoadedForAgent === bot.workflow || this.isLoadingHistory) {
       return;
     }
 
     try {
       this.isLoadingHistory = true;
-      console.log(`[BotService] Loading history for ${agent.name}`);
+      console.log(`[BotService] Loading history for ${bot.name}`);
       
       await this.socketSDK.getThreadHistory(
-        agent.bot,
+        bot.workflow,
         this.getParticipantId(),
         1,
         20,
         this.getCurrentDocumentId()
       );
       
-      this.historyLoadedForAgent = agent.bot;
-      console.log(`[BotService] ✅ History loaded for ${agent.name}`);
+      this.historyLoadedForAgent = bot.workflow;
+      console.log(`[BotService] ✅ History loaded for ${bot.name}`);
     } catch (error) {
-      console.error(`[BotService] Failed to load history for ${agent.name}:`, error);
+      console.error(`[BotService] Failed to load history for ${bot.name}:`, error);
       this.options.onError?.('Failed to load conversation history');
     } finally {
       this.isLoadingHistory = false;
@@ -159,9 +159,9 @@ export class BotService {
   }
 
   async sendMessage(text: string): Promise<void> {
-    const currentAgent = getCurrentAgentGlobal();
-    if (!currentAgent) {
-      throw new Error('No agent selected');
+    const currentBot = getCurrentBotGlobal();
+    if (!currentBot) {
+      throw new Error('No bot selected');
     }
 
     if (!this.isConnected()) {
@@ -172,7 +172,7 @@ export class BotService {
     const message = {
       requestId,
       participantId: this.getParticipantId(),
-      workflow: currentAgent.bot,
+      workflow: currentBot.workflow,
       type: 'Chat' as const,
       scope: this.getCurrentDocumentId(),
       text,
@@ -186,9 +186,9 @@ export class BotService {
   }
 
   async sendData(data: Record<string, unknown>): Promise<void> {
-    const currentAgent = getCurrentAgentGlobal();
-    if (!currentAgent) {
-      throw new Error('No agent selected');
+    const currentBot = getCurrentBotGlobal();
+    if (!currentBot) {
+      throw new Error('No bot selected');
     }
 
     if (!this.isConnected()) {
@@ -198,7 +198,7 @@ export class BotService {
     const message = {
       requestId: `data-${Date.now()}-${++this.messageCounter}`,
       participantId: this.getParticipantId(),
-      workflow: currentAgent.bot,
+      workflow: currentBot.workflow,
       type: 'Data' as const,
       scope: this.getCurrentDocumentId(),
       data: {

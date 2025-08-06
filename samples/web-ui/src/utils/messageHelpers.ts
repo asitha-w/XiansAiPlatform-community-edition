@@ -102,10 +102,19 @@ export const createUserMessage = (content: string, id?: string): ChatMessageType
   type: 'text',
 });
 
+interface MessagePayload {
+  message: {
+    id?: string;
+    createdAt?: string;
+  };
+  data?: unknown;
+  messageSubject?: string;
+}
+
 /**
  * Creates a worklog message object from data message payload
  */
-export const createWorkLogMessage = (payload: any): ChatMessageType => ({
+export const createWorkLogMessage = (payload: MessagePayload): ChatMessageType => ({
   id: `worklog-${payload.message.id || Date.now()}`,
   content: typeof payload.data === 'string' 
     ? payload.data 
@@ -123,7 +132,7 @@ export const createWorkLogMessage = (payload: any): ChatMessageType => ({
 /**
  * Creates a UI component message object from data message payload
  */
-export const createUIComponentMessage = (payload: any): ChatMessageType => ({
+export const createUIComponentMessage = (payload: MessagePayload): ChatMessageType => ({
   id: `ui-component-${payload.message.id || Date.now()}`,
   content: '', // No text content, just the component
   sender: 'agent',

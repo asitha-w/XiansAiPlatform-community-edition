@@ -1,12 +1,15 @@
 import { useContext } from 'react';
-import type { Bot as Agent } from '../types';
+import type { Agent, Bot } from '../types';
 
 // Global agent context for non-React service access
 export interface AgentContextType {
   currentAgent: Agent | null;
+  currentBot: Bot | null;
   setCurrentAgent: (agent: Agent | null) => void;
+  setCurrentBot: (bot: Bot | null) => void;
   agents: Agent[];
   getCurrentFlow: () => string | null;
+  getCurrentWorkflow: () => string | null;
 }
 
 // This will be set by AgentContext.tsx to avoid circular imports
@@ -34,6 +37,14 @@ export const getCurrentAgentGlobal = (): Agent | null => {
   return globalAgentContext?.currentAgent || null;
 };
 
+export const getCurrentBotGlobal = (): Bot | null => {
+  return globalAgentContext?.currentBot || null;
+};
+
 export const getCurrentFlowGlobal = (): string | null => {
   return globalAgentContext?.getCurrentFlow() || null;
+};
+
+export const getCurrentWorkflowGlobal = (): string | null => {
+  return globalAgentContext?.getCurrentWorkflow() || null;
 };

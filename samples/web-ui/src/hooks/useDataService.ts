@@ -3,11 +3,11 @@ import { useLocation } from 'react-router-dom';
 import { FlowService } from '../services/flowService';
 import type { FlowServiceOptions } from '../services/flowService';
 import type { Message } from '@99xio/xians-sdk-typescript';
-import type { Bot } from '../types';
+import type { Agent, Bot } from '../types';
 import { useDataMessage } from './useDataMessage';
 
 interface UseDataServiceOptions extends Omit<FlowServiceOptions, 'participantId' | 'documentId'> {
-  agents: Bot[];
+  agents: Agent[];
   documentId?: string;
 }
 
@@ -40,12 +40,22 @@ interface UseDataServiceReturn {
   /**
    * Current agent (if any)
    */
-  currentAgent?: Bot;
+  currentAgent?: Agent;
+  
+  /**
+   * Current bot (if any)
+   */
+  currentBot?: Bot;
   
   /**
    * Current flow ID (from current agent)
    */
   currentFlow?: string;
+  
+  /**
+   * Current workflow ID (from current bot)
+   */
+  currentWorkflow?: string;
   
   /**
    * Error state
@@ -72,14 +82,32 @@ export function useDataService(options: UseDataServiceOptions): UseDataServiceRe
   const currentDocumentIdRef = useRef<string | undefined>(documentId);
   const dataMessageContext = useDataMessage();
 
-  // Determine current agent based on URL
-  const currentAgent = (() => {
+  // Determine current agent and bot based on URL
+  const { currentAgent, currentBot } = (() => {
     const currentPath = location.pathname.slice(1); // Remove leading slash
-    const agentSlug = currentPath ? currentPath.split('/')[0] : undefined;
-    return agentSlug ? agents.find(agent => agent.slug === agentSlug) : undefined;
+    const segments = currentPath.split('/').filter(Boolean);
+    
+    const agentSlug = segments[0];
+    const botSlug = segments[1];
+    
+    const agent = agentSlug ? agents.find(a => a.slug === agentSlug) : undefined;
+    
+    // If we have an agent but no specific bot slug, use the first bot as default
+    let bot: Bot | undefined = undefined;
+    if (agent) {
+      if (botSlug) {
+        bot = agent.bots.find(b => b.slug === botSlug);
+      } else if (agent.bots.length > 0) {
+        // Use first bot as default when accessing agent-level route
+        bot = agent.bots[0];
+      }
+    }
+    
+    return { currentAgent: agent, currentBot: bot };
   })();
 
   const currentFlow = currentAgent?.flow;
+  const currentWorkflow = currentBot?.workflow;
 
   // Initialize data service instance
   useEffect(() => {
@@ -204,7 +232,9 @@ export function useDataService(options: UseDataServiceOptions): UseDataServiceRe
     updateDocumentId,
     isConnected,
     currentAgent,
+    currentBot,
     currentFlow,
+    currentWorkflow,
     error,
     lastDataMessage,
   };

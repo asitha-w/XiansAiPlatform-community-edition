@@ -126,7 +126,7 @@ export const useChatService = ({
   };
 
   const getCurrentAgent = () => {
-    return chatServiceRef.current?.getCurrentAgent() || null;
+    return chatServiceRef.current?.getCurrentBot() || null;
   };
 
 

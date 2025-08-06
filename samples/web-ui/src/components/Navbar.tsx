@@ -19,13 +19,13 @@ import {
   KeyboardArrowDown as ArrowDownIcon,
   Add as AddIcon,
 } from '@mui/icons-material';
-import type { Bot } from '../types';
+import type { Agent } from '../types';
 import { colors } from '../utils/theme';
 
 interface NavbarProps {
-  currentAgent?: Bot;
-  availableAgents?: Bot[];
-  onSelectAgent?: (agent: Bot) => void;
+  currentAgent?: Agent;
+  availableAgents?: Agent[];
+  onSelectAgent?: (agent: Agent) => void;
 }
 
 const Navbar: React.FC<NavbarProps> = ({
@@ -47,7 +47,7 @@ const Navbar: React.FC<NavbarProps> = ({
     setAgentMenuAnchorEl(null);
   };
 
-  const handleAgentSelect = (agent: Bot) => {
+  const handleAgentSelect = (agent: Agent) => {
     if (onSelectAgent) {
       onSelectAgent(agent);
     }
@@ -56,11 +56,21 @@ const Navbar: React.FC<NavbarProps> = ({
 
   const handleNewClick = () => {
     if (currentAgent?.slug) {
-      navigate(`/${currentAgent.slug}/new`);
+      // Navigate to the agent's first bot with /new
+      if (currentAgent.bots.length > 0) {
+        navigate(`/${currentAgent.slug}/${currentAgent.bots[0].slug}/new`);
+      } else {
+        navigate(`/${currentAgent.slug}/new`);
+      }
     } else {
-      // If no agent is selected, navigate to a general new route or first available agent
+      // If no agent is selected, navigate to first available agent's first bot
       if (availableAgents.length > 0) {
-        navigate(`/${availableAgents[0].slug}/new`);
+        const firstAgent = availableAgents[0];
+        if (firstAgent.bots.length > 0) {
+          navigate(`/${firstAgent.slug}/${firstAgent.bots[0].slug}/new`);
+        } else {
+          navigate(`/${firstAgent.slug}/new`);
+        }
       } else {
         navigate('/new');
       }
@@ -180,10 +190,10 @@ const Navbar: React.FC<NavbarProps> = ({
                             {agent.description}
                           </Typography>
                           <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
-                            {agent.capabilities.slice(0, 2).map((capability) => (
+                            {agent.bots.slice(0, 2).map((bot) => (
                               <Chip
-                                key={capability}
-                                label={capability}
+                                key={bot.id}
+                                label={bot.name}
                                 size="small"
                                 variant="outlined"
                                 sx={{ 

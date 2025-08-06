@@ -3,6 +3,7 @@ import { Box, List } from '@mui/material';
 import type { ChatMessage as ChatMessageType, Bot } from '../../types';
 import ChatMessageComponent from './ChatMessage';
 import WorkLogMessageGroup from './WorkLogMessageGroup';
+import AgentHeader from './AgentHeader';
 import { groupMessages } from '../../utils/messageHelpers';
 
 interface MessageListProps {
@@ -10,40 +11,58 @@ interface MessageListProps {
   currentAgent?: Bot | null;
   isLoadingHistory: boolean;
   isLoading: boolean;
+  isConnected?: boolean;
 }
 
-const EmptyState: React.FC<{ currentAgent?: Bot | null }> = ({ currentAgent }) => (
+const EmptyState: React.FC<{ currentAgent?: Bot | null; isConnected?: boolean }> = ({ currentAgent, isConnected = false }) => (
   <Box
     sx={{
       display: 'flex',
       flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
       height: '100%',
-      textAlign: 'center',
-      px: 3,
-      py: 6,
     }}
   >
+    {/* Show AgentHeader when in empty state */}
+    {currentAgent && (
+      <AgentHeader 
+        currentAgent={currentAgent} 
+        isConnected={isConnected}
+        forceExpanded={true}
+      />
+    )}
+    
     <Box
       sx={{
-        color: 'text.secondary',
-        fontSize: '1.1rem',
-        fontWeight: 500,
-        mb: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flex: 1,
+        textAlign: 'center',
+        px: 3,
+        py: 6,
       }}
     >
-      {currentAgent ? `Welcome to ${currentAgent.name}!` : 'Welcome!'}
-    </Box>
-    <Box
-      sx={{
-        color: 'text.disabled',
-        fontSize: '0.9rem',
-        lineHeight: 1.5,
-        maxWidth: 400,
-      }}
-    >
-      Send a message below to start the conversation and begin working with your AI assistant.
+      <Box
+        sx={{
+          color: 'text.secondary',
+          fontSize: '1.1rem',
+          fontWeight: 500,
+          mb: 1,
+        }}
+      >
+        {currentAgent ? `Welcome to ${currentAgent.name}!` : 'Welcome!'}
+      </Box>
+      <Box
+        sx={{
+          color: 'text.disabled',
+          fontSize: '0.9rem',
+          lineHeight: 1.5,
+          maxWidth: 400,
+        }}
+      >
+        Send a message to begin working with your AI assistant, or click on a capability above to get started.
+      </Box>
     </Box>
   </Box>
 );
@@ -56,6 +75,7 @@ const MessageList: React.FC<MessageListProps> = ({
   currentAgent,
   isLoadingHistory,
   isLoading,
+  isConnected = false,
 }) => {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
@@ -82,7 +102,7 @@ const MessageList: React.FC<MessageListProps> = ({
       }}
     >
       {shouldShowEmptyState ? (
-        <EmptyState currentAgent={currentAgent} />
+        <EmptyState currentAgent={currentAgent} isConnected={isConnected} />
       ) : (
         <List sx={{ p: 0 }}>
           {groupMessages(messages).map((group, index) => {

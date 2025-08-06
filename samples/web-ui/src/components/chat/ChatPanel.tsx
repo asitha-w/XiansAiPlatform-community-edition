@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Box } from '@mui/material';
+import { useParams } from 'react-router-dom';
 import type { Bot } from '../../types';
 
 import AgentHeader from './AgentHeader';
@@ -18,13 +19,14 @@ import { useDataMessage } from '../../hooks/useDataMessage';
 interface ChatPanelProps {
   currentAgent?: Bot | null;
   participantId?: string; // Optional - will use SDK config participant ID if not provided
-  documentId?: string; // Optional - document context for chat history
 }
 
 const ChatPanel: React.FC<ChatPanelProps> = ({
   currentAgent,
   participantId,
 }) => {
+  // Get documentId directly from URL params like ContractEntityPanel does
+  const { documentId } = useParams<{ documentId?: string }>();
   const [messageInput, setMessageInput] = useState('');
   const [shouldFocusInput, setShouldFocusInput] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -95,6 +97,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
     removePendingRequest,
   } = useChatAgentState({
     currentAgent,
+    documentId,
     isConnected,
     setCurrentAgent,
     clearMessages,
@@ -161,8 +164,8 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
       position: 'relative',
       overflow: 'hidden' // Prevent any overflow that might push content down
     }}>
-      {/* Agent Header */}
-      {currentAgent && (
+      {/* Agent Header - only show when there are messages, EmptyState handles its own header */}
+      {currentAgent && messages.length > 0 && (
         <AgentHeader 
           currentAgent={currentAgent} 
           isConnected={isConnected} 
@@ -188,6 +191,7 @@ const ChatPanel: React.FC<ChatPanelProps> = ({
         currentAgent={currentAgent}
         isLoadingHistory={isLoadingHistory}
         isLoading={isLoading || serviceLoading}
+        isConnected={isConnected}
       />
 
       {/* Typing Indicator */}

@@ -13,7 +13,7 @@ const ContractLink: React.FC<ContractLinkProps> = ({ properties }) => {
   const handleClick = () => {
     const contractId = properties.id as string;
     if (contractId) {
-      navigate(`/legal/${contractId}`);
+      navigate(`/legal/assistant/${contractId}`);
     }
   };
 

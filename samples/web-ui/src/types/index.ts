@@ -7,16 +7,25 @@ export interface User {
   avatar?: string;
   roles: string[];
 }
+export interface Agent {
+  enabled: boolean;
+  id: string;
+  name: string;
+  slug: string; // URL-friendly identifier (e.g., 'legal', 'sales', 'finance')
+  bots: Bot[];
+  flow?: string;
+  description?: string;
+}
+
 export interface Bot {
   id: string;
-  bot: string;
-  flow?: string;
   name: string;
-  description: string;
-  avatar?: string;
+  description?: string;
+  slug: string; // URL-friendly identifier within the agent (e.g., 'assistant', 'analyzer')
+  workflow: string;
   capabilities: string[];
-  slug: string;
-  mainComponent?: React.ComponentType<{ agents: Bot[] }>;
+  avatar?: string;
+  mainComponent?: React.ComponentType<Record<string, unknown>>;
 }
 
 export interface ContractEntity {
