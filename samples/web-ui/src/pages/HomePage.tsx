@@ -33,7 +33,7 @@ const HomePage: React.FC<HomePageProps> = ({ agents }) => {
           color: colors.text.primary,
           mb: 2 
         }}>
-          Welcome to AI Studio
+          Welcome to Agentri Studio
         </Typography>
         <Typography variant="h6" color={colors.text.muted} sx={{ maxWidth: '600px', mx: 'auto' }}>
           Choose an AI assistant to help you with your business needs. Each agent specializes in different areas and workflows.

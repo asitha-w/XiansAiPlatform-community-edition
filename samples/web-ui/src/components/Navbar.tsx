@@ -106,7 +106,7 @@ const Navbar: React.FC<NavbarProps> = ({
                 }
               }}
             >
-              AI Studio
+              Agentri Studio
             </Typography>
 
             {/* Agent Selector - Shown when current agent exists or on new route */}

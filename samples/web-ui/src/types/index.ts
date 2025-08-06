@@ -1,4 +1,4 @@
-// Core types for AI Studio application
+// Core types
 
 export interface User {
   id: string;

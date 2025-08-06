@@ -122,6 +122,21 @@ export const ContractEntityPanel: React.FC<ContractEntityPanelProps> = ({
     setEditableContract(updatedContract);
   }, []);
   
+  // Update browser title when contract data changes
+  useEffect(() => {
+    if (contractData?.title) {
+      document.title = `Contract: ${contractData.title}`;
+    } else {
+      // Reset to default title when no contract is loaded
+      document.title = 'Agentri';
+    }
+    
+    // Cleanup function to reset title when component unmounts
+    return () => {
+      document.title = 'Agentri';
+    };
+  }, [contractData?.title]);
+
   // Subscribe to DocumentUpdate messages for real-time updates
   useEffect(() => {
     const handleDocumentUpdate = (payload: DataMessagePayload) => {
