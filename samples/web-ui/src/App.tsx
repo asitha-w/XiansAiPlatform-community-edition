@@ -157,16 +157,6 @@ function AppContent() {
               />
             }
           />
-          {/* Sub-module route for document */}
-          <Route
-            path="/:agentSlug/:botSlug/:documentId/:subModuleSlug"
-            element={
-              <BotPage
-                agents={agents}
-                onSelectAgent={handleAgentSelect}
-              />
-            }
-          />
         </Routes>
       </Box>
     </Box>

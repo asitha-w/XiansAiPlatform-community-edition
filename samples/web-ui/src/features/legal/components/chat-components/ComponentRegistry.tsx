@@ -4,6 +4,7 @@ import ContractParty from './ContractParty';
 import ContractTerms from './ContractTerms';
 import Calendar from './Calendar';
 import ContractDescription from './ContractDescription';
+import PieChart from './PieChart';
 
 export interface UIComponentRef {
   name: string;
@@ -21,6 +22,7 @@ const componentRegistry: Record<string, React.FC<UIComponentProps>> = {
   ContractTerms,
   Calendar,
   ContractDescription,
+  PieChart,
   // Add more components here as needed
   // ExampleComponent: ExampleComponent,
 };

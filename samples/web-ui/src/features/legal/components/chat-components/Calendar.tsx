@@ -47,38 +47,32 @@ const Calendar: React.FC<CalendarProps> = ({ properties }) => {
     <Paper 
       elevation={2} 
       sx={{ 
-        p: 3, 
-        my: 2, 
+        p: 2, 
+        my: 1, 
         borderRadius: 2,
         border: '1px solid',
         borderColor: 'divider'
       }}
     >
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-        <CalendarTodayIcon sx={{ mr: 1, color: 'primary.main' }} />
-        <Typography variant="h6" component="h3">
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
+        <CalendarTodayIcon sx={{ mr: 1, color: 'primary.main', fontSize: '1.2rem' }} />
+        <Typography variant="subtitle1" component="h3" sx={{ fontWeight: 600 }}>
           Select {field}
         </Typography>
       </Box>
-      
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-        Please choose the date for {field}
-      </Typography>
 
-      <Box sx={{ mb: 3 }}>
-        <TextField
-          fullWidth
-          type="date"
-          label={`Select ${field}`}
-          value={selectedDate}
-          onChange={handleDateChange}
-          InputLabelProps={{
-            shrink: true,
-          }}
-          helperText={`Choose the ${field} from the calendar`}
-          sx={{ mb: 2 }}
-        />
-      </Box>
+      <TextField
+        fullWidth
+        type="date"
+        label={`Select ${field}`}
+        value={selectedDate}
+        onChange={handleDateChange}
+        InputLabelProps={{
+          shrink: true,
+        }}
+        size="small"
+        sx={{ mb: 2 }}
+      />
 
       <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
         <Button 
@@ -86,6 +80,7 @@ const Calendar: React.FC<CalendarProps> = ({ properties }) => {
           variant="contained"
           disabled={!selectedDate}
           startIcon={<CalendarTodayIcon />}
+          size="small"
         >
           Set Date
         </Button>

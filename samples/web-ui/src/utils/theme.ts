@@ -366,6 +366,22 @@ export const theme = createTheme({
               borderWidth: '0.5px',
             },
           },
+          '& .MuiInputBase-input': {
+            padding: '12px 14px',
+            lineHeight: '1.4375em',
+            boxSizing: 'border-box',
+            width: '100%',
+            height: '100%',
+          },
+          '& .MuiInputBase-inputSizeSmall': {
+            padding: '8px 12px',
+          },
+          '& .MuiInputBase-inputMultiline': {
+            padding: '12px 14px',
+            resize: 'none',
+            width: '100%',
+            minHeight: '1.4375em',
+          },
         },
       },
     },

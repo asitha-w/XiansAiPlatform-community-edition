@@ -123,8 +123,8 @@ button:disabled {
   color: #FFFFFF;
 }
 
-/* Enhanced form element styling */
-input, textarea, select {
+/* Enhanced form element styling - exclude Material-UI components */
+input:not([class*="Mui"]), textarea:not([class*="Mui"]), select:not([class*="Mui"]) {
   font-family: inherit;
   font-size: inherit;
   border-radius: 12px;
@@ -134,10 +134,9 @@ input, textarea, select {
   background-color: #FEFEFE;
 }
 
-input:focus, textarea:focus, select:focus {
+input:not([class*="Mui"]):focus, textarea:not([class*="Mui"]):focus, select:not([class*="Mui"]):focus {
   outline: none;
   border-color: #5E81AC;
-  box-shadow: 0 0 0 2px rgba(94, 129, 172, 0.1);
 }
 
 /* Clean up MUI overrides */
