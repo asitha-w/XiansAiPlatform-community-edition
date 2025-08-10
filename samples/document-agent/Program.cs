@@ -20,4 +20,7 @@ bot.SetChatInterceptor(new ChatInterceptor());
 var flow =agent.AddFlow<LegalContractFlow>();
 flow.SetDataProcessor<DataProcessor>();
 
+// Add the asset manager flow
+agent.AddFlow<AssetManagerFlow>();
+
 await agent.RunAsync();

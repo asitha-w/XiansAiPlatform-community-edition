@@ -20,6 +20,7 @@ public class DataProcessor {
     private static readonly Logger<DataProcessor> _logger =
     Logger<DataProcessor>.For();
     public DataProcessor(MessageThread messageThread) {
+        _logger.LogDebug($"DataProcessor constructor called with message thread: {messageThread.ThreadId}");
         _messageThread = messageThread;
     }
 
