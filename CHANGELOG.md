@@ -5,6 +5,24 @@ All notable changes to the XiansAi Platform Community Edition will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v2.3.0] - 2025-08-11
+
+# 🚀 New Features
+
+- [RPC calls to the agents](https://xiansaiplatform.github.io/XiansAi.PublicDocs/4-automation/1-external-triggers/)
+- [Skip Responses feature](https://xiansaiplatform.github.io/XiansAi.PublicDocs/2-agent-communication/5-skip-llm-response.html)
+- [Chat Interceptors](https://xiansaiplatform.github.io/XiansAi.PublicDocs/2-agent-communication/7-chat-interceptors.html)
+- [simple LLM completion](https://xiansaiplatform.github.io/XiansAi.PublicDocs/n-encyclopedia/llm-completion/#parameters)
+- [Scheduled workflows](https://xiansaiplatform.github.io/XiansAi.PublicDocs/4-automation/2-scheduled-execution/)
+
+## 🐛 Bug Fixes
+
+- Fix the temporal signal limit bug
+
+## ⚠️ Breaking Changes
+
+- none
+
 ## [v2.2.0] - 2025-07-29
 
 ### 🚀 New Features
