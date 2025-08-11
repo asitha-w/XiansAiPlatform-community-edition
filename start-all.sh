@@ -5,10 +5,19 @@
 
 set -e
 
-# Default Configuration (can be overridden via command line)
-VERSION="latest"
-ENV_POSTFIX="local"
-COMPOSE_PROJECT_NAME="xians-community-edition"
+# Load environment variables from .env if present
+if [ -f ".env" ]; then
+    echo "🧪 Loading environment variables from .env"
+    set -a
+    # shellcheck disable=SC1091
+    source ".env"
+    set +a
+fi
+
+# Default Configuration (can be overridden by .env or via command line)
+: "${VERSION:=latest}"
+: "${ENV_POSTFIX:=local}"
+: "${COMPOSE_PROJECT_NAME:=xians-community-edition}"
 
 echo "🚀 Starting XiansAi Community Edition with Temporal and Keycloak..."
 
