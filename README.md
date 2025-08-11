@@ -47,9 +47,14 @@ Welcome to the XiansAi Platform Community Edition! This repository provides a si
    ```bash
    Llm__ApiKey=your-openai-api-key
    ```
+
+   Alternatively, create an .env file on the repo rool directory and add the Api Key
+   ```bash
+   Llm__ApiKey=your-openai-api-key
+   ```
    **********
 
-3. **Start the platform:**
+4. **Start the platform:**
 
    ```bash
    # Start with defaults (latest version, local environment)
@@ -74,7 +79,7 @@ Welcome to the XiansAi Platform Community Edition! This repository provides a si
    - `./reset-all.sh [options]` - Complete reset and cleanup (removes all data)
    - `./pull-latest.sh [options]` - Pull latest Docker images from DockerHub
 
-4. **Access the applications:**
+5. **Access the applications:**
 
    - **XiansAi UI**: [http://localhost:3001](http://localhost:3001)
    - **XiansAi Server API**: [http://localhost:5001/api-docs](http://localhost:5001/api-docs)
