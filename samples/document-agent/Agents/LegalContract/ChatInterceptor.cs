@@ -99,9 +99,9 @@ public class ChatInterceptor : IChatInterceptor
                         new UICommand("ContractDescription", new Dictionary<string, object> {  })
                     );
 
-                    await messageThread.SendData(
-                        new UICommand("PieChart", new Dictionary<string, object> {  })
-                    );
+                    // await messageThread.SendData(
+                    //     new UICommand("PieChart", new Dictionary<string, object> {  })
+                    // );
                     break;
             }
 

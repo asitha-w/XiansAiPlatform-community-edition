@@ -4,22 +4,16 @@ export interface SDKConfig {
   apiKey: string;
   serverUrl: string;
   participantId: string;
+  jwtToken?: string; // Optional JWT token for authenticated users
 }
 
-// TODO: Replace these with your actual configuration values
-export const sdkConfig: SDKConfig = {
-  tenantId: 'your-tenant-id',
-  apiKey: 'sk-your-api-key', 
-  serverUrl: 'https://api.yourdomain.com',
-  participantId: 'default-participant'
-};
-
 // Environment-based configuration
-export const getSDKConfig = (): SDKConfig => {
+export const getSDKConfig = (jwtToken?: string): SDKConfig => {
   return {
-    tenantId: import.meta.env.VITE_XIANSAI_TENANT_ID || sdkConfig.tenantId,
-    apiKey: import.meta.env.VITE_XIANSAI_API_KEY || sdkConfig.apiKey,
-    serverUrl: import.meta.env.VITE_XIANSAI_SERVER_URL || sdkConfig.serverUrl,
-    participantId: import.meta.env.VITE_XIANSAI_PARTICIPANT_ID || sdkConfig.participantId,
+    tenantId: import.meta.env.VITE_XIANSAI_TENANT_ID,
+    apiKey: import.meta.env.VITE_XIANSAI_API_KEY,
+    serverUrl: import.meta.env.VITE_XIANSAI_SERVER_URL,
+    participantId: import.meta.env.VITE_XIANSAI_PARTICIPANT_ID,
+    jwtToken, // Pass through the JWT token if provided
   };
 };

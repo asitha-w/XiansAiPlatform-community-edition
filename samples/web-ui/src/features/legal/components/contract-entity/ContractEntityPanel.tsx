@@ -6,6 +6,8 @@ import EntityOverview from './EntityOverview';
 import AddPartyDialog from './AddPartyDialog';
 import { useParams } from 'react-router-dom';
 import { useDataMessage } from '../../../../hooks/useDataMessage';
+import { useAuthActions } from '../../../../hooks/useAuth';
+import { extractJwtIdToken } from '../../../../utils/authUtils';
 import { legalDataService } from '../../services/legalDataService';
 import type { EntityDetailsProps } from './EntityDetails';
 import type { Bot, ContractValidation, Contract } from '../../../../types';
@@ -48,6 +50,9 @@ export const ContractEntityPanel: React.FC<ContractEntityPanelProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
+  // Authentication state for JWT token
+  const { isAuthenticated, user } = useAuthActions();
+  
   // Data message context for subscribing to DocumentUpdate messages
   const dataMessageContext = useDataMessage();
   
@@ -60,7 +65,17 @@ export const ContractEntityPanel: React.FC<ContractEntityPanelProps> = ({
     
     try {
       console.log('[ContractEntityPanel] Loading document:', docId);
-      const entityData = await legalDataService.getCurrentContract();
+      
+      // Get JWT ID token from authenticated user
+      const jwtToken = isAuthenticated ? extractJwtIdToken(user) : undefined;
+      
+      if (jwtToken) {
+        console.log('[ContractEntityPanel] Making authenticated request with JWT token:', jwtToken.substring(0, 50) + '...');
+      } else {
+        console.log('[ContractEntityPanel] Making unauthenticated request');
+      }
+      
+      const entityData = await legalDataService.getCurrentContract(jwtToken);
       
       if (entityData?.contract) {
         console.log('[ContractEntityPanel] Document loaded:', entityData.contract.title);
@@ -78,7 +93,7 @@ export const ContractEntityPanel: React.FC<ContractEntityPanelProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [isAuthenticated, user]);
   
   // Load document when documentId changes
   useEffect(() => {

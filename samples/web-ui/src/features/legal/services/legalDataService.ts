@@ -5,10 +5,11 @@ import { getCurrentDocumentIdGlobal } from '../../../utils/documentUtils';
 export class LegalDataService {
 
   /**
-   * Get the current document ID
-   * @returns The current document ID from manual setting or global context
+   * Get the current contract document
+   * @param jwtToken - Optional JWT token for authenticated requests
+   * @returns The current contract data or null if not found
    */
-   async getCurrentContract(): Promise<ContractEntityData | null> {
+   async getCurrentContract(jwtToken?: string): Promise<ContractEntityData | null> {
     const documentId = getCurrentDocumentIdGlobal();
   
     try {
@@ -16,7 +17,7 @@ export class LegalDataService {
       
       const response = await flowRestService.callRPC('GetValidatedDocument', {
         documentId: documentId
-      });
+      }, jwtToken);
       
       console.log(`[LegalDataService] GetValidatedDocument response:`, response);
       

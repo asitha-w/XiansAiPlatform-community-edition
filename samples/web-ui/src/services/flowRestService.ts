@@ -25,32 +25,45 @@ export class FlowRestService {
    * Make a REST API call to the converse endpoint
    * @param methodName - The RPC method name
    * @param data - The request data
+   * @param jwtToken - Optional JWT token for authenticated requests
    * @returns Promise<RestConverseResponse>
    */
-  async callRPC(methodName: string, data: object): Promise<RestConverseResponse> {
+  async callRPC(methodName: string, data: object, jwtToken?: string): Promise<RestConverseResponse> {
     try {
-      const config = getSDKConfig();
+      const config = getSDKConfig(jwtToken);
       
       // Build query parameters
       const queryParams = new URLSearchParams({
         workflow: this.getWorkflow(),
-        apikey: config.apiKey,
         tenantId: config.tenantId,
         type: 'Data',
         participantId: config.participantId,
         text: methodName,
       });
 
+      if (config.apiKey) {
+        queryParams.set('apikey', config.apiKey);
+      }
+
       const url = `${config.serverUrl}/api/user/rest/converse?${queryParams.toString()}`;
       
       console.log(`[FlowRestService] Making POST request to: ${url}`);
       console.log(`[FlowRestService] Request body:`, data);
+      
+      // Build headers
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      // Add Authorization header if JWT token is provided
+      if (jwtToken) {
+        headers['Authorization'] = `Bearer ${jwtToken}`;
+        console.log('[FlowRestService] Including JWT token in Authorization header');
+      }
 
       const response = await fetch(url, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify(data),
       });
 

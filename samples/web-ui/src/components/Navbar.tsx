@@ -18,9 +18,12 @@ import {
   SmartToy as AgentIcon,
   KeyboardArrowDown as ArrowDownIcon,
   Add as AddIcon,
+  Login as LoginIcon,
+  Logout as LogoutIcon,
 } from '@mui/icons-material';
 import type { Agent } from '../types';
 import { colors } from '../utils/theme';
+import { useAuthActions } from '../hooks/useAuth';
 
 interface NavbarProps {
   currentAgent?: Agent;
@@ -34,7 +37,9 @@ const Navbar: React.FC<NavbarProps> = ({
   onSelectAgent,
 }) => {
   const navigate = useNavigate();
+  const { isAuthenticated, user, login, logout } = useAuthActions();
   const [agentMenuAnchorEl, setAgentMenuAnchorEl] = React.useState<null | HTMLElement>(null);
+  const [userMenuAnchorEl, setUserMenuAnchorEl] = React.useState<null | HTMLElement>(null);
   
   const shouldShowAgentSelector = availableAgents.length > 0; // Always show if agents are available
   const shouldShowNewButton = true; // Always show new button
@@ -52,6 +57,23 @@ const Navbar: React.FC<NavbarProps> = ({
       onSelectAgent(agent);
     }
     handleAgentMenuClose();
+  };
+
+  const handleUserMenuClick = (event: React.MouseEvent<HTMLElement>) => {
+    setUserMenuAnchorEl(event.currentTarget);
+  };
+
+  const handleUserMenuClose = () => {
+    setUserMenuAnchorEl(null);
+  };
+
+  const handleLogin = () => {
+    login();
+  };
+
+  const handleLogout = () => {
+    logout();
+    handleUserMenuClose();
   };
 
   const handleNewClick = () => {
@@ -279,21 +301,79 @@ const Navbar: React.FC<NavbarProps> = ({
             >
               <SettingsIcon />
             </IconButton>
-            <Avatar 
-              sx={{ 
-                width: 36, 
-                height: 36, 
-                bgcolor: colors.text.muted,
-                ml: 2,
-                fontWeight: 500,
-                border: `2px solid ${colors.surface.primary}`,
-                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-                color: colors.text.inverse,
-                fontSize: '0.875rem'
-              }}
-            >
-              U
-            </Avatar>
+            {/* Authentication UI */}
+            {isAuthenticated && user ? (
+              <>
+                <Avatar 
+                  onClick={handleUserMenuClick}
+                  sx={{ 
+                    width: 36, 
+                    height: 36, 
+                    bgcolor: colors.text.muted,
+                    ml: 2,
+                    fontWeight: 500,
+                    border: `2px solid ${colors.surface.primary}`,
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                    color: colors.text.inverse,
+                    fontSize: '0.875rem',
+                    cursor: 'pointer',
+                    '&:hover': {
+                      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                    }
+                  }}
+                  src={user.profile?.picture}
+                >
+                  {user.profile?.given_name?.[0] || user.profile?.name?.[0] || 'U'}
+                </Avatar>
+                <Menu
+                  anchorEl={userMenuAnchorEl}
+                  open={Boolean(userMenuAnchorEl)}
+                  onClose={handleUserMenuClose}
+                  sx={{
+                    '& .MuiPaper-root': {
+                      mt: 1,
+                      borderRadius: 2,
+                      minWidth: 200,
+                      boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
+                      border: '1px solid #E5E7EB',
+                    }
+                  }}
+                >
+                  <Box sx={{ px: 3, py: 2, borderBottom: '1px solid #E5E7EB' }}>
+                    <Typography variant="body2" sx={{ fontWeight: 500, color: colors.text.primary }}>
+                      {user.profile?.name || user.profile?.email}
+                    </Typography>
+                    <Typography variant="caption" color={colors.text.muted}>
+                      {user.profile?.email}
+                    </Typography>
+                  </Box>
+                  <MenuItem onClick={handleLogout} sx={{ py: 1.5, px: 3 }}>
+                    <LogoutIcon sx={{ mr: 2, fontSize: 18 }} />
+                    Sign Out
+                  </MenuItem>
+                </Menu>
+              </>
+            ) : (
+              <Button
+                onClick={handleLogin}
+                startIcon={<LoginIcon sx={{ fontSize: 18 }} />}
+                variant="contained"
+                sx={{
+                  px: 3,
+                  py: 1.5,
+                  ml: 2,
+                  borderRadius: 1.5,
+                  textTransform: 'none',
+                  fontWeight: 500,
+                  boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1)',
+                  '&:hover': {
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)',
+                  }
+                }}
+              >
+                Sign In
+              </Button>
+            )}
           </Box>
         </Toolbar>
       </Box>

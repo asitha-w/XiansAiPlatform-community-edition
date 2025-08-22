@@ -15,6 +15,7 @@ export interface BotServiceOptions {
   onChatRequestSent?: (requestId: string) => void;
   onChatResponseReceived?: (requestId: string) => void;
   participantId?: string;
+  jwtToken?: string; // JWT token for authenticated users
 }
 
 export class BotService {
@@ -37,9 +38,8 @@ export class BotService {
   }
 
   constructor(options: BotServiceOptions = {}) {
-    this.options = options;
-    
-    const config = getSDKConfig();
+    this.options = options;    
+    const config = getSDKConfig(options.jwtToken);
     
     const eventHandlers: EventHandlers = {
       onReceiveChat: this.handleChatMessage.bind(this),
@@ -52,7 +52,8 @@ export class BotService {
       onError: this.handleError.bind(this),
     };
 
-    this.socketSDK = new SocketSDK({
+    // Create SocketSDK configuration - include jwtToken if available
+    const socketConfig: Record<string, unknown> = {
       tenantId: config.tenantId,
       apiKey: config.apiKey,
       serverUrl: config.serverUrl,
@@ -61,28 +62,65 @@ export class BotService {
       maxReconnectAttempts: 5,
       eventHandlers,
       logger: (message: string) => console.log(`[BotService] ${message}`),
-    });
+    };
+
+    // Add JWT token if provided for authenticated users
+    if (config.jwtToken) {
+      socketConfig.jwtToken = config.jwtToken;
+      console.log('[BotService] Initializing with JWT token for authenticated user');
+    }
+
+    try {
+      this.socketSDK = new SocketSDK(socketConfig as unknown as ConstructorParameters<typeof SocketSDK>[0]);
+    } catch (error) {
+      console.error('[BotService] Failed to initialize SocketSDK:', error);
+      // Handle the case where neither apiKey nor jwtToken is available
+      if (!config.apiKey && !config.jwtToken) {
+        console.warn('[BotService] Neither API key nor JWT token available. User needs to authenticate.');
+        // Create a minimal socket SDK that will fail gracefully
+        this.socketSDK = null as unknown as SocketSDK;
+        // Notify the error handler
+        if (this.options.onError) {
+          this.options.onError('Authentication required. Please sign in to continue.');
+        }
+        return;
+      }
+      // Re-throw other errors
+      throw error;
+    }
   }
 
   async connect(): Promise<void> {
     console.log('[BotService] Attempting to connect...');
+    if (!this.socketSDK) {
+      throw new Error('SocketSDK not initialized. Authentication required.');
+    }
     await this.socketSDK.connect();
     
     // Manually check connection state since onConnected might not be called
     setTimeout(() => {
-      const isConnected = this.socketSDK.isConnected();
-      console.log('[BotService] Manual connection check:', isConnected);
-      if (isConnected) {
-        this.handleConnected();
+      if (this.socketSDK) {
+        const isConnected = this.socketSDK.isConnected();
+        console.log('[BotService] Manual connection check:', isConnected);
+        if (isConnected) {
+          this.handleConnected();
+        }
       }
     }, 1000); // Give it a moment to establish connection
   }
 
   async disconnect(): Promise<void> {
+    if (!this.socketSDK) {
+      console.warn('[BotService] SocketSDK not initialized, cannot disconnect');
+      return;
+    }
     await this.socketSDK.disconnect();
   }
 
   isConnected(): boolean {
+    if (!this.socketSDK) {
+      return false;
+    }
     return this.socketSDK.isConnected();
   }
 
@@ -102,10 +140,12 @@ export class BotService {
     // Unsubscribe from previous bot if different
     if (this.historyLoadedForAgent && this.isConnected()) {
       console.log(`[BotService] Unsubscribing from previous bot`);
-      await this.socketSDK.unsubscribeFromAgent(
-        this.historyLoadedForAgent,
-        this.getParticipantId()
-      );
+      if (this.socketSDK) {
+        await this.socketSDK.unsubscribeFromAgent(
+          this.historyLoadedForAgent,
+          this.getParticipantId()
+        );
+      }
     }
 
     // Reset state for new subscription
@@ -119,10 +159,12 @@ export class BotService {
       console.log(`[BotService] Subscribing to ${bot.name}`);
       
       try {
-        await this.socketSDK.subscribeToAgent(
-          bot.workflow,
-          this.getParticipantId()
-        );
+        if (this.socketSDK) {
+          await this.socketSDK.subscribeToAgent(
+            bot.workflow,
+            this.getParticipantId()
+          );
+        }
         console.log(`✅ [BotService] Subscribed to ${bot.workflow}`);
         
         // Load conversation history
@@ -156,13 +198,15 @@ export class BotService {
       this.isLoadingHistory = true;
       console.log(`[BotService] Loading history for ${bot.name}, document: ${currentDocumentId}`);
       
-      await this.socketSDK.getThreadHistory(
-        botWorkflow,
-        this.getParticipantId(),
-        1,
+      if (this.socketSDK) {
+        await this.socketSDK.getThreadHistory(
+          botWorkflow,
+          this.getParticipantId(),
+          1,
         20,
         currentDocumentId
-      );
+        );
+      }
       
       this.historyLoadedForAgent = botWorkflow;
       this.historyLoadedForDocument = currentDocumentId || null;
@@ -199,6 +243,9 @@ export class BotService {
     // Notify that a chat request was sent
     this.options.onChatRequestSent?.(requestId);
 
+    if (!this.socketSDK) {
+      throw new Error('SocketSDK not initialized. Authentication required.');
+    }
     await this.socketSDK.sendInboundMessage(message, MessageType.Chat);
   }
 
@@ -224,6 +271,9 @@ export class BotService {
       },
     };
 
+    if (!this.socketSDK) {
+      throw new Error('SocketSDK not initialized. Authentication required.');
+    }
     await this.socketSDK.sendInboundMessage(message, MessageType.Data);
   }
 
@@ -347,6 +397,8 @@ export class BotService {
     this.processedHistoryHashes.clear();
     this.historyLoadedForAgent = null;
     
-    await this.socketSDK.dispose();
+    if (this.socketSDK) {
+      await this.socketSDK.dispose();
+    }
   }
 }

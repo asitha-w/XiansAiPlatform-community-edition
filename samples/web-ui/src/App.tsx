@@ -8,7 +8,9 @@ import type { Agent } from './types';
 import { ContractEntityPanel } from './features/legal/components/contract-entity/ContractEntityPanel';
 import { DataMessageProvider } from './context/DataMessageContext';
 import { AgentProvider } from './context/AgentContext';
+import { AuthProvider } from './context/AuthContext';
 import { useAgent } from './utils/agentUtils';
+import { AuthCallback, SilentCallback, ProtectedRoute } from './components/auth';
 
 
 // Mock agents data - centralized for the entire app
@@ -117,44 +119,61 @@ function AppContent() {
             path="/"
             element={<HomePage agents={agents} />}
           />
+          {/* OAuth callback routes */}
+          <Route
+            path="/auth/callback"
+            element={<AuthCallback />}
+          />
+          <Route
+            path="/auth/silent-callback"
+            element={<SilentCallback />}
+          />
           {/* Agent-level route - shows agent overview or default bot */}
           <Route
             path="/:agentSlug"
             element={
-              <BotPage
-                agents={agents}
-                onSelectAgent={handleAgentSelect}
-              />
+              <ProtectedRoute>
+                <BotPage
+                  agents={agents}
+                  onSelectAgent={handleAgentSelect}
+                />
+              </ProtectedRoute>
             }
           />
           {/* Specific bot within an agent */}
           <Route
             path="/:agentSlug/:botSlug"
             element={
-              <BotPage
-                agents={agents}
-                onSelectAgent={handleAgentSelect}
-              />
+              <ProtectedRoute>
+                <BotPage
+                  agents={agents}
+                  onSelectAgent={handleAgentSelect}
+                />
+              </ProtectedRoute>
             }
           />
           {/* New document creation for specific bot */}
           <Route
             path="/:agentSlug/:botSlug/new"
             element={
-              <BotPage
-                agents={agents}
-                onSelectAgent={handleAgentSelect}
-              />
+              <ProtectedRoute>
+                <BotPage
+                  agents={agents}
+                  onSelectAgent={handleAgentSelect}
+                />
+              </ProtectedRoute>
             }
           />
           {/* Document-specific route for bot */}
           <Route
             path="/:agentSlug/:botSlug/:documentId"
             element={
-              <BotPage
-                agents={agents}
-                onSelectAgent={handleAgentSelect}
-              />
+              <ProtectedRoute>
+                <BotPage
+                  agents={agents}
+                  onSelectAgent={handleAgentSelect}
+                />
+              </ProtectedRoute>
             }
           />
         </Routes>
@@ -167,11 +186,13 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <AgentProvider agents={agents}>
-        <DataMessageProvider>
-          <AppContent />
-        </DataMessageProvider>
-      </AgentProvider>
+      <AuthProvider>
+        <AgentProvider agents={agents}>
+          <DataMessageProvider>
+            <AppContent />
+          </DataMessageProvider>
+        </AgentProvider>
+      </AuthProvider>
     </ThemeProvider>
   );
 }
