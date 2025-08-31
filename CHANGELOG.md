@@ -5,6 +5,40 @@ All notable changes to the XiansAi Platform Community Edition will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v2.5.0] - 2025-08-31
+
+### 🚀 New Features
+
+- **Schedule RunAt Start Setting**: In schedules flows, one can specify to run at the start of the workflow execution.
+- **Webhooks**: Webhooks can be used to send logs to an external service. [details](https://xiansaiplatform.github.io/XiansAi.PublicDocs/2-agent-communication/17-webhooks/)
+- **MCP Support**: MCP Support for LLM agents to be able to use it. [details](https://xiansaiplatform.github.io/XiansAi.PublicDocs/n-encyclopedia/mcp-integration/)
+
+### 🔧 Improvements
+
+- **Logs Handling**: Agents are now sending only ERROR and above logs by default to server. Log retention is reduced from 30days to 15days to reduce the db storage cost. [details](https://xiansaiplatform.github.io/XiansAi.PublicDocs/n-encyclopedia/logging/#step-2-configure-logging)
+- **Trim Large Activities**: Large (>10K) inputs and outputs of activities histories are now removed from the database to reduce the db storage cost.
+
+### 🐛 Bug Fixes
+
+- Fixed issue with KeyCloak authentication in UI Portal not letting admin to delete agent definitions.
+- Resolved a bug stopping agents sutting down when Ctrl+C is pressed.
+
+---
+
+**Full Changelog**: https://github.com/XiansAiPlatform/community-edition/compare/vPREVIOUS...v2.5.0
+**Docker Images**: Available with tag `v2.5.0`
+**Documentation**: See updated documentation in repository
+
+<!-- 
+INSTRUCTIONS FOR EDITING THIS TEMPLATE:
+1. Replace placeholder text with actual changes
+2. Remove sections that don't apply to this release
+3. Add specific version numbers and dates where needed
+4. Include links to relevant PRs, issues, or documentation
+5. Test all code examples and commands
+6. Review for clarity and completeness before release
+-->
+
 ## [v2.4.0] - 2025-08-22
 
 ### 🚀 New Features
