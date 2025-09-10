@@ -5,6 +5,34 @@ All notable changes to the XiansAi Platform Community Edition will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v2.6.0] - 2025-09-10
+
+### 🚀 New Features
+
+- **Ability to limit the max tokens for LLM completion**: [details](https://xiansaiplatform.github.io/XiansAi.PublicDocs/n-encyclopedia/limiting-chat-router-tokens/)
+- **Another Feature**: Description with more details about implementation
+
+### 🔧 Improvements
+
+- **Performance**: Agent2Agent message forwarding performance improvements (in process routing capability)
+- **Developer Experience**: Agent chat routing and A2A interactions are now unit testable without needing to use temporal.[details](https://xiansaiplatform.github.io/XiansAi.PublicDocs/n-encyclopedia/unit-testing/)
+
+---
+
+**Full Changelog**: https://github.com/XiansAiPlatform/community-edition/compare/vPREVIOUS...v2.6.0
+**Docker Images**: Available with tag `v2.6.0`
+**Documentation**: See updated documentation in repository
+
+<!-- 
+INSTRUCTIONS FOR EDITING THIS TEMPLATE:
+1. Replace placeholder text with actual changes
+2. Remove sections that don't apply to this release
+3. Add specific version numbers and dates where needed
+4. Include links to relevant PRs, issues, or documentation
+5. Test all code examples and commands
+6. Review for clarity and completeness before release
+-->
+
 ## [v2.5.0] - 2025-08-31
 
 ### 🚀 New Features
