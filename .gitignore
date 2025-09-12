@@ -2,6 +2,8 @@
 .env
 # Note: .env.development and .env.production are needed for Docker Compose configuration
 
+*/tls/certs/*
+
 # All environment files with sensitive data
 .env.*
 !.env.example
