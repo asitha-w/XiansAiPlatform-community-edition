@@ -12,8 +12,8 @@ services:
     volumes:
       - mongodb_data:/data/db
       - mongodb_configdb:/data/configdb
-      - ./db/mongo-healthcheck.js:/mongo-healthcheck.js:ro
-      - ./db/mongo-startup.sh:/mongo-startup.sh:ro
+      - ./mongodb/mongo-healthcheck.js:/mongo-healthcheck.js:ro
+      - ./mongodb/mongo-startup.sh:/mongo-startup.sh:ro
     networks:
       - xians-community-edition
     healthcheck:

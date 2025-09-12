@@ -364,7 +364,7 @@ echo "Llm__ApiKey=your-actual-api-key" > .env.local
 mongosh --eval "db.adminCommand('ping')" --quiet
 
 # Run health check script
-mongosh --eval "$(cat db/mongo-healthcheck.js)" --quiet
+mongosh --eval "$(cat mongodb/mongo-healthcheck.js)" --quiet
 ```
 
 #### PostgreSQL Health Check
@@ -434,7 +434,7 @@ docker compose pull
 ### MongoDB Service
 - **Purpose**: Primary database for XiansAi platform
 - **Port**: 27017
-- **Health Check**: `db/mongo-healthcheck.js`
+- **Health Check**: `mongodb/mongo-healthcheck.js`
 - **No authentication required** (development setup)
 
 ### PostgreSQL Service
