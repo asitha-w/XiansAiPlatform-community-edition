@@ -58,7 +58,7 @@ Our release process includes:
 
 ```bash
 # Create a new release branch
-VERSION=v2.1.0
+export VERSION=v2.1.0
 ```
 
 ```bash
