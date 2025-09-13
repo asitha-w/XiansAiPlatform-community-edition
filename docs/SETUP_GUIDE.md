@@ -17,6 +17,7 @@ This comprehensive guide will help you set up the XiansAi Platform Community Edi
 ## 🖥️ System Requirements
 
 ### Minimum Requirements
+
 - **Operating System**: macOS 10.15+, Ubuntu 20.04+, or Windows 10/11
 - **RAM**: 8GB (4GB minimum, but 8GB recommended)
 - **Storage**: 10GB free space
@@ -24,6 +25,7 @@ This comprehensive guide will help you set up the XiansAi Platform Community Edi
 - **Internet**: Stable connection for downloading Docker images
 
 ### Recommended Requirements
+
 - **RAM**: 16GB
 - **Storage**: 20GB free space
 - **CPU**: 4+ cores
@@ -34,6 +36,7 @@ This comprehensive guide will help you set up the XiansAi Platform Community Edi
 ### 1. Docker and Docker Compose
 
 #### macOS
+
 ```bash
 # Install Docker Desktop (includes Docker Compose)
 brew install --cask docker
@@ -42,6 +45,7 @@ brew install --cask docker
 ```
 
 #### Ubuntu/Debian
+
 ```bash
 # Update package index
 sudo apt-get update
@@ -256,16 +260,19 @@ docker compose up -d
 Once all services are running, you can access them at:
 
 ### Primary Services
+
 - **XiansAi UI**: http://localhost:3001
 - **XiansAi Server API**: http://localhost:5001/api-docs
 - **Keycloak Admin Console**: http://localhost:18080/admin
 - **Temporal Web UI**: http://localhost:8080
 
 ### Database Services
+
 - **MongoDB**: localhost:27017
 - **PostgreSQL**: localhost:5432
 
 ### Default Credentials
+
 - **Keycloak Admin**: `admin` / `admin`
 - **PostgreSQL**: `temporal` / `temporal`
 - **MongoDB**: No authentication required (development setup)
@@ -275,9 +282,11 @@ Once all services are running, you can access them at:
 ### Common Issues and Solutions
 
 #### 1. Container Name Conflicts
+
 **Error**: `Error response from daemon: Conflict. The container name "/xians-mongodb" is already in use`
 
 **Solution**:
+
 ```bash
 # Stop and remove conflicting containers
 docker stop xians-mongodb xians-server xians-ui keycloak postgresql
@@ -288,9 +297,11 @@ docker rm xians-mongodb xians-server xians-ui keycloak postgresql
 ```
 
 #### 2. Port Already in Use
+
 **Error**: `Error starting userland proxy: listen tcp 0.0.0.0:27017: bind: address already in use`
 
 **Solution**:
+
 ```bash
 # Check what's using the port
 lsof -i :27017
@@ -299,9 +310,11 @@ lsof -i :27017
 ```
 
 #### 3. Environment Variable Not Set
+
 **Error**: `The "POSTGRESQL_VERSION" variable is not set. Defaulting to a blank string.`
 
 **Solution**:
+
 ```bash
 # Check if .env.local file exists
 ls -la postgresql/.env.local
@@ -312,9 +325,11 @@ cd postgresql && cp .env.example .env.local && cd ..
 ```
 
 #### 4. Docker Network Issues
+
 **Error**: `network with name xians-community-edition-network exists but was not created`
 
 **Solution**:
+
 ```bash
 # This is just a warning, not an error. The network exists and will be used.
 # If you want to clean up networks:
@@ -322,9 +337,11 @@ docker network prune
 ```
 
 #### 5. Service Health Check Failures
+
 **Error**: Services show as unhealthy
 
 **Solution**:
+
 ```bash
 # Check service logs
 docker compose logs xians-server
@@ -336,17 +353,21 @@ docker compose restart xians-server
 ```
 
 #### 6. Memory Issues
+
 **Error**: Services fail to start due to insufficient memory
 
 **Solution**:
+
 - Increase Docker Desktop memory limit (8GB+ recommended)
 - Close other applications to free up RAM
 - Restart Docker Desktop
 
 #### 7. API Key Issues
+
 **Error**: Server fails to start or returns authentication errors
 
 **Solution**:
+
 ```bash
 # Verify API key is set
 cd server
@@ -359,6 +380,7 @@ echo "Llm__ApiKey=your-actual-api-key" > .env.local
 ### Health Check Commands
 
 #### MongoDB Health Check
+
 ```bash
 # Test MongoDB connection
 mongosh --eval "db.adminCommand('ping')" --quiet
@@ -368,18 +390,34 @@ mongosh --eval "$(cat mongodb/mongo-healthcheck.js)" --quiet
 ```
 
 #### PostgreSQL Health Check
+
 ```bash
 # Test PostgreSQL connection
 docker exec postgresql pg_isready -U temporal
 ```
 
 #### Keycloak Health Check
+
 ```bash
 # Check Keycloak health
 curl http://localhost:18080/health/ready
 ```
 
+#### Elasticsearch Health Check
+
+```bash
+# Check Elasticsearch health
+curl http://localhost:9200/_cluster/health
+
+# Check Temporal visibility index
+curl http://localhost:9200/temporal_visibility_v1_dev/_search?size=0
+
+# Verify Elasticsearch is accessible from Temporal
+docker exec temporal curl -f http://elasticsearch:9200/_cluster/health
+```
+
 ### Log Monitoring
+
 ```bash
 # All services
 docker compose logs -f
@@ -393,6 +431,7 @@ docker compose logs -f postgresql
 ## 🛠️ Development Workflow
 
 ### 1. Starting Development
+
 ```bash
 # Start all services
 ./start-all.sh
@@ -402,6 +441,7 @@ docker compose logs -f
 ```
 
 ### 2. Stopping Services
+
 ```bash
 # Stop all services
 ./stop-all.sh
@@ -411,6 +451,7 @@ docker compose down
 ```
 
 ### 3. Resetting Everything
+
 ```bash
 # Complete reset (removes all data)
 ./reset-all.sh
@@ -420,6 +461,7 @@ docker compose down
 ```
 
 ### 4. Updating Services
+
 ```bash
 # Pull latest images
 docker compose pull
@@ -432,35 +474,49 @@ docker compose pull
 ## 📚 Service-Specific Guides
 
 ### MongoDB Service
+
 - **Purpose**: Primary database for XiansAi platform
 - **Port**: 27017
 - **Health Check**: `mongodb/mongo-healthcheck.js`
 - **No authentication required** (development setup)
 
 ### PostgreSQL Service
+
 - **Purpose**: Database for Keycloak and Temporal
 - **Port**: 5432
 - **Credentials**: temporal/temporal
 - **Environment**: Requires `POSTGRESQL_VERSION=16` in `.env.local`
 
 ### Keycloak Service
+
 - **Purpose**: Identity and Access Management
 - **Port**: 18080
 - **Admin**: admin/admin
 - **Dependencies**: Requires PostgreSQL running first
 
 ### Temporal Service
+
 - **Purpose**: Workflow orchestration
 - **Port**: 8080 (UI), 7233 (gRPC)
-- **Dependencies**: Requires PostgreSQL running first
+- **Dependencies**: Requires PostgreSQL and Elasticsearch running first
+- **Visibility**: Uses Elasticsearch for advanced workflow search and filtering
+
+### Elasticsearch Service
+
+- **Purpose**: Temporal visibility store for advanced search capabilities
+- **Port**: 9200 (HTTP API)
+- **Index**: temporal_visibility_v1_dev
+- **Configuration**: Single-node cluster optimized for development
 
 ### XiansAi Server
+
 - **Purpose**: Backend API service
 - **Port**: 5001
 - **Dependencies**: Requires MongoDB and Keycloak
 - **Configuration**: Requires OpenAI API key in `server/.env.local`
 
 ### XiansAi UI
+
 - **Purpose**: Frontend web application
 - **Port**: 3001
 - **Dependencies**: Requires XiansAi Server running
@@ -468,12 +524,14 @@ docker compose pull
 ## 🔄 Maintenance
 
 ### Regular Tasks
+
 1. **Update Docker images**: `docker compose pull`
 2. **Clean up unused resources**: `docker system prune`
 3. **Monitor disk usage**: `docker system df`
 4. **Backup data** (if needed): Export volumes before major updates
 
 ### Backup and Restore
+
 ```bash
 # Backup PostgreSQL data
 docker exec postgresql pg_dump -U temporal keycloak > backup.sql

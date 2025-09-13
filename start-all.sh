@@ -119,8 +119,17 @@ sleep 20
 echo "⚡ Starting Temporal services..."
 docker compose -p $COMPOSE_PROJECT_NAME -f temporal/docker-compose.yml --env-file temporal/.env.local up -d
 
-# Setup Temporal search attributes
+# Wait for Elasticsearch to be ready
+echo "⏳ Waiting for Elasticsearch to be ready..."
+sleep 30
+
+# Setup Elasticsearch for Temporal visibility
+echo "🔍 Setting up Elasticsearch for Temporal visibility..."
+./temporal/setup-elasticsearch.sh
+
+# Setup Temporal search attributes (asynchronous process)
 echo "🔧 Setting up Temporal search attributes..."
+echo "  Note: Search attributes setup may take time and run in background"
 ./temporal/setup-search-attributes.sh
 
 echo ""
@@ -132,6 +141,7 @@ echo "  • XiansAi Server API:   http://localhost:5001/api-docs"
 echo "  • Keycloak Admin Console: http://localhost:18080/admin"
 echo "  • Temporal Web UI:        http://localhost:8080"
 echo "  • Temporal gRPC API:      localhost:7233"
+echo "  • Elasticsearch:          http://localhost:9200"
 echo "  • MongoDB:                localhost:27017"
 echo "  • Temporal PostgreSQL:    localhost:5432"
 echo ""

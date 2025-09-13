@@ -1,4 +1,40 @@
 services:
+  elasticsearch:
+    container_name: temporal-elasticsearch
+    image: elasticsearch:7.17.18
+    environment:
+      - cluster.name=temporal-elasticsearch
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - xpack.security.enabled=false
+      - xpack.monitoring.enabled=false
+      - xpack.graph.enabled=false
+      - xpack.watcher.enabled=false
+      - xpack.ml.enabled=false
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    ports:
+      - 9200:9200
+    networks:
+      - xians-community-edition
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+        reservations:
+          memory: 512m
+
   temporal:
     container_name: temporal
     external_links:
@@ -9,10 +45,16 @@ services:
       - POSTGRES_USER=temporal
       - POSTGRES_PWD=temporal
       - POSTGRES_SEEDS=postgresql
-      - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development-sql.yaml
-      - ENABLE_ES=false
+      - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development-es.yaml
+      - ENABLE_ES=true
+      - ES_SEEDS=elasticsearch
+      - ES_VERSION=v7
+      - ES_VIS_INDEX=temporal_visibility_v1_dev
       - TEMPORAL_ADDRESS=temporal:7233
       - TEMPORAL_CLI_ADDRESS=temporal:7233
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
     # This image runs ALL temporal services (frontend, matching, history, worker) in single process
     image: temporalio/auto-setup:${TEMPORAL_VERSION}
     networks:
@@ -39,3 +81,8 @@ networks:
   xians-community-edition:
     external: true
     name: xians-community-edition-network
+
+volumes:
+  elasticsearch_data:
+    name: temporal-elasticsearch-data
+    driver: local
