@@ -7,13 +7,13 @@ services:
     environment:
       # Admin Configuration
       - KEYCLOAK_ADMIN=${KEYCLOAK_ADMIN:-admin}
-      - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      - KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD}
       
       # Database Configuration
       - KC_DB=postgres
       - KC_DB_URL=jdbc:postgresql://postgresql:5432/${KC_DB_NAME:-keycloak}
       - KC_DB_USERNAME=${KC_DB_USERNAME:-temporal}
-      - KC_DB_PASSWORD=${KC_DB_PASSWORD:-temporal}
+      - KC_DB_PASSWORD=${KC_DB_PASSWORD}
       
       # Keycloak Configuration
       - KC_HEALTH_ENABLED=true
