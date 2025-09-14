@@ -39,11 +39,29 @@ generate_ssl_certificate() {
     # Generate private key
     openssl genrsa -des3 -passout pass:"$password" -out "$temp_dir/$ca_name.key" $key_size 2>/dev/null
     
-    # Generate self-signed certificate
+    # Calculate certificate validity dates with safety margin
+    # Set notBefore to 5 minutes ago to prevent timing issues with client certificates
+    # Try BSD date syntax first (macOS), then fall back to GNU date syntax (Linux)
+    local not_before
+    local not_after
+    
+    if date -u -v-5M '+%Y%m%d%H%M%SZ' >/dev/null 2>&1; then
+        # BSD date (macOS)
+        not_before=$(date -u -v-5M '+%Y%m%d%H%M%SZ')
+        not_after=$(date -u -v+${days}d '+%Y%m%d%H%M%SZ')
+    else
+        # GNU date (Linux)
+        not_before=$(date -u -d '5 minutes ago' '+%Y%m%d%H%M%SZ')
+        not_after=$(date -u -d "+${days} days" '+%Y%m%d%H%M%SZ')
+    fi
+    
+    # Generate self-signed certificate with explicit validity dates
     openssl req -x509 -new -nodes -key "$temp_dir/$ca_name.key" -sha256 -days $days \
         -passin pass:"$password" \
         -out "$temp_dir/$ca_name.crt" \
         -subj "/C=US/ST=State/L=City/O=XiansAi/OU=IT/CN=$ca_name" \
+        -not_before "$not_before" \
+        -not_after "$not_after" \
         -set_serial $(date -u +%s) 2>/dev/null
     
     # Create PFX file (PKCS#12) containing both certificate and private key

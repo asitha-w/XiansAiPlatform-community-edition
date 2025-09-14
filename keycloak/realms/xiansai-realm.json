@@ -147,7 +147,7 @@
       "credentials": [
         {
           "type": "password",
-          "value": "admin",
+          "value": "${KEYCLOAK_ADMIN_PASSWORD}",
           "temporary": false
         }
       ],

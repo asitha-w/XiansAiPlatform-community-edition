@@ -168,6 +168,14 @@ else
     echo "   • No unused anonymous volumes found"
 fi
 
+# Step 6: Clean up environment files
+echo "🔒 Cleaning up environment files..."
+if [ -f "scripts/delete-secrets.sh" ]; then
+    ./scripts/delete-secrets.sh
+else
+    echo "   ⚠️  scripts/delete-secrets.sh not found (skipping)"
+fi
+
 echo ""
 echo "✅ XiansAi platform reset completed successfully!"
 echo ""

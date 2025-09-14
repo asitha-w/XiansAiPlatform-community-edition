@@ -39,6 +39,8 @@ services:
     container_name: temporal
     external_links:
       - postgresql:postgresql
+    env_file:
+      - .env.local
     environment:
       - DB=postgres12
       - DB_PORT=5432

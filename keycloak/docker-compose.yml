@@ -4,6 +4,8 @@ services:
     container_name: keycloak
     restart: unless-stopped
     command: start-dev --import-realm
+    env_file:
+      - .env.local
     environment:
       # Admin Configuration
       - KEYCLOAK_ADMIN=${KEYCLOAK_ADMIN:-admin}
