@@ -21,6 +21,14 @@ fi
 
 echo "🚀 Starting XiansAi Community Edition with Temporal and Keycloak..."
 
+# Generate secure secrets before starting services
+echo "🔐 Generating secure secrets..."
+if [ -f "./recreate-secrets.sh" ]; then
+    ./recreate-secrets.sh
+else
+    echo "⚠️  recreate-secrets.sh not found, using existing .env.local files"
+fi
+
 # Parse command line arguments
 DETACHED=true
 
