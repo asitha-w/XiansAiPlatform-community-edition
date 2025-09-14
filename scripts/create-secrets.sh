@@ -186,6 +186,8 @@ echo "   Found root .env file, reading required values..."
 OPENAI_API_KEY=$(grep "^OPENAI_API_KEY=" "$ROOT_ENV_FILE" | cut -d'=' -f2- | tr -d '"' | tr -d "'")
 # Read KEYCLOAK_ADMIN_PASSWORD from root .env
 KEYCLOAK_ADMIN_PASSWORD=$(grep "^KEYCLOAK_ADMIN_PASSWORD=" "$ROOT_ENV_FILE" | cut -d'=' -f2- | tr -d '"' | tr -d "'")
+# Read HOST_IP from root .env
+HOST_IP=$(grep "^HOST_IP=" "$ROOT_ENV_FILE" | cut -d'=' -f2- | tr -d '"' | tr -d "'")
 
 # Validate that required values are present and not empty
 MISSING_VALUES=""
@@ -198,6 +200,10 @@ if [ -z "$KEYCLOAK_ADMIN_PASSWORD" ]; then
     MISSING_VALUES="${MISSING_VALUES}  • KEYCLOAK_ADMIN_PASSWORD\n"
 fi
 
+if [ -z "$HOST_IP" ]; then
+    MISSING_VALUES="${MISSING_VALUES}  • HOST_IP\n"
+fi
+
 if [ -n "$MISSING_VALUES" ]; then
     echo "❌ ERROR: Required values missing or empty in root .env file:"
     echo -e "$MISSING_VALUES"
@@ -207,6 +213,7 @@ fi
 
 echo "   ✓ OpenAI API Key: [SET] (${#OPENAI_API_KEY} characters)"
 echo "   ✓ Keycloak Admin Password: [SET] (${#KEYCLOAK_ADMIN_PASSWORD} characters)"
+echo "   ✓ Host IP: [SET] ($HOST_IP)"
 
 # Use Keycloak admin credentials from root .env
 echo "🔐 Using Keycloak admin credentials from root .env file..."
@@ -267,6 +274,9 @@ if service_needs_secrets "keycloak"; then
     update_env_file "keycloak/.env.local" "KC_DB_USERNAME" "$POSTGRES_USER"
     update_env_file "keycloak/.env.local" "KC_DB_PASSWORD" "$POSTGRES_PASSWORD"
     update_env_file "keycloak/.env.local" "TEMPORAL_UI_CLIENT_SECRET" "$TEMPORAL_UI_CLIENT_SECRET"
+    
+    echo "📝 Updating Keycloak URL variables..."
+    update_env_file "keycloak/.env.local" "HOST_IP" "$HOST_IP"
 fi
 
 # Update Server secrets

@@ -51,20 +51,20 @@
       "clientId": "xiansai-ui",
       "name": "XianAI UI Client",
       "description": "Frontend application client for XianAI Platform",
-      "rootUrl": "http://localhost:3001",
-      "adminUrl": "http://localhost:3001",
-      "baseUrl": "http://localhost:3001",
+      "rootUrl": "${UI_HOST_URL}",
+      "adminUrl": "${UI_HOST_URL}",
+      "baseUrl": "${UI_HOST_URL}",
       "surrogateAuthRequired": false,
       "enabled": true,
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
       "redirectUris": [
-        "http://localhost:3001/*",
-        "http://localhost:3000/*"
+        "${UI_HOST_URL_REDIRECT_1}",
+        "${UI_HOST_URL_REDIRECT_2}"
       ],
       "webOrigins": [
-        "http://localhost:3001",
-        "http://localhost:3000"
+        "${UI_HOST_URL}",
+        "${UI_DEV_HOST_URL}"
       ],
       "notBefore": 0,
       "bearerOnly": false,
@@ -138,20 +138,19 @@
       "clientId": "temporal-ui",
       "name": "Temporal UI Client",
       "description": "Temporal UI application client for authentication",
-      "rootUrl": "http://localhost:8080",
-      "adminUrl": "http://localhost:8080",
-      "baseUrl": "http://localhost:8080",
+      "rootUrl": "${TEMPORAL_UI_HOST_URL}",
+      "adminUrl": "${TEMPORAL_UI_HOST_URL}",
+      "baseUrl": "${TEMPORAL_UI_HOST_URL}",
       "surrogateAuthRequired": false,
       "enabled": true,
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
       "secret": "${TEMPORAL_UI_CLIENT_SECRET}",
       "redirectUris": [
-        "http://localhost:8080/auth/sso/callback",
-        "http://localhost:8080/*"
+        "${TEMPORAL_UI_HOST_URL_REDIRECT_1}"
       ],
       "webOrigins": [
-        "http://localhost:8080"
+        "${TEMPORAL_UI_HOST_URL}"
       ],
       "notBefore": 0,
       "bearerOnly": false,
