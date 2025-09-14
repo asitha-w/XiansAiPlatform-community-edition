@@ -6,7 +6,37 @@
 
 set -e
 
-echo "🔐 Recreating secrets for XiansAi Community Edition..."
+echo "🔐 Creating secrets for XiansAi Community Edition..."
+
+# Check which services need .env.local files
+echo "🔍 Checking which services need .env.local files..."
+SERVICES_TO_GENERATE=""
+EXISTING_FILES=""
+
+for service in keycloak postgresql temporal server mongodb; do
+    if [ -f "${service}/.env.local" ]; then
+        EXISTING_FILES="${EXISTING_FILES}${service} "
+    else
+        SERVICES_TO_GENERATE="${SERVICES_TO_GENERATE}${service} "
+    fi
+done
+
+if [ -n "$EXISTING_FILES" ]; then
+    echo "   ✓ Found existing .env.local files (will skip):"
+    for service in $EXISTING_FILES; do
+        echo "     • ${service}/.env.local"
+    done
+fi
+
+if [ -n "$SERVICES_TO_GENERATE" ]; then
+    echo "   → Will generate secrets for:"
+    for service in $SERVICES_TO_GENERATE; do
+        echo "     • ${service}/.env.local"
+    done
+else
+    echo "   ✓ All .env.local files already exist, nothing to generate."
+    exit 0
+fi
 
 # Function to generate secure random password
 generate_password() {
@@ -111,6 +141,12 @@ update_env_file() {
     fi
 }
 
+# Function to check if a service needs secrets generated
+service_needs_secrets() {
+    local service="$1"
+    echo "$SERVICES_TO_GENERATE" | grep -q "$service"
+}
+
 # Generate shared database credentials (used by both Temporal and Keycloak)
 echo "🗄️  Generating database credentials..."
 POSTGRES_USER="dbuser"
@@ -119,10 +155,10 @@ POSTGRES_PASSWORD=$(generate_alphanumeric 32)
 # Generate MongoDB credentials
 echo "🍃 Generating MongoDB credentials..."
 MONGO_ROOT_USERNAME="xiansai_admin"
-MONGO_ROOT_PASSWORD=$(generate_alphanumeric 32)
 MONGO_APP_USERNAME="xiansai_app"
-MONGO_APP_PASSWORD=$(generate_alphanumeric 32)
 MONGO_DB_NAME="xians"
+MONGO_ROOT_PASSWORD=$(generate_alphanumeric 32)
+MONGO_APP_PASSWORD=$(generate_alphanumeric 32)
 
 # Load values from root .env file (REQUIRED)
 echo "📖 Reading configuration from root .env file..."
@@ -186,78 +222,100 @@ echo "📜 Generating SSL certificate..."
 CERT_PASSWORD=$(generate_alphanumeric 24)
 CERT_BASE64=$(generate_ssl_certificate "$CERT_PASSWORD")
 
-# Create .env.local files from .env.example templates if they don't exist
+# Create .env.local files from .env.example templates (only for services that need them)
 echo "📝 Creating .env.local files from templates..."
 
-# Copy template files to .env.local if they don't exist
-for service in keycloak postgresql temporal server mongodb; do
-
+for service in $SERVICES_TO_GENERATE; do
     example_file="${service}/.env.example"
     local_file="${service}/.env.local"
     
-    
     if [ -f "$example_file" ]; then
-        if [ ! -f "$local_file" ]; then
-            echo "   Creating $local_file from $example_file"
-            cp "$example_file" "$local_file"
-        fi
+        echo "   Creating $local_file from $example_file"
+        cp "$example_file" "$local_file"
     else
         echo "   ⚠️  Template $example_file not found, skipping..."
     fi
 done
 
-# Update PostgreSQL credentials
-echo "📝 Updating PostgreSQL credentials..."
-update_env_file "temporal/.env.local" "POSTGRES_USER" "$POSTGRES_USER"
-update_env_file "temporal/.env.local" "POSTGRES_PASSWORD" "$POSTGRES_PASSWORD"
-update_env_file "postgresql/.env.local" "POSTGRES_USER" "$POSTGRES_USER"
-update_env_file "postgresql/.env.local" "POSTGRES_PASSWORD" "$POSTGRES_PASSWORD"
+# Update PostgreSQL credentials (only for services that need them)
+if service_needs_secrets "postgresql" || service_needs_secrets "temporal"; then
+    echo "📝 Updating PostgreSQL credentials..."
+    if service_needs_secrets "temporal"; then
+        update_env_file "temporal/.env.local" "POSTGRES_USER" "$POSTGRES_USER"
+        update_env_file "temporal/.env.local" "POSTGRES_PASSWORD" "$POSTGRES_PASSWORD"
+    fi
+    if service_needs_secrets "postgresql"; then
+        update_env_file "postgresql/.env.local" "POSTGRES_USER" "$POSTGRES_USER"
+        update_env_file "postgresql/.env.local" "POSTGRES_PASSWORD" "$POSTGRES_PASSWORD"
+    fi
+fi
 
 # Update Keycloak credentials (using same DB credentials)
-echo "📝 Updating Keycloak credentials..."
-update_env_file "keycloak/.env.local" "KEYCLOAK_ADMIN_PASSWORD" "$KEYCLOAK_ADMIN_PASSWORD"
-update_env_file "keycloak/.env.local" "KC_DB_USERNAME" "$POSTGRES_USER"
-update_env_file "keycloak/.env.local" "KC_DB_PASSWORD" "$POSTGRES_PASSWORD"
+if service_needs_secrets "keycloak"; then
+    echo "📝 Updating Keycloak credentials..."
+    update_env_file "keycloak/.env.local" "KEYCLOAK_ADMIN_PASSWORD" "$KEYCLOAK_ADMIN_PASSWORD"
+    update_env_file "keycloak/.env.local" "KC_DB_USERNAME" "$POSTGRES_USER"
+    update_env_file "keycloak/.env.local" "KC_DB_PASSWORD" "$POSTGRES_PASSWORD"
+fi
 
 # Update Server secrets
-echo "📝 Updating server secrets..."
-update_env_file "server/.env.local" "Certificates__AppServerPfxBase64" "$CERT_BASE64"
-update_env_file "server/.env.local" "Certificates__AppServerCertPassword" "$CERT_PASSWORD"
-update_env_file "server/.env.local" "EncryptionKeys__BaseSecret" "$ENCRYPTION_BASE_SECRET"
-update_env_file "server/.env.local" "EncryptionKeys__UniqueSecrets__ConversationMessageKey" "$CONVERSATION_MESSAGE_KEY"
-update_env_file "server/.env.local" "EncryptionKeys__UniqueSecrets__TenantOidcSecretKey" "$TENANT_OIDC_SECRET_KEY"
+if service_needs_secrets "server"; then
+    echo "📝 Updating server secrets..."
+    update_env_file "server/.env.local" "Certificates__AppServerPfxBase64" "$CERT_BASE64"
+    update_env_file "server/.env.local" "Certificates__AppServerCertPassword" "$CERT_PASSWORD"
+    update_env_file "server/.env.local" "EncryptionKeys__BaseSecret" "$ENCRYPTION_BASE_SECRET"
+    update_env_file "server/.env.local" "EncryptionKeys__UniqueSecrets__ConversationMessageKey" "$CONVERSATION_MESSAGE_KEY"
+    update_env_file "server/.env.local" "EncryptionKeys__UniqueSecrets__TenantOidcSecretKey" "$TENANT_OIDC_SECRET_KEY"
+fi
 
 # Update MongoDB credentials
-echo "📝 Updating MongoDB credentials..."
-update_env_file "mongodb/.env.local" "MONGO_INITDB_ROOT_USERNAME" "$MONGO_ROOT_USERNAME"
-update_env_file "mongodb/.env.local" "MONGO_INITDB_ROOT_PASSWORD" "$MONGO_ROOT_PASSWORD"
-update_env_file "mongodb/.env.local" "MONGO_APP_USERNAME" "$MONGO_APP_USERNAME"
-update_env_file "mongodb/.env.local" "MONGO_APP_PASSWORD" "$MONGO_APP_PASSWORD"
-update_env_file "mongodb/.env.local" "MONGO_DB_NAME" "$MONGO_DB_NAME"
+if service_needs_secrets "mongodb"; then
+    echo "📝 Updating MongoDB credentials..."
+    update_env_file "mongodb/.env.local" "MONGO_INITDB_ROOT_USERNAME" "$MONGO_ROOT_USERNAME"
+    update_env_file "mongodb/.env.local" "MONGO_INITDB_ROOT_PASSWORD" "$MONGO_ROOT_PASSWORD"
+    update_env_file "mongodb/.env.local" "MONGO_APP_USERNAME" "$MONGO_APP_USERNAME"
+    update_env_file "mongodb/.env.local" "MONGO_APP_PASSWORD" "$MONGO_APP_PASSWORD"
+    update_env_file "mongodb/.env.local" "MONGO_DB_NAME" "$MONGO_DB_NAME"
+fi
 
-# Update server MongoDB connection string with generated credentials
-echo "📝 Updating server MongoDB connection string..."
-MONGO_CONNECTION_STRING="mongodb://${MONGO_APP_USERNAME}:${MONGO_APP_PASSWORD}@mongodb:27017/${MONGO_DB_NAME}?replicaSet=rs0&retryWrites=true&w=majority&authSource=${MONGO_DB_NAME}"
-update_env_file "server/.env.local" "MongoDB__ConnectionString" "$MONGO_CONNECTION_STRING"
-
-# Update OpenAI API key from root .env
-echo "📝 Updating OpenAI API key in server configuration..."
-update_env_file "server/.env.local" "Llm__ApiKey" "$OPENAI_API_KEY"
+# Update server MongoDB connection string and OpenAI API key
+if service_needs_secrets "server"; then
+    echo "📝 Updating server MongoDB connection string..."
+    MONGO_CONNECTION_STRING="mongodb://${MONGO_APP_USERNAME}:${MONGO_APP_PASSWORD}@mongodb:27017/${MONGO_DB_NAME}?replicaSet=rs0&retryWrites=true&w=majority&authSource=${MONGO_DB_NAME}"
+    update_env_file "server/.env.local" "MongoDB__ConnectionString" "$MONGO_CONNECTION_STRING"
+    
+    echo "📝 Updating OpenAI API key in server configuration..."
+    update_env_file "server/.env.local" "Llm__ApiKey" "$OPENAI_API_KEY"
+fi
 
 echo ""
-echo "✅ Secret recreation completed successfully!"
+echo "✅ Secret creation completed successfully!"
 echo ""
-echo "📊 Generated secrets:"
-echo "   🗄️  PostgreSQL password: ${POSTGRES_PASSWORD:0:8}... (32 chars)"
-echo "   🍃 MongoDB root password: ${MONGO_ROOT_PASSWORD:0:8}... (32 chars)"
-echo "   🍃 MongoDB app password: ${MONGO_APP_PASSWORD:0:8}... (32 chars)"
-echo "   🔐 Keycloak admin password: ${KEYCLOAK_ADMIN_PASSWORD:0:8}... (${#KEYCLOAK_ADMIN_PASSWORD} chars)"
-echo "   📜 SSL certificate password: ${CERT_PASSWORD:0:8}... (24 chars)"
-echo "   📜 SSL certificate (PFX): ${CERT_BASE64:0:32}... (base64, ~4KB)"
-echo "   🌐 WebSocket secrets: 2 secrets generated (32 chars each)"
-echo "   🔑 Encryption keys: 3 keys generated (base64 encoded)"
+echo "📊 Generated secrets for services: $SERVICES_TO_GENERATE"
+
+if service_needs_secrets "postgresql" || service_needs_secrets "temporal" || service_needs_secrets "keycloak"; then
+    echo "   🗄️  PostgreSQL password: ${POSTGRES_PASSWORD:0:8}... (32 chars)"
+fi
+
+if service_needs_secrets "mongodb"; then
+    echo "   🍃 MongoDB root password: ${MONGO_ROOT_PASSWORD:0:8}... (32 chars)"
+    echo "   🍃 MongoDB app password: ${MONGO_APP_PASSWORD:0:8}... (32 chars)"
+fi
+
+if service_needs_secrets "keycloak"; then
+    echo "   🔐 Keycloak admin password: ${KEYCLOAK_ADMIN_PASSWORD:0:8}... (${#KEYCLOAK_ADMIN_PASSWORD} chars)"
+fi
+
+if service_needs_secrets "server"; then
+    echo "   📜 SSL certificate password: ${CERT_PASSWORD:0:8}... (24 chars)"
+    echo "   📜 SSL certificate (PFX): ${CERT_BASE64:0:32}... (base64, ~4KB)"
+    echo "   🌐 WebSocket secrets: 2 secrets generated (32 chars each)"
+    echo "   🔑 Encryption keys: 3 keys generated (base64 encoded)"
+fi
 echo ""
 echo "⚠️  IMPORTANT NOTES:"
+echo "   • This script only generates secrets for services missing .env.local files"
+echo "   • Existing .env.local files are preserved and skipped"
 echo "   • All database passwords have been randomly generated for security"
 echo "   • PostgreSQL credentials are shared between Temporal and Keycloak"
 echo "   • MongoDB has separate admin and application users for security"

@@ -8,7 +8,7 @@ set -e
 echo "🗑️  Deleting .env.local files..."
 
 # Define directories to check
-DIRECTORIES=("keycloak" "postgresql" "temporal" "server")
+DIRECTORIES=("keycloak" "postgresql" "temporal" "server" "mongodb")
 
 # Counter for deleted files
 deleted_count=0

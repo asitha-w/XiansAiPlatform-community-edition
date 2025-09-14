@@ -2,31 +2,12 @@
 
 Welcome to the XiansAi Platform Community Edition! This repository provides a simple Docker Compose setup to get you started with the XiansAi platform quickly and easily.
 
-## ⚠️ Important Disclaimer
-
-**This community edition Docker Compose setup is NOT intended for production deployments.** It is designed specifically for local agent development and testing purposes only.
-
-**Why not for production:**
-
-- Uses default/example credentials and secrets
-- No proper SSL/TLS certificate configuration
-- Missing production-grade security hardening
-- Simplified configuration not suitable for production environments
-- No unique secrets or certificates in the setup scripts
-
-**For production deployments**, please use proper enterprise-grade configurations with:
-
-- Unique, secure credentials and secrets
-- SSL/TLS certificates
-- Production-grade security configurations
-- Proper environment isolation and access controls
-
 ## 🚀 Quick Start
 
 ### Prerequisites
 
 - Docker and Docker Compose installed on your system
-- At least 4GB of available RAM (8GB recommended)
+- 8GB of available RAM
 - Internet connection to download the Docker images
 
 **💡 New to the project?** Check out our **[Complete Setup Guide](docs/SETUP_GUIDE.md)** for detailed step-by-step instructions.
@@ -42,32 +23,33 @@ Welcome to the XiansAi Platform Community Edition! This repository provides a si
 
 2. **Configure your environment:**
 
-   **********
-   Set the ***Llm__ApiKey*** in `server/.env.local`
    ```bash
-   Llm__ApiKey=your-openai-api-key
+   # Copy the example environment file
+   cp .env.example .env
    ```
 
-   Alternatively, create an .env file on the repo rool directory and add the Api Key
-   ```bash
-   Llm__ApiKey=your-openai-api-key
-   ```
-   **********
+   Edit the `.env` file and add your configuration:
+   - `OPENAI_API_KEY`: Your OpenAI API key for AI functionality
+   - `KEYCLOAK_ADMIN_PASSWORD`: Password for the admin user to login to XiansAi UI
 
-4. **Start the platform:**
+   Example:
+
+   ```bash
+   OPENAI_API_KEY=sk-your-openai-api-key-here
+   KEYCLOAK_ADMIN_PASSWORD=your-secure-password
+   ```
+
+3. **Generate additional secrets:**
+
+   ```bash
+   ./scripts/create-secrets.sh
+   ```
+
+5. **Start the platform:**
 
    ```bash
    # Start with defaults (latest version, local environment)
    ./start-all.sh
-   
-   # Start with specific version
-   ./start-all.sh -v v2.0.2
-   
-   # Start with specific environment
-   ./start-all.sh -e production
-   
-   # Start with specific version and environment
-   ./start-all.sh -v v2.0.2 -e staging
 
    # Show help for all options
    ./start-all.sh --help
@@ -79,22 +61,15 @@ Welcome to the XiansAi Platform Community Edition! This repository provides a si
    - `./reset-all.sh [options]` - Complete reset and cleanup (removes all data)
    - `./pull-latest.sh [options]` - Pull latest Docker images from DockerHub
 
-5. **Access the applications:**
+6. **Access the applications:**
 
    - **XiansAi UI**: [http://localhost:3001](http://localhost:3001)
+    use the credentials `admin` / `KEYCLOAK_ADMIN_PASSWORD`
    - **XiansAi Server API**: [http://localhost:5001/api-docs](http://localhost:5001/api-docs)
    - **Keycloak Admin Console**: [http://localhost:18080/admin](http://localhost:18080/admin)
+    credentials are found in  `admin` / `KEYCLOAK_ADMIN_PASSWORD`
    - **Temporal Web UI**: [http://localhost:8080](http://localhost:8080)
-
-## 🔧 Quick Troubleshooting
-
-**Common Issues:**
-- **Container conflicts**: `./reset-all.sh -f` then `./start-all.sh`
-- **Port conflicts**: Check what's using the port with `lsof -i :PORT`
-- **Environment variables**: The project uses `.env.local` files (already included)
-- **API key issues**: Set `Llm__ApiKey` in `server/.env.local`
-
-**📖 For detailed troubleshooting:** See our **[Troubleshooting Guide](docs/TROUBLESHOOTING.md)**
+   - **Xians Database Access**: Connection string can be found under `MongoDB__ConnectionString` in `server\.env.local` file
 
 ## 📋 Configuration
 
