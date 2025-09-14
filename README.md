@@ -21,7 +21,7 @@ Welcome to the XiansAi Platform Community Edition! This repository provides a si
    cd community-edition
    ```
 
-2. **Configure your environment:**
+1. **Configure your environment:**
 
    ```bash
    # Copy the example environment file
@@ -39,13 +39,7 @@ Welcome to the XiansAi Platform Community Edition! This repository provides a si
    KEYCLOAK_ADMIN_PASSWORD=your-secure-password
    ```
 
-3. **Generate additional secrets:**
-
-   ```bash
-   ./scripts/create-secrets.sh
-   ```
-
-5. **Start the platform:**
+1. **Start the platform:**
 
    ```bash
    # Start with defaults (latest version, local environment)
@@ -70,15 +64,14 @@ Welcome to the XiansAi Platform Community Edition! This repository provides a si
    | Application | URL | Purpose | Credentials |
    |-------------|-----|---------|-------------|
    | **XiansAi Platform** | [http://localhost:3001](http://localhost:3001) | Main AI platform interface | `admin` / `KEYCLOAK_ADMIN_PASSWORD` |
+   | **Temporal Web UI** | [http://localhost:8080](http://localhost:8080) | Workflow orchestration dashboard |  `admin` / `KEYCLOAK_ADMIN_PASSWORD`|
    | **Keycloak Admin** | [http://localhost:18080/admin](http://localhost:18080/admin) | Identity & access management | `admin` / `KEYCLOAK_ADMIN_PASSWORD` |
-   | **Temporal Web UI** | [http://localhost:8080](http://localhost:8080) | Workflow orchestration dashboard | SSO via Keycloak |
    | **API Documentation** | [http://localhost:5001/api-docs](http://localhost:5001/api-docs) | Interactive API documentation | No authentication required |
 
    ### 🔐 Authentication Notes
 
    - **Default Username**: `admin` for both XiansAi Platform and Keycloak
    - **Password**: Use the value you set for `KEYCLOAK_ADMIN_PASSWORD` in your `.env` file
-   - **Temporal UI**: Uses Keycloak SSO (Single Sign-On) - login with the same admin credentials
 
    ### 🖥️ Host Configuration (Required for some services)
 
@@ -99,10 +92,12 @@ Welcome to the XiansAi Platform Community Edition! This repository provides a si
    **MongoDB Connection**: The connection string is available in `server/.env.local` under `MongoDB__ConnectionString`.
 
    **Direct Database Access**:
+
    ```bash
    # Using MongoDB Compass or similar tools
    # Connection string format: mongodb://mongodb:27017/xiansai
    # Replace 'mongodb' with 'localhost' if host entry not added
+   # Find the connection string in generate `server/.env.local` file.
    ```
 
    ### ✅ Verify Services are Running
@@ -113,9 +108,10 @@ Welcome to the XiansAi Platform Community Edition! This repository provides a si
 
    # Test service endpoints
    curl -s http://localhost:3001 > /dev/null && echo "✅ XiansAi UI is running"
+   curl -s http://localhost:8080 > /dev/null && echo "✅ Temporal UI is running"
    curl -s http://localhost:5001/api-docs > /dev/null && echo "✅ XiansAi Server is running"
    curl -s http://localhost:18080 > /dev/null && echo "✅ Keycloak is running"
-   curl -s http://localhost:8080 > /dev/null && echo "✅ Temporal UI is running"
+
    ```
 
 ## 📋 Configuration
@@ -157,9 +153,6 @@ Welcome to the XiansAi Platform Community Edition! This repository provides a si
 # Development setup (default)
 ./start-all.sh
 
-# Staging environment with specific version
-./start-all.sh -v v2.0.2 -e staging
-
 # Production environment
 ./start-all.sh -v v2.1.0 -e production
 
@@ -187,33 +180,6 @@ docker compose logs -f xiansai-server
 docker compose logs -f xiansai-ui
 ```
 
-## 🔧 Management Commands
-
-### Available Scripts
-
-| Script | Purpose | Key Options |
-|--------|---------|-------------|
-| `./start-all.sh` | Start all services | `-v` (version), `-e` (environment) |
-| `./stop-all.sh` | Stop all services | None |
-| `./pull-latest.sh` | Pull latest images | `-v` (version) |
-| `./reset-all.sh` | Complete platform reset | `-f` (force) |
-
-### Common Workflows
-
-```bash
-# Fresh setup
-./pull-latest.sh          # Pull latest images
-./start-all.sh            # Start services
-
-# Update to new version
-./stop-all.sh             # Stop current services
-./pull-latest.sh -v v2.1.0 # Pull new version
-./start-all.sh -v v2.1.0   # Start with new version
-
-# Complete reset and restart
-./reset-all.sh -f         # Reset everything
-./start-all.sh            # Start fresh
-```
 
 ## 🏗️ Platform Architecture
 
