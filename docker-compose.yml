@@ -9,6 +9,8 @@ services:
     command: bash /mongo-startup.sh
     ports:
       - "27017:27017"
+    env_file:
+      - mongodb/.env.${ENV_POSTFIX:-local}
     volumes:
       - mongodb_data:/data/db
       - mongodb_configdb:/data/configdb
@@ -17,7 +19,7 @@ services:
     networks:
       - xians-community-edition
     healthcheck:
-      test: ["CMD", "mongosh", "--eval", "rs.status().members[0].stateStr" ]
+      test: ["CMD", "mongosh", "--file", "/mongo-healthcheck.js"]
       interval: 15s
       timeout: 10s
       retries: 10

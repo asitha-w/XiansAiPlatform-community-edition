@@ -116,6 +116,14 @@ echo "🗄️  Generating database credentials..."
 POSTGRES_USER="dbuser"
 POSTGRES_PASSWORD=$(generate_alphanumeric 32)
 
+# Generate MongoDB credentials
+echo "🍃 Generating MongoDB credentials..."
+MONGO_ROOT_USERNAME="xiansai_admin"
+MONGO_ROOT_PASSWORD=$(generate_alphanumeric 32)
+MONGO_APP_USERNAME="xiansai_app"
+MONGO_APP_PASSWORD=$(generate_alphanumeric 32)
+MONGO_DB_NAME="xians"
+
 # Load values from root .env file (REQUIRED)
 echo "📖 Reading configuration from root .env file..."
 # Get the directory where this script is located
@@ -182,7 +190,7 @@ CERT_BASE64=$(generate_ssl_certificate "$CERT_PASSWORD")
 echo "📝 Creating .env.local files from templates..."
 
 # Copy template files to .env.local if they don't exist
-for service in keycloak postgresql temporal server; do
+for service in keycloak postgresql temporal server mongodb; do
 
     example_file="${service}/.env.example"
     local_file="${service}/.env.local"
@@ -219,6 +227,19 @@ update_env_file "server/.env.local" "EncryptionKeys__BaseSecret" "$ENCRYPTION_BA
 update_env_file "server/.env.local" "EncryptionKeys__UniqueSecrets__ConversationMessageKey" "$CONVERSATION_MESSAGE_KEY"
 update_env_file "server/.env.local" "EncryptionKeys__UniqueSecrets__TenantOidcSecretKey" "$TENANT_OIDC_SECRET_KEY"
 
+# Update MongoDB credentials
+echo "📝 Updating MongoDB credentials..."
+update_env_file "mongodb/.env.local" "MONGO_INITDB_ROOT_USERNAME" "$MONGO_ROOT_USERNAME"
+update_env_file "mongodb/.env.local" "MONGO_INITDB_ROOT_PASSWORD" "$MONGO_ROOT_PASSWORD"
+update_env_file "mongodb/.env.local" "MONGO_APP_USERNAME" "$MONGO_APP_USERNAME"
+update_env_file "mongodb/.env.local" "MONGO_APP_PASSWORD" "$MONGO_APP_PASSWORD"
+update_env_file "mongodb/.env.local" "MONGO_DB_NAME" "$MONGO_DB_NAME"
+
+# Update server MongoDB connection string with generated credentials
+echo "📝 Updating server MongoDB connection string..."
+MONGO_CONNECTION_STRING="mongodb://${MONGO_APP_USERNAME}:${MONGO_APP_PASSWORD}@mongodb:27017/${MONGO_DB_NAME}?replicaSet=rs0&retryWrites=true&w=majority&authSource=${MONGO_DB_NAME}"
+update_env_file "server/.env.local" "MongoDB__ConnectionString" "$MONGO_CONNECTION_STRING"
+
 # Update OpenAI API key from root .env
 echo "📝 Updating OpenAI API key in server configuration..."
 update_env_file "server/.env.local" "Llm__ApiKey" "$OPENAI_API_KEY"
@@ -228,15 +249,18 @@ echo "✅ Secret recreation completed successfully!"
 echo ""
 echo "📊 Generated secrets:"
 echo "   🗄️  PostgreSQL password: ${POSTGRES_PASSWORD:0:8}... (32 chars)"
-echo "   🔐 Keycloak admin password: ${KEYCLOAK_ADMIN_PASSWORD:0:8}... (16 chars)"
+echo "   🍃 MongoDB root password: ${MONGO_ROOT_PASSWORD:0:8}... (32 chars)"
+echo "   🍃 MongoDB app password: ${MONGO_APP_PASSWORD:0:8}... (32 chars)"
+echo "   🔐 Keycloak admin password: ${KEYCLOAK_ADMIN_PASSWORD:0:8}... (${#KEYCLOAK_ADMIN_PASSWORD} chars)"
 echo "   📜 SSL certificate password: ${CERT_PASSWORD:0:8}... (24 chars)"
 echo "   📜 SSL certificate (PFX): ${CERT_BASE64:0:32}... (base64, ~4KB)"
 echo "   🌐 WebSocket secrets: 2 secrets generated (32 chars each)"
 echo "   🔑 Encryption keys: 3 keys generated (base64 encoded)"
 echo ""
 echo "⚠️  IMPORTANT NOTES:"
-echo "   • Database passwords have been randomly generated for security"
-echo "   • Database credentials are shared between Temporal and Keycloak"
+echo "   • All database passwords have been randomly generated for security"
+echo "   • PostgreSQL credentials are shared between Temporal and Keycloak"
+echo "   • MongoDB has separate admin and application users for security"
 echo "   • Keycloak admin password and OpenAI API key are read from root .env file (REQUIRED)"
 echo "   • Root .env file must exist and contain valid OPENAI_API_KEY and KEYCLOAK_ADMIN_PASSWORD"
 echo "   • These secrets are now stored in .env.local files (not in git)"

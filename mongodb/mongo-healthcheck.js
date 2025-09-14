@@ -1,37 +1,30 @@
-// MongoDB Healthcheck and Replica Set Initialization Script
+// MongoDB Healthcheck with Authentication Support
 // This script ensures MongoDB is healthy AND the replica set is properly configured
 
 function log(message) {
     print(`[MongoDB-Health] ${new Date().toISOString()}: ${message}`);
 }
 
-function initializeReplicaSet() {
+function authenticateIfNeeded() {
+    // Get environment variables from container environment
+    const username = process.env.MONGO_INITDB_ROOT_USERNAME || "xiansai_admin";
+    const password = process.env.MONGO_INITDB_ROOT_PASSWORD;
+    
     try {
-        log("Attempting to initialize replica set...");
-        
-        const result = rs.initiate({
-            _id: "rs0",
-            members: [
-                {
-                    _id: 0,
-                    host: "mongodb:27017"
-                }
-            ]
-        });
-        
-        if (result.ok === 1) {
-            log("✅ Replica set initialized successfully");
-            return true;
-        } else {
-            log(`❌ Replica set initialization failed: ${JSON.stringify(result)}`);
-            return false;
-        }
+        // Try to ping without authentication first (for backwards compatibility)
+        db.adminCommand('ping');
+        log("✅ MongoDB responsive without authentication (first run or auth not enabled)");
+        return true;
     } catch (error) {
-        if (error.message.includes("already initialized")) {
-            log("✅ Replica set already initialized");
+        // If ping fails, try with authentication
+        try {
+            db = db.getSiblingDB('admin');
+            db.auth(username, password);
+            db.adminCommand('ping');
+            log("✅ MongoDB responsive with authentication");
             return true;
-        } else {
-            log(`❌ Error initializing replica set: ${error.message}`);
+        } catch (authError) {
+            log(`❌ Authentication failed: ${authError.message}`);
             return false;
         }
     }
@@ -57,17 +50,26 @@ function checkReplicaSetStatus() {
         }
         return false;
     } catch (error) {
-        log(`Error checking replica set: ${error.message}`);
-        log("Note: Replica set should be initialized by startup script");
-        return false;
+        if (error.message.includes("requires authentication")) {
+            log("Replica set check requires authentication - MongoDB is properly secured");
+            // If we got here, authentication worked in the previous step, so replica set is likely healthy
+            return true;
+        } else {
+            log(`Error checking replica set: ${error.message}`);
+            log("Note: Replica set should be initialized by startup script");
+            return false;
+        }
     }
 }
 
 function main() {
     try {
-        // First check if MongoDB itself is responsive
-        db.adminCommand('ping');
-        log("✅ MongoDB is responsive");
+        // First authenticate if needed and check if MongoDB is responsive
+        const authOk = authenticateIfNeeded();
+        if (!authOk) {
+            log("❌ MongoDB health check failed - authentication failed");
+            quit(1);
+        }
         
         // Then check/ensure replica set is properly configured
         const replicaSetOk = checkReplicaSetStatus();

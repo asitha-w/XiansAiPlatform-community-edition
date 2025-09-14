@@ -34,15 +34,15 @@ done
 
 # Stop Temporal services first
 echo "⚡ Stopping Temporal services..."
-docker compose -p $COMPOSE_PROJECT_NAME -f temporal/docker-compose.yml down
+docker compose -p $COMPOSE_PROJECT_NAME -f temporal/docker-compose.yml --env-file temporal/.env.local down
 
 # Stop Keycloak service
 echo "🔐 Stopping Keycloak service..."
-docker compose -p $COMPOSE_PROJECT_NAME -f keycloak/docker-compose.yml down
+docker compose -p $COMPOSE_PROJECT_NAME -f keycloak/docker-compose.yml --env-file keycloak/.env.local down
 
 # Stop PostgreSQL service
 echo "🗄️  Stopping PostgreSQL service..."
-docker compose -p $COMPOSE_PROJECT_NAME -f postgresql/docker-compose.yml down
+docker compose -p $COMPOSE_PROJECT_NAME -f postgresql/docker-compose.yml --env-file postgresql/.env.local down
 
 # Stop main application services
 echo "🔧 Stopping main application services..."
