@@ -113,7 +113,7 @@ update_env_file() {
 
 # Generate shared database credentials (used by both Temporal and Keycloak)
 echo "🗄️  Generating database credentials..."
-POSTGRES_USER="temporal"
+POSTGRES_USER="dbuser"
 POSTGRES_PASSWORD=$(generate_alphanumeric 32)
 
 # Load values from root .env file (REQUIRED)

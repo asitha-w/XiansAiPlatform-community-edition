@@ -14,7 +14,7 @@ services:
       # Database Configuration
       - KC_DB=postgres
       - KC_DB_URL=jdbc:postgresql://postgresql:5432/${KC_DB_NAME:-keycloak}
-      - KC_DB_USERNAME=${KC_DB_USERNAME:-temporal}
+      - KC_DB_USERNAME=${KC_DB_USERNAME:-dbuser}
       - KC_DB_PASSWORD=${KC_DB_PASSWORD}
       
       # Keycloak Configuration

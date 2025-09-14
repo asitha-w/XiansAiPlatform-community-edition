@@ -10,11 +10,11 @@ echo "🔧 Initializing Keycloak database..."
 # Configuration
 POSTGRES_HOST=${POSTGRES_HOST:-postgresql}
 POSTGRES_PORT=${POSTGRES_PORT:-5432}
-POSTGRES_USER=${POSTGRES_USER:-temporal}
-POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres-password}
+POSTGRES_USER=${POSTGRES_USER:-dbuser}
+POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
 KC_DB_NAME=${KC_DB_NAME:-keycloak}
 KC_DB_USER=${KC_DB_USER:-keycloak}
-KC_DB_PASSWORD=${KC_DB_PASSWORD:-temporal}
+KC_DB_PASSWORD=${KC_DB_PASSWORD}
 
 # Wait for PostgreSQL to be ready
 echo "⏳ Waiting for PostgreSQL to be ready..."
