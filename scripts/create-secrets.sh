@@ -217,6 +217,10 @@ ENCRYPTION_BASE_SECRET=$(generate_base64_secret 64)
 CONVERSATION_MESSAGE_KEY=$(generate_base64_secret 32)
 TENANT_OIDC_SECRET_KEY=$(generate_base64_secret 32)
 
+# Generate Temporal UI client secret
+echo "⏰ Generating Temporal UI client secret..."
+TEMPORAL_UI_CLIENT_SECRET=$(generate_alphanumeric 48)
+
 # Generate SSL certificate and password
 echo "📜 Generating SSL certificate..."
 CERT_PASSWORD=$(generate_alphanumeric 24)
@@ -250,12 +254,19 @@ if service_needs_secrets "postgresql" || service_needs_secrets "temporal"; then
     fi
 fi
 
+# Update Temporal UI client secret
+if service_needs_secrets "temporal"; then
+    echo "📝 Updating Temporal UI client secret..."
+    update_env_file "temporal/.env.local" "TEMPORAL_UI_CLIENT_SECRET" "$TEMPORAL_UI_CLIENT_SECRET"
+fi
+
 # Update Keycloak credentials (using same DB credentials)
 if service_needs_secrets "keycloak"; then
     echo "📝 Updating Keycloak credentials..."
     update_env_file "keycloak/.env.local" "KEYCLOAK_ADMIN_PASSWORD" "$KEYCLOAK_ADMIN_PASSWORD"
     update_env_file "keycloak/.env.local" "KC_DB_USERNAME" "$POSTGRES_USER"
     update_env_file "keycloak/.env.local" "KC_DB_PASSWORD" "$POSTGRES_PASSWORD"
+    update_env_file "keycloak/.env.local" "TEMPORAL_UI_CLIENT_SECRET" "$TEMPORAL_UI_CLIENT_SECRET"
 fi
 
 # Update Server secrets
@@ -304,6 +315,10 @@ fi
 
 if service_needs_secrets "keycloak"; then
     echo "   🔐 Keycloak admin password: ${KEYCLOAK_ADMIN_PASSWORD:0:8}... (${#KEYCLOAK_ADMIN_PASSWORD} chars)"
+fi
+
+if service_needs_secrets "temporal"; then
+    echo "   ⏰ Temporal UI client secret: ${TEMPORAL_UI_CLIENT_SECRET:0:8}... (48 chars)"
 fi
 
 if service_needs_secrets "server"; then

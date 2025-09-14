@@ -84,11 +84,28 @@ import_realm() {
     
     echo "📤 Importing realm from $realm_file..."
     
+    # Create temporary file with environment variables substituted
+    local temp_file=$(mktemp)
+    echo "🔄 Substituting environment variables..."
+    
+    # Load environment variables from .env.local if it exists
+    if [ -f ".env.local" ]; then
+        set -a  # automatically export all variables
+        source .env.local
+        set +a  # stop automatically exporting
+    fi
+    
+    # Substitute environment variables in the realm file
+    envsubst < "$realm_file" > "$temp_file"
+    
     local response=$(curl -s -X POST "$KEYCLOAK_URL/admin/realms" \
         -H "Authorization: Bearer $token" \
         -H "Content-Type: application/json" \
-        -d @"$realm_file" \
+        -d @"$temp_file" \
         -w "%{http_code}")
+    
+    # Clean up temporary file
+    rm -f "$temp_file"
     
     local http_code="${response: -3}"
     local body="${response%???}"
@@ -113,11 +130,28 @@ update_realm() {
     
     echo "🔄 Updating existing realm: $realm_name"
     
+    # Create temporary file with environment variables substituted
+    local temp_file=$(mktemp)
+    echo "🔄 Substituting environment variables..."
+    
+    # Load environment variables from .env.local if it exists
+    if [ -f ".env.local" ]; then
+        set -a  # automatically export all variables
+        source .env.local
+        set +a  # stop automatically exporting
+    fi
+    
+    # Substitute environment variables in the realm file
+    envsubst < "$realm_file" > "$temp_file"
+    
     local response=$(curl -s -X PUT "$KEYCLOAK_URL/admin/realms/$realm_name" \
         -H "Authorization: Bearer $token" \
         -H "Content-Type: application/json" \
-        -d @"$realm_file" \
+        -d @"$temp_file" \
         -w "%{http_code}")
+    
+    # Clean up temporary file
+    rm -f "$temp_file"
     
     local http_code="${response: -3}"
     local body="${response%???}"

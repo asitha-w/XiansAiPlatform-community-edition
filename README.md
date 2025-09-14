@@ -63,13 +63,60 @@ Welcome to the XiansAi Platform Community Edition! This repository provides a si
 
 6. **Access the applications:**
 
-   - **XiansAi UI**: [http://localhost:3001](http://localhost:3001)
-    use the credentials `admin` / `KEYCLOAK_ADMIN_PASSWORD`
-   - **XiansAi Server API**: [http://localhost:5001/api-docs](http://localhost:5001/api-docs)
-   - **Keycloak Admin Console**: [http://localhost:18080/admin](http://localhost:18080/admin)
-    credentials are found in  `admin` / `KEYCLOAK_ADMIN_PASSWORD`
-   - **Temporal Web UI**: [http://localhost:8080](http://localhost:8080)
-   - **Xians Database Access**: Connection string can be found under `MongoDB__ConnectionString` in `server\.env.local` file
+   > ⏱️ **Startup Time**: Allow 2-3 minutes for all services to fully initialize. Check logs with `docker compose logs -f` if services seem unresponsive.
+
+   ### 🌐 Web Applications
+
+   | Application | URL | Purpose | Credentials |
+   |-------------|-----|---------|-------------|
+   | **XiansAi Platform** | [http://localhost:3001](http://localhost:3001) | Main AI platform interface | `admin` / `KEYCLOAK_ADMIN_PASSWORD` |
+   | **Keycloak Admin** | [http://localhost:18080/admin](http://localhost:18080/admin) | Identity & access management | `admin` / `KEYCLOAK_ADMIN_PASSWORD` |
+   | **Temporal Web UI** | [http://localhost:8080](http://localhost:8080) | Workflow orchestration dashboard | SSO via Keycloak |
+   | **API Documentation** | [http://localhost:5001/api-docs](http://localhost:5001/api-docs) | Interactive API documentation | No authentication required |
+
+   ### 🔐 Authentication Notes
+
+   - **Default Username**: `admin` for both XiansAi Platform and Keycloak
+   - **Password**: Use the value you set for `KEYCLOAK_ADMIN_PASSWORD` in your `.env` file
+   - **Temporal UI**: Uses Keycloak SSO (Single Sign-On) - login with the same admin credentials
+
+   ### 🖥️ Host Configuration (Required for some services)
+
+   Some services require host file entries to work properly. Add these entries **only once**:
+
+   ```bash
+   # Check if entries already exist to avoid duplicates
+   grep -q "keycloak" /etc/hosts || echo "127.0.0.1   keycloak" | sudo tee -a /etc/hosts
+   grep -q "mongodb" /etc/hosts || echo "127.0.0.1   mongodb" | sudo tee -a /etc/hosts
+   ```
+
+   **What these entries do:**
+   - `keycloak`: Enables Temporal Web UI to authenticate via Keycloak SSO
+   - `mongodb`: Allows direct database access tools to connect to the containerized MongoDB
+
+   ### 💾 Database Access
+
+   **MongoDB Connection**: The connection string is available in `server/.env.local` under `MongoDB__ConnectionString`.
+
+   **Direct Database Access**:
+   ```bash
+   # Using MongoDB Compass or similar tools
+   # Connection string format: mongodb://mongodb:27017/xiansai
+   # Replace 'mongodb' with 'localhost' if host entry not added
+   ```
+
+   ### ✅ Verify Services are Running
+
+   ```bash
+   # Check all service status
+   docker compose ps
+
+   # Test service endpoints
+   curl -s http://localhost:3001 > /dev/null && echo "✅ XiansAi UI is running"
+   curl -s http://localhost:5001/api-docs > /dev/null && echo "✅ XiansAi Server is running"
+   curl -s http://localhost:18080 > /dev/null && echo "✅ Keycloak is running"
+   curl -s http://localhost:8080 > /dev/null && echo "✅ Temporal UI is running"
+   ```
 
 ## 📋 Configuration
 
