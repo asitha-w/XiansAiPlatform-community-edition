@@ -13,7 +13,7 @@ echo "🔍 Checking which services need .env.local files..."
 SERVICES_TO_GENERATE=""
 EXISTING_FILES=""
 
-for service in keycloak postgresql temporal server mongodb; do
+for service in keycloak postgresql temporal server mongodb ui; do
     if [ -f "${service}/.env.local" ]; then
         EXISTING_FILES="${EXISTING_FILES}${service} "
     else
@@ -309,6 +309,12 @@ if service_needs_secrets "server"; then
     update_env_file "server/.env.local" "Llm__ApiKey" "$OPENAI_API_KEY"
 fi
 
+# Update UI configuration
+if service_needs_secrets "ui"; then
+    echo "📝 Updating UI configuration..."
+    update_env_file "ui/.env.local" "HOST_IP" "$HOST_IP"
+fi
+
 echo ""
 echo "✅ Secret creation completed successfully!"
 echo ""
@@ -336,6 +342,10 @@ if service_needs_secrets "server"; then
     echo "   📜 SSL certificate (PFX): ${CERT_BASE64:0:32}... (base64, ~4KB)"
     echo "   🌐 WebSocket secrets: 2 secrets generated (32 chars each)"
     echo "   🔑 Encryption keys: 3 keys generated (base64 encoded)"
+fi
+
+if service_needs_secrets "ui"; then
+    echo "   🖥️  UI Host IP: $HOST_IP"
 fi
 echo ""
 echo "⚠️  IMPORTANT NOTES:"
