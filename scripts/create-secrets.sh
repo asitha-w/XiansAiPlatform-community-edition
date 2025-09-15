@@ -261,10 +261,11 @@ if service_needs_secrets "postgresql" || service_needs_secrets "temporal"; then
     fi
 fi
 
-# Update Temporal UI client secret
+# Update Temporal UI client secret and HOST_IP
 if service_needs_secrets "temporal"; then
-    echo "📝 Updating Temporal UI client secret..."
+    echo "📝 Updating Temporal UI client secret and HOST_IP..."
     update_env_file "temporal/.env.local" "TEMPORAL_UI_CLIENT_SECRET" "$TEMPORAL_UI_CLIENT_SECRET"
+    update_env_file "temporal/.env.local" "HOST_IP" "$HOST_IP"
 fi
 
 # Update Keycloak credentials (using same DB credentials)
