@@ -116,7 +116,15 @@ fi
 
 # Verify setup
 echo "Verifying setup..."
-curl -s "$ES_URL/$INDEX_NAME/_mapping" | python3 -m json.tool
+# Try python3, then python, then just output without formatting
+if command -v python3 &> /dev/null; then
+    curl -s "$ES_URL/$INDEX_NAME/_mapping" | python3 -m json.tool
+elif command -v python &> /dev/null; then
+    curl -s "$ES_URL/$INDEX_NAME/_mapping" | python -m json.tool
+else
+    echo "Python not found. Displaying unformatted output:"
+    curl -s "$ES_URL/$INDEX_NAME/_mapping"
+fi
 
 echo ""
 echo "Elasticsearch setup completed successfully!"
