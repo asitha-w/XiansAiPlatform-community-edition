@@ -71,13 +71,11 @@ services:
     container_name: temporal-ui
     depends_on:
       - temporal
-    extra_hosts:
-      - "keycloak:host-gateway"
     environment:
       - TEMPORAL_ADDRESS=temporal:7233
       - TEMPORAL_AUTH_ENABLED=true
-      - TEMPORAL_AUTH_PROVIDER_URL=http://keycloak:18080/realms/xiansai
-      - TEMPORAL_AUTH_ISSUER_URL=http://keycloak:18080/realms/xiansai
+      - TEMPORAL_AUTH_PROVIDER_URL=http://host.docker.internal:18080/realms/xiansai
+      - TEMPORAL_AUTH_ISSUER_URL=http://host.docker.internal:18080/realms/xiansai
       - TEMPORAL_AUTH_CLIENT_ID=temporal-ui
       - TEMPORAL_AUTH_CLIENT_SECRET=${TEMPORAL_UI_CLIENT_SECRET}
       - TEMPORAL_AUTH_CALLBACK_URL=http://${HOST_IP}:8080/auth/sso/callback

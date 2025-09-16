@@ -266,6 +266,13 @@ if service_needs_secrets "temporal"; then
     echo "📝 Updating Temporal UI client secret and HOST_IP..."
     update_env_file "temporal/.env.local" "TEMPORAL_UI_CLIENT_SECRET" "$TEMPORAL_UI_CLIENT_SECRET"
     update_env_file "temporal/.env.local" "HOST_IP" "$HOST_IP"
+
+    # Use host.docker.internal for temporal when HOST_IP is localhost
+    if [ "$HOST_IP" = "localhost" ]; then
+        update_env_file "temporal/.env.local" "KEYCLOAK_IP" "host.docker.internal"
+    else
+        update_env_file "temporal/.env.local" "KEYCLOAK_IP" "$HOST_IP"
+    fi
 fi
 
 # Update Keycloak credentials (using same DB credentials)
