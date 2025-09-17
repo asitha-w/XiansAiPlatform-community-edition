@@ -24,6 +24,13 @@ services:
       - KC_HOSTNAME_STRICT=false
       - KC_HOSTNAME_STRICT_HTTPS=false
       
+      # Proxy Configuration for HTTPS reverse proxy
+      #- KC_PROXY=edge
+      #- KC_PROXY_HEADERS=xforwarded
+      #- KC_HOSTNAME_STRICT_BACKCHANNEL=false
+      - KC_HOSTNAME=${KEYCLOAK_HOST}
+      - KC_HOSTNAME_ADMIN=${KEYCLOAK_HOST}
+      
       # Development Settings
       - SERVICE_TYPE=--web
       - ASPNETCORE_ENVIRONMENT=Development

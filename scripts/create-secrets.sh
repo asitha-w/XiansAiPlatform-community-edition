@@ -236,6 +236,8 @@ if service_needs_secrets "keycloak"; then
     echo "📝 Updating Keycloak URL variables..."
     update_env_file "keycloak/.env.local" "TEMPORAL_HOST" "$TEMPORAL_HOST"
     update_env_file "keycloak/.env.local" "XIANSUI_HOST" "$XIANSUI_HOST"
+
+    update_env_file "keycloak/.env.local" "KEYCLOAK_HOST" "$KEYCLOAK_HOST"
 fi
 
 # Update Server secrets
