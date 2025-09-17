@@ -7,6 +7,7 @@ Welcome to the XiansAi Platform Community Edition! This repository provides a si
 ### Prerequisites
 
 - Docker and Docker Compose installed on your system
+- Device's host file containing the entry `host.docker.internal -> 127.0.0.1`
 - 8GB of available RAM
 - Internet connection to download the Docker images
 
