@@ -1,9 +1,9 @@
 # Deployment
 
-1. ssh to the VM machine
+1. ssh to the VM machine. e.g.,
 
 ```bash
-ssh username@172.191.111.122
+ssh xiansadmin@172.191.111.122
 ```
 
 1. Clone the repository
@@ -23,12 +23,12 @@ cp .env.example .env
 vi .env
 # change  DOMAIN=prod.xiansai.net to the domain name assigned to this vm
 # DNS   A   *prod.xiansai.net   <vm's ip>
+source .env 
 ```
 
 1. Setup https with a new certificate
 
 ```bash
-cd deploy/nginx
 ./setup-production-https.sh
 
 ```
@@ -36,7 +36,7 @@ cd deploy/nginx
 1. Configure xians deployment
 
 ```bash
-
+cd ../..
 cd .env.sample .env
 vi .env
 # Change the befolow configuration. For example

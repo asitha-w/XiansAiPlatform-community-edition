@@ -247,6 +247,9 @@ if service_needs_secrets "server"; then
     update_env_file "server/.env.local" "EncryptionKeys__UniqueSecrets__ConversationMessageKey" "$CONVERSATION_MESSAGE_KEY"
     update_env_file "server/.env.local" "EncryptionKeys__UniqueSecrets__TenantOidcSecretKey" "$TENANT_OIDC_SECRET_KEY"
 
+    echo "📝 Updating server CORS configuration..."
+    update_env_file "server/.env.local" "Cors__AllowedOrigins__1" "$XIANSUI_HOST"
+
     echo "📝 Updating server MongoDB connection string..."
     MONGO_CONNECTION_STRING="mongodb://${MONGO_APP_USERNAME}:${MONGO_APP_PASSWORD}@mongodb:27017/${MONGO_DB_NAME}?replicaSet=rs0&retryWrites=true&w=majority&authSource=${MONGO_DB_NAME}"
     update_env_file "server/.env.local" "MongoDB__ConnectionString" "$MONGO_CONNECTION_STRING"
