@@ -51,20 +51,20 @@
       "clientId": "xiansai-ui",
       "name": "XianAI UI Client",
       "description": "Frontend application client for XianAI Platform",
-      "rootUrl": "${UI_HOST_URL}",
-      "adminUrl": "${UI_HOST_URL}",
-      "baseUrl": "${UI_HOST_URL}",
+      "rootUrl": "${XIANSUI_HOST}",
+      "adminUrl": "${XIANSUI_HOST}",
+      "baseUrl": "${XIANSUI_HOST}",
       "surrogateAuthRequired": false,
       "enabled": true,
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
       "redirectUris": [
-        "${UI_HOST_URL_REDIRECT_1}",
-        "${UI_HOST_URL_REDIRECT_2}"
+        "${XIANSUI_HOST_REDIRECT}",
+        "${XIANSUI_HOST_DEV_REDIRECT}"
       ],
       "webOrigins": [
-        "${UI_HOST_URL}",
-        "${UI_DEV_HOST_URL}"
+        "${XIANSUI_HOST_DEV}",
+        "${XIANSUI_HOST}"
       ],
       "notBefore": 0,
       "bearerOnly": false,
@@ -138,19 +138,19 @@
       "clientId": "temporal-ui",
       "name": "Temporal UI Client",
       "description": "Temporal UI application client for authentication",
-      "rootUrl": "${TEMPORAL_UI_HOST_URL}",
-      "adminUrl": "${TEMPORAL_UI_HOST_URL}",
-      "baseUrl": "${TEMPORAL_UI_HOST_URL}",
+      "rootUrl": "${TEMPORAL_HOST}",
+      "adminUrl": "${TEMPORAL_HOST}",
+      "baseUrl": "${TEMPORAL_HOST}",
       "surrogateAuthRequired": false,
       "enabled": true,
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
       "secret": "${TEMPORAL_UI_CLIENT_SECRET}",
       "redirectUris": [
-        "${TEMPORAL_UI_HOST_URL_REDIRECT_1}"
+        "${TEMPORAL_HOST_URL_REDIRECT}"
       ],
       "webOrigins": [
-        "${TEMPORAL_UI_HOST_URL}"
+        "${TEMPORAL_HOST}"
       ],
       "notBefore": 0,
       "bearerOnly": false,
