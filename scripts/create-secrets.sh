@@ -253,6 +253,11 @@ if service_needs_secrets "server"; then
     
     echo "📝 Updating OpenAI API key in server configuration..."
     update_env_file "server/.env.local" "Llm__ApiKey" "$OPENAI_API_KEY"
+
+
+    echo "📝 Updating server Keycloak URL..."
+    update_env_file "server/.env.local" "Keycloak__AuthServerUrl" "$KEYCLOAK_HOST"
+    update_env_file "server/.env.local" "Keycloak__ValidIssuer" "$KEYCLOAK_HOST/realms/xiansai"
 fi
 
 # Update MongoDB credentials
