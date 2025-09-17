@@ -73,12 +73,12 @@ server {
     # Health check endpoint
     location /health {
         access_log off;
-        return 200 "healthy\\n";
+        return 200 "healthy\n";
         add_header Content-Type text/plain;
     }
     
     # Static assets caching
-    location ~* \\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
         proxy_pass http://xiansai-ui:${UI_PORT};
         proxy_set_header Host $host;
         expires 1y;
