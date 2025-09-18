@@ -10,7 +10,7 @@ services:
     ports:
       - "27017:27017"
     env_file:
-      - mongodb/.env.${ENV_POSTFIX:-local}
+      - mongodb/.env.local
     volumes:
       - mongodb_data:/data/db
       - mongodb_configdb:/data/configdb
@@ -45,7 +45,7 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=${ASPNETCORE_ENV:-Development}
     env_file:
-      - server/.env.${ENV_POSTFIX:-local}
+      - server/.env.local
     networks:
       - xians-community-edition
     volumes:
@@ -78,7 +78,7 @@ services:
     ports:
       - "${UI_EXTERNAL_PORT:-3001}:8080"
     env_file:
-      - ui/.env.${ENV_POSTFIX:-local}
+      - ui/.env.local
     networks:
       - xians-community-edition
     depends_on:
