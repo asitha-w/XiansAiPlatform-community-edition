@@ -76,8 +76,8 @@ services:
     environment:
       - TEMPORAL_ADDRESS=temporal:7233
       - TEMPORAL_AUTH_ENABLED=true
-      - TEMPORAL_AUTH_PROVIDER_URL=${KEYCLOAK_HOST}/realms/xiansai
-      - TEMPORAL_AUTH_ISSUER_URL=${KEYCLOAK_HOST}/realms/xiansai
+      - TEMPORAL_AUTH_PROVIDER_URL=${AUTH_HOST}/realms/xiansai
+      - TEMPORAL_AUTH_ISSUER_URL=${AUTH_HOST}/realms/xiansai
       - TEMPORAL_AUTH_CLIENT_ID=temporal-ui
       - TEMPORAL_AUTH_CLIENT_SECRET=${TEMPORAL_UI_CLIENT_SECRET}
       - TEMPORAL_AUTH_CALLBACK_URL=${TEMPORAL_HOST}/auth/sso/callback

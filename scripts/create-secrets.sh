@@ -140,8 +140,8 @@ echo "   Found root .env file, reading required values..."
 OPENAI_API_KEY=$(grep "^OPENAI_API_KEY=" "$ROOT_ENV_FILE" | cut -d'=' -f2- | tr -d '"' | tr -d "'")
 # Read KEYCLOAK_ADMIN_PASSWORD from root .env
 KEYCLOAK_ADMIN_PASSWORD=$(grep "^KEYCLOAK_ADMIN_PASSWORD=" "$ROOT_ENV_FILE" | cut -d'=' -f2- | tr -d '"' | tr -d "'")
-# Read KEYCLOAK_HOST from root .env
-KEYCLOAK_HOST=$(grep "^KEYCLOAK_HOST=" "$ROOT_ENV_FILE" | cut -d'=' -f2- | tr -d '"' | tr -d "'")
+# Read AUTH_HOST from root .env
+AUTH_HOST=$(grep "^AUTH_HOST=" "$ROOT_ENV_FILE" | cut -d'=' -f2- | tr -d '"' | tr -d "'")
 # Read XIANSUI_HOST from root .env
 XIANSUI_HOST=$(grep "^XIANSUI_HOST=" "$ROOT_ENV_FILE" | cut -d'=' -f2- | tr -d '"' | tr -d "'")
 # Read XIANSAPI_HOST from root .env
@@ -221,7 +221,7 @@ fi
 if service_needs_secrets "temporal"; then
     echo "📝 Updating Temporal UI client secret and HOST_IP..."
     update_env_file "temporal/.env.local" "TEMPORAL_UI_CLIENT_SECRET" "$TEMPORAL_UI_CLIENT_SECRET"
-    update_env_file "temporal/.env.local" "KEYCLOAK_HOST" "$KEYCLOAK_HOST"
+    update_env_file "temporal/.env.local" "AUTH_HOST" "$AUTH_HOST"
     update_env_file "temporal/.env.local" "TEMPORAL_HOST" "$TEMPORAL_HOST"
 fi
 
@@ -237,7 +237,7 @@ if service_needs_secrets "keycloak"; then
     update_env_file "keycloak/.env.local" "TEMPORAL_HOST" "$TEMPORAL_HOST"
     update_env_file "keycloak/.env.local" "XIANSUI_HOST" "$XIANSUI_HOST"
 
-    update_env_file "keycloak/.env.local" "KEYCLOAK_HOST" "$KEYCLOAK_HOST"
+    update_env_file "keycloak/.env.local" "AUTH_HOST" "$AUTH_HOST"
 fi
 
 # Update Server secrets
@@ -261,8 +261,8 @@ if service_needs_secrets "server"; then
 
 
     echo "📝 Updating server Keycloak URL..."
-    update_env_file "server/.env.local" "Keycloak__AuthServerUrl" "$KEYCLOAK_HOST"
-    update_env_file "server/.env.local" "Keycloak__ValidIssuer" "$KEYCLOAK_HOST/realms/xiansai"
+    update_env_file "server/.env.local" "Keycloak__AuthServerUrl" "$AUTH_HOST"
+    update_env_file "server/.env.local" "Keycloak__ValidIssuer" "$AUTH_HOST/realms/xiansai"
 fi
 
 # Update MongoDB credentials
@@ -279,7 +279,7 @@ fi
 if service_needs_secrets "ui"; then
     echo "📝 Updating UI configuration..."
     update_env_file "ui/.env.local" "XIANSAPI_HOST" "$XIANSAPI_HOST"
-    update_env_file "ui/.env.local" "KEYCLOAK_HOST" "$KEYCLOAK_HOST"
+    update_env_file "ui/.env.local" "AUTH_HOST" "$AUTH_HOST"
 fi
 
 echo ""
