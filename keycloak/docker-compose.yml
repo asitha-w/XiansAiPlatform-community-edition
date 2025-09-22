@@ -23,7 +23,7 @@ services:
       - KC_HTTP_ENABLED=true
       - KC_HOSTNAME_STRICT=false
       - KC_HOSTNAME_STRICT_HTTPS=false
-      
+      - KC_HOSTNAME=${AUTH_HOST}
 
       
       # Development Settings
