@@ -84,7 +84,7 @@ Welcome to the XiansAi Platform Community Edition! This repository provides a si
    grep -q "mongodb" /etc/hosts || echo "127.0.0.1   mongodb" | sudo tee -a /etc/hosts
    ```
 
-  ### 🖥️ Windows Host File Setup
+  #### 🖥️ Windows Host File Setup
 
   On Windows, you need administrator privileges to edit the hosts file. Scripts cannot update it automatically.
 
