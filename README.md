@@ -83,26 +83,25 @@ Welcome to the XiansAi Platform Community Edition! This repository provides a si
    grep -q "keycloak" /etc/hosts || echo "127.0.0.1   keycloak" | sudo tee -a /etc/hosts
    grep -q "mongodb" /etc/hosts || echo "127.0.0.1   mongodb" | sudo tee -a /etc/hosts
    ```
+    ### 🖥️ Windows Host File Setup
 
-  #### 🖥️ Windows Host File Setup
+    On Windows, you need administrator privileges to edit the hosts file. Scripts cannot update it automatically.
 
-  On Windows, you need administrator privileges to edit the hosts file. Scripts cannot update it automatically.
+    1. Open Notepad as Administrator:
+      - Search for "Notepad" in the Start menu, right-click, and select "Run as administrator".
+    2. Open the hosts file:
+      - File > Open, then navigate to `C:\Windows\System32\drivers\etc\hosts` (set file type to "All Files").
+    3. Add or update these lines:
+      ```
+      127.0.0.1   host.docker.internal
+      ```
+      > If `host.docker.internal` is set to another IP (e.g., `192.168.1.7`), change it to `127.0.0.1`.
+    4. Save the file and close Notepad.
 
-  1. Open Notepad as Administrator:
-    - Search for "Notepad" in the Start menu, right-click, and select "Run as administrator".
-  2. Open the hosts file:
-    - File > Open, then navigate to `C:\Windows\System32\drivers\etc\hosts` (set file type to "All Files").
-  3. Add or update these lines:
-    ```
-    127.0.0.1   host.docker.internal
-    ```
-    > If `host.docker.internal` is set to another IP (e.g., `192.168.1.7`), change it to `127.0.0.1`.
-  4. Save the file and close Notepad.
+    **Note:** You must have administrator rights to save changes.
 
-  **Note:** You must have administrator rights to save changes.
-
-   **What these entries do:**
-  - `host.docker.internal`: Ensures Docker containers can access services on your local machine. On Windows, this may default to another IP (e.g., `192.168.1.7`); update it to `127.0.0.1` if needed.
+    **What these entries do:**
+    - `host.docker.internal`: Ensures Docker containers can access services on your local machine. On Windows, this may default to another IP (e.g., `192.168.1.7`); update it to `127.0.0.1` if needed.
 
    ### 💾 Database Access
 
