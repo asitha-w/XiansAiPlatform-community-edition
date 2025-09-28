@@ -24,6 +24,8 @@ services:
       - KC_HOSTNAME_STRICT=false
       - KC_HOSTNAME_STRICT_HTTPS=false
       - KC_HOSTNAME=${AUTH_HOST}
+      - KC_HTTP_RELATIVE_PATH=/
+      - KC_PROXY=edge
 
       
       # Development Settings

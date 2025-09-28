@@ -5,20 +5,24 @@ This guide covers the complete release process for maintainers of the XiansAi Pl
 ## 📚 Documentation Overview
 
 ### Quick Navigation
+
 - **[Main README](../README.md)** - Getting started and quick setup
 - **[Contributing Guide](../CONTRIBUTING.md)** - How to contribute to the project
 
 ### For Users
+
 - [Quick Start Guide](../README.md#-quick-start)
 - [Configuration Options](../README.md#-configuration)
 - [Access URLs](../README.md#access-the-applications)
 
 ### For Contributors
+
 - [Development Setup](../CONTRIBUTING.md#development-setup)
 - [Pull Request Guidelines](../CONTRIBUTING.md#pull-request-guidelines)
 - [Issue Guidelines](../CONTRIBUTING.md#issue-guidelines)
 
 ### For Maintainers
+
 - [Release Process](#-quick-release-process) - Quick release workflow
 - [Version Strategy](#-versioning-strategy) - Semantic versioning approach
 - [Testing Checklist](#-testing-before-release) - Pre-release validation
@@ -26,6 +30,7 @@ This guide covers the complete release process for maintainers of the XiansAi Pl
 ## 📖 Release Documentation Structure
 
 ### Release Files Structure
+
 ```
 releases/
 ├── v2.1.0.md          # Release notes for v2.1.0 (example)
