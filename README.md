@@ -196,6 +196,16 @@ docker compose logs -f xiansai-server
 docker compose logs -f xiansai-ui
 ```
 
+### Docker Releases
+
+```bash
+# Define the version
+export VERSION=v1.3.7 # or 1.3.7-beta for pre-release
+
+# Create and push a version tag
+git tag -a v$VERSION -m "Release v$VERSION"
+git push origin v$VERSION
+```
 
 ## 🏗️ Platform Architecture
 
