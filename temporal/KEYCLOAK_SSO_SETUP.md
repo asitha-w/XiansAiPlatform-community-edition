@@ -33,7 +33,7 @@ environment:
   - TEMPORAL_ADDRESS=temporal:7233
   - TEMPORAL_CORS_ORIGINS=http://localhost:3000
   - TEMPORAL_AUTH_ENABLED=true
-  - TEMPORAL_AUTH_PROVIDER_URL=http://keycloak:8080/realms/xiansai
+  - TEMPORAL_AUTH_PROVIDER_URL=http://keycloak:9080/realms/xiansai
   - TEMPORAL_AUTH_CLIENT_ID=temporal-ui
   - TEMPORAL_AUTH_CLIENT_SECRET=temporal-ui-secret-key-12345
   - TEMPORAL_AUTH_CALLBACK_URL=http://localhost:8080/auth/sso/callback
@@ -81,7 +81,7 @@ Check that all services are healthy:
 
 ```bash
 # Check Keycloak
-curl -f http://localhost:18080/health/ready
+curl -f http://localhost:9080/health/ready
 
 # Check Temporal UI
 curl -f http://localhost:8080
@@ -103,7 +103,7 @@ docker exec temporal-ui ping -c 1 keycloak
 
 Both services use the `xians-community-edition-network`, enabling:
 - Internal service-to-service communication using container names as hostnames
-- **Important**: Browser redirects use `http://localhost:18080` (external URL) while internal API calls can use `http://keycloak:8080`
+- **Important**: Browser redirects use `http://localhost:9080` (external URL) while internal API calls can use `http://keycloak:9080`
 
 ## Troubleshooting
 
@@ -115,7 +115,7 @@ Both services use the `xians-community-edition-network`, enabling:
 
 2. **Cannot reach Keycloak**
    - Ensure both services are on the same Docker network
-   - Verify Keycloak is healthy: `docker exec keycloak curl -f http://localhost:8080/health/ready`
+   - Verify Keycloak is healthy: `docker exec keycloak curl -f http://localhost:9080/health/ready`
 
 3. **Token validation errors**
    - Verify client secret matches between Temporal UI config and Keycloak client
@@ -132,7 +132,7 @@ docker logs keycloak -f
 
 # Test network connectivity
 docker exec temporal-ui nslookup keycloak
-docker exec temporal-ui curl -v http://keycloak:8080/realms/xiansai/.well-known/openid_configuration
+docker exec temporal-ui curl -v http://keycloak:9080/realms/xiansai/.well-known/openid_configuration
 ```
 
 ## Security Architecture
@@ -163,7 +163,7 @@ For production deployments, you can enable full API protection by:
      - TEMPORAL_AUTH_ENABLED=true
      - TEMPORAL_AUTH_AUTHORIZER=default
      - TEMPORAL_AUTH_CLAIM_MAPPER=default
-     - TEMPORAL_JWT_KEY_SOURCE1=http://keycloak:8080/realms/xiansai/protocol/openid-connect/certs
+     - TEMPORAL_JWT_KEY_SOURCE1=http://keycloak:9080/realms/xiansai/protocol/openid-connect/certs
      - TEMPORAL_JWT_PERMISSIONS_CLAIM=permissions
    ```
 

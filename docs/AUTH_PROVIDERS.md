@@ -37,7 +37,7 @@ Remove the local admin user from the realm configuration:
 2. Fill in:
    - **Application name**: `XiansAI Platform`
    - **Homepage URL**: `http://localhost:3001`
-   - **Authorization callback URL**: `http://localhost:18080/realms/xiansai/broker/github/endpoint`
+   - **Authorization callback URL**: `http://localhost:9080/realms/xiansai/broker/github/endpoint`
 3. Save and copy your **Client ID** and **Client Secret**
 
 ### 2. Configure GitHub Provider in Realm

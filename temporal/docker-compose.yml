@@ -71,8 +71,6 @@ services:
     container_name: temporal-ui
     depends_on:
       - temporal
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     environment:
       - TEMPORAL_ADDRESS=temporal:7233
       - TEMPORAL_AUTH_ENABLED=true

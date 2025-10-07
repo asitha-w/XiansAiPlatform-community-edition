@@ -263,7 +263,7 @@ Once all services are running, you can access them at:
 
 - **XiansAi UI**: http://localhost:3001
 - **XiansAi Server API**: http://localhost:5001/api-docs
-- **Keycloak Admin Console**: http://localhost:18080/admin
+- **Keycloak Admin Console**: http://localhost:9080/admin
 - **Temporal Web UI**: http://localhost:8080
 
 ### Database Services
@@ -400,7 +400,7 @@ docker exec postgresql pg_isready -U temporal
 
 ```bash
 # Check Keycloak health
-curl http://localhost:18080/health/ready
+curl http://localhost:9080/health/ready
 ```
 
 #### Elasticsearch Health Check
@@ -490,7 +490,7 @@ docker compose pull
 ### Keycloak Service
 
 - **Purpose**: Identity and Access Management
-- **Port**: 18080
+- **Port**: 9080
 - **Admin**: admin/admin
 - **Dependencies**: Requires PostgreSQL running first
 
@@ -557,7 +557,7 @@ If you encounter issues not covered in this guide:
 After successful setup:
 1. **Explore the UI**: http://localhost:3001
 2. **Check API documentation**: http://localhost:5001/api-docs
-3. **Configure Keycloak**: http://localhost:18080/admin
+3. **Configure Keycloak**: http://localhost:9080/admin
 4. **Monitor workflows**: http://localhost:8080
 5. **Read the contributing guide**: [CONTRIBUTING.md](../CONTRIBUTING.md)
 
