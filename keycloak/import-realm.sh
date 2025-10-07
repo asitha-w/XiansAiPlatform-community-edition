@@ -6,7 +6,7 @@
 set -e
 
 # Configuration
-KEYCLOAK_URL=${KEYCLOAK_URL:-http://localhost:18080}
+KEYCLOAK_URL=${KEYCLOAK_URL:-http://keycloak:9080}
 KEYCLOAK_ADMIN_USER=${KEYCLOAK_ADMIN_USER:-admin}
 KEYCLOAK_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD:-admin}
 REALM_FILE=${1:-realms/xiansai-realm.json}
@@ -240,14 +240,14 @@ if [[ "$1" == "-h" || "$1" == "--help" ]]; then
     echo "  -h, --help    Show this help message"
     echo ""
     echo "Environment Variables:"
-    echo "  KEYCLOAK_URL            Keycloak base URL (default: http://localhost:18080)"
+    echo "  KEYCLOAK_URL            Keycloak base URL (default: http://keycloak:9080)"
     echo "  KEYCLOAK_ADMIN_USER     Admin username (default: admin)"
     echo "  KEYCLOAK_ADMIN_PASSWORD Admin password (default: admin)"
     echo ""
     echo "Examples:"
     echo "  $0                                    # Import default realm (realms/xianAI-realm.json)"
     echo "  $0 realms/my-realm.json             # Import specific realm file"
-    echo "  KEYCLOAK_URL=http://keycloak:8080 $0 # Use different Keycloak URL"
+    echo "  KEYCLOAK_URL=http://keycloak:9080 $0 # Use different Keycloak URL"
     exit 0
 fi
 

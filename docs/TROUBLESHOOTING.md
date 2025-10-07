@@ -79,7 +79,7 @@ Error starting userland proxy: listen tcp 0.0.0.0:27017: bind: address already i
 # Check what's using the port
 lsof -i :27017
 lsof -i :5432
-lsof -i :18080
+lsof -i :9080
 lsof -i :3001
 lsof -i :5001
 
@@ -178,7 +178,7 @@ docker logs postgresql
 #### Keycloak Health Issues
 ```bash
 # Check Keycloak health endpoint
-curl http://localhost:18080/health/ready
+curl http://localhost:9080/health/ready
 
 # Wait for Keycloak to fully start (can take 2-3 minutes)
 docker logs keycloak | grep "started"

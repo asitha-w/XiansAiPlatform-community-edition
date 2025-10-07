@@ -66,7 +66,7 @@ Welcome to the XiansAi Platform Community Edition! This repository provides a si
    |-------------|-----|---------|-------------|
    | **XiansAi Platform** | [http://localhost:3001](http://localhost:3001) | Main AI platform interface | `admin` / `KEYCLOAK_ADMIN_PASSWORD` |
    | **Temporal Web UI** | [http://localhost:8080](http://localhost:8080) | Workflow orchestration dashboard |  `admin` / `KEYCLOAK_ADMIN_PASSWORD`|
-   | **Keycloak Admin** | [http://localhost:18080/admin](http://localhost:18080/admin) | Identity & access management | `admin` / `KEYCLOAK_ADMIN_PASSWORD` |
+   | **Keycloak Admin** | [http://localhost:9080/admin](http://localhost:9080/admin) | Identity & access management | `admin` / `KEYCLOAK_ADMIN_PASSWORD` |
    | **API Documentation** | [http://localhost:5001/api-docs](http://localhost:5001/api-docs) | Interactive API documentation | No authentication required |
 
    ### 🔐 Authentication Notes
@@ -126,7 +126,7 @@ Welcome to the XiansAi Platform Community Edition! This repository provides a si
    curl -s http://localhost:3001 > /dev/null && echo "✅ XiansAi UI is running"
    curl -s http://localhost:8080 > /dev/null && echo "✅ Temporal UI is running"
    curl -s http://localhost:5001/api-docs > /dev/null && echo "✅ XiansAi Server is running"
-   curl -s http://localhost:18080 > /dev/null && echo "✅ Keycloak is running"
+   curl -s http://localhost:9080 > /dev/null && echo "✅ Keycloak is running"
 
    ```
 

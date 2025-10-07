@@ -153,7 +153,7 @@ echo "📊 Access Points:"
 echo "  • XiansAi UI:    http://localhost:3001"
 echo "  • XiansAi Server API:   http://localhost:5001/api-docs"
 if [ "$SKIP_KEYCLOAK" = false ]; then
-    echo "  • Keycloak Admin Console: http://localhost:18080/admin"
+    echo "  • Keycloak Admin Console: http://localhost:9080/admin"
 fi
 echo "  • Temporal Web UI:        http://localhost:8080"
 echo "  • Temporal gRPC API:      localhost:7233"
