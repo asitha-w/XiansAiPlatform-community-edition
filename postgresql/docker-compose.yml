@@ -14,6 +14,7 @@ services:
     volumes:
       - postgresql_data:/var/lib/postgresql/data
       - ../keycloak/init-keycloak-db.sql:/docker-entrypoint-initdb.d/01-init-keycloak-db.sql
+      - ./init-temporal-db.sql:/docker-entrypoint-initdb.d/02-init-temporal-db.sql
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]

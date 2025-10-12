@@ -178,11 +178,34 @@ fi
 
 # Step 7: Clean up temporary certificates
 echo "🗑️  Removing temporary certificates..."
+CERTS_CLEANED=0
+
+# Remove global CA directory
 if [ -d "./tmp/certs" ]; then
     rm -rf ./tmp/certs
-    echo "   ✓ Removed ./tmp/certs/"
-else
-    echo "   • No temporary certificates found"
+    echo "   ✓ Removed ./tmp/certs/ (global CA)"
+    CERTS_CLEANED=1
+fi
+
+# Remove service-specific certificate directories
+if [ -d "./temporal/certs" ]; then
+    rm -rf ./temporal/certs
+    echo "   ✓ Removed ./temporal/certs/"
+    CERTS_CLEANED=1
+fi
+
+# Remove any leftover temp cert generation directories
+TEMP_CERT_DIRS=$(find . -maxdepth 1 -type d -name "temp_cert_*" 2>/dev/null)
+if [ -n "$TEMP_CERT_DIRS" ]; then
+    echo "$TEMP_CERT_DIRS" | while read dir; do
+        rm -rf "$dir"
+        echo "   ✓ Removed $dir (leftover temp directory)"
+        CERTS_CLEANED=1
+    done
+fi
+
+if [ $CERTS_CLEANED -eq 0 ]; then
+    echo "   • No certificates found"
 fi
 
 # Also clean up any custom certificate directory if CERTS_DIR is set

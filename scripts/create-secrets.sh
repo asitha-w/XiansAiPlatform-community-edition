@@ -184,24 +184,44 @@ TENANT_OIDC_SECRET_KEY=$(generate_base64_secret 32)
 echo "⏰ Generating Temporal UI client secret..."
 TEMPORAL_UI_CLIENT_SECRET=$(generate_alphanumeric 48)
 
-# Determine certificate storage location (cross-platform compatible)
+# Determine global CA storage location (cross-platform compatible)
 if [ -n "$CERTS_DIR" ]; then
     # User specified custom location
-    CERT_STORAGE_DIR="$CERTS_DIR"
-    echo "📂 Using custom certificate directory: $CERT_STORAGE_DIR"
+    GLOBAL_CA_DIR="$CERTS_DIR"
+    echo "📂 Using custom CA directory: $GLOBAL_CA_DIR"
 else
     # Use project-relative temp directory (self-contained, cleaned by reset-all.sh)
-    CERT_STORAGE_DIR="./tmp/certs"
-    echo "📂 Using project temp directory for certificates: $CERT_STORAGE_DIR"
+    GLOBAL_CA_DIR="./tmp/certs"
+    echo "📂 Using project temp directory for global CA: $GLOBAL_CA_DIR"
 fi
 
-# Ensure certificate directory exists
-mkdir -p "$CERT_STORAGE_DIR"
+# Ensure global CA directory exists
+mkdir -p "$GLOBAL_CA_DIR"
 
-# Generate SSL certificate and password
-echo "📜 Generating SSL certificate..."
+# Generate SSL certificate and password (Global CA)
+echo "📜 Generating global CA certificate..."
 CERT_PASSWORD=$(generate_alphanumeric 24)
-CERT_BASE64=$(generate_ssl_certificate "$CERT_PASSWORD" "$CERT_STORAGE_DIR")
+CERT_BASE64=$(generate_ssl_certificate "$CERT_PASSWORD" "$GLOBAL_CA_DIR")
+
+# Generate Temporal-specific certificates in temporal/certs/
+if service_needs_secrets "temporal"; then
+    echo "🔐 Generating Temporal mTLS certificates..."
+    
+    TEMPORAL_CERTS_DIR="./temporal/certs"
+    mkdir -p "$TEMPORAL_CERTS_DIR"
+    
+    # Generate Temporal server certificate (SAN: temporal, localhost)
+    generate_server_certificate "$GLOBAL_CA_DIR" "$TEMPORAL_CERTS_DIR" "temporal" "temporal" "localhost"
+    
+    # Generate Temporal UI client certificate
+    generate_client_certificate "$GLOBAL_CA_DIR" "$TEMPORAL_CERTS_DIR" "temporal-ui" "temporal-ui"
+    
+    # Copy CA certificate to temporal directory (needed for client verification)
+    cp "$GLOBAL_CA_DIR/ca.crt" "$TEMPORAL_CERTS_DIR/ca.crt"
+    chmod 644 "$TEMPORAL_CERTS_DIR/ca.crt"
+    
+    echo "✅ Temporal certificates generated in $TEMPORAL_CERTS_DIR"
+fi
 
 # Create .env.local files from .env.example templates (only for services that need them)
 echo "📝 Creating .env.local files from templates..."
@@ -239,10 +259,12 @@ if service_needs_secrets "temporal"; then
     update_env_file "temporal/.env.local" "TEMPORAL_HOST" "$TEMPORAL_HOST"
     
     echo "📝 Updating Temporal mTLS configuration..."
-    update_env_file "temporal/.env.local" "TEMPORAL_TLS_CA_CERT" "/etc/temporal/certs/ca.crt"
-    update_env_file "temporal/.env.local" "TEMPORAL_TLS_CA_KEY" "/etc/temporal/certs/ca.key"
-    update_env_file "temporal/.env.local" "TEMPORAL_TLS_CA_PASSWORD" "$CERT_PASSWORD"
-    update_env_file "temporal/.env.local" "TEMPORAL_CERTS_HOST_DIR" "$CERT_STORAGE_DIR"
+    # Certificate paths are now fixed - certs are in temporal/certs/, mounted to /etc/temporal/certs/
+    update_env_file "temporal/.env.local" "TEMPORAL_SERVER_CERT" "/etc/temporal/certs/temporal.crt"
+    update_env_file "temporal/.env.local" "TEMPORAL_SERVER_KEY" "/etc/temporal/certs/temporal.key"
+    update_env_file "temporal/.env.local" "TEMPORAL_CA_CERT" "/etc/temporal/certs/ca.crt"
+    update_env_file "temporal/.env.local" "TEMPORAL_UI_CERT" "/etc/temporal/certs/temporal-ui.crt"
+    update_env_file "temporal/.env.local" "TEMPORAL_UI_KEY" "/etc/temporal/certs/temporal-ui.key"
 fi
 
 # Update Keycloak credentials (using same DB credentials)
@@ -267,8 +289,8 @@ if service_needs_secrets "server"; then
     update_env_file "server/.env.local" "Certificates__AppServerCertPassword" "$CERT_PASSWORD"
     
     # Extract and inject CA certificate for mTLS
-    if [ -f "$CERT_STORAGE_DIR/ca.crt" ]; then
-        CA_CERT_BASE64=$(base64 -w 0 "$CERT_STORAGE_DIR/ca.crt")
+    if [ -f "$GLOBAL_CA_DIR/ca.crt" ]; then
+        CA_CERT_BASE64=$(base64 -w 0 "$GLOBAL_CA_DIR/ca.crt")
         update_env_file "server/.env.local" "Certificates__ServerRootCACertBase64" "$CA_CERT_BASE64"
     fi
     update_env_file "server/.env.local" "EncryptionKeys__BaseSecret" "$ENCRYPTION_BASE_SECRET"

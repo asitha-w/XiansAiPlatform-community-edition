@@ -5,7 +5,15 @@
 
 set -e
 
-echo "🔧 Setting up Temporal search attributes..."
+# Load environment variables from .env.local
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "$SCRIPT_DIR/.env.local" ]; then
+    source "$SCRIPT_DIR/.env.local"
+fi
+
+NAMESPACE="${TEMPORAL_NAMESPACE:-xiansai}"
+
+echo "🔧 Setting up Temporal search attributes for namespace: $NAMESPACE..."
 
 # Function to check if Temporal is ready
 wait_for_temporal() {
@@ -18,23 +26,23 @@ wait_for_temporal() {
         if docker exec temporal tctl cluster health 2>/dev/null | grep -q "temporal.api.workflowservice.v1.WorkflowService: SERVING"; then
             echo "✅ Temporal server is ready!"
             
-            # Now check if the default namespace exists
-            echo "⏳ Waiting for default namespace to be available..."
+            # Now check if the namespace exists
+            echo "⏳ Waiting for $NAMESPACE namespace to be available..."
             local namespace_attempts=15
             local namespace_attempt=1
             
             while [ $namespace_attempt -le $namespace_attempts ]; do
-                if docker exec temporal tctl namespace describe default >/dev/null 2>&1; then
-                    echo "✅ Default namespace is available!"
+                if docker exec temporal tctl namespace describe "$NAMESPACE" >/dev/null 2>&1; then
+                    echo "✅ $NAMESPACE namespace is available!"
                     return 0
                 fi
                 
-                echo "  Namespace attempt $namespace_attempt/$namespace_attempts - Default namespace not ready yet..."
+                echo "  Namespace attempt $namespace_attempt/$namespace_attempts - $NAMESPACE namespace not ready yet..."
                 sleep 3
                 ((namespace_attempt++))
             done
             
-            echo "❌ Default namespace failed to become available after $namespace_attempts attempts"
+            echo "❌ $NAMESPACE namespace failed to become available after $namespace_attempts attempts"
             return 1
         fi
         

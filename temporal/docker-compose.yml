@@ -1,4 +1,108 @@
 services:
+  # Schema initialization service (runs once, like K8s init container)
+  temporal-schema-setup:
+    container_name: temporal-schema-setup
+    image: temporalio/admin-tools:${TEMPORAL_ADMIN_VERSION:-${TEMPORAL_VERSION}}
+    external_links:
+      - postgresql:postgresql
+    env_file:
+      - .env.local
+    entrypoint: []
+    labels:
+      - "com.docker.compose.type=init"
+      - "description=One-time schema initialization (will show as Exited - this is normal)"
+    command:
+      - /bin/sh
+      - -c
+      - |
+        echo "⏳ Waiting for PostgreSQL..."
+        until nc -z postgresql 5432; do
+          sleep 2
+        done
+        echo "✅ PostgreSQL is ready!"
+        
+        echo "🔨 Initializing Temporal schema..."
+        temporal-sql-tool \
+          --plugin postgres12 \
+          --ep postgresql \
+          --port 5432 \
+          --db temporal \
+          --user "$${POSTGRES_USER}" \
+          --password "$${POSTGRES_PASSWORD}" \
+          setup-schema -v 0.0
+        
+        temporal-sql-tool \
+          --plugin postgres12 \
+          --ep postgresql \
+          --port 5432 \
+          --db temporal_visibility \
+          --user "$${POSTGRES_USER}" \
+          --password "$${POSTGRES_PASSWORD}" \
+          setup-schema -v 0.0
+        
+        echo "🔨 Updating schemas to latest version..."
+        temporal-sql-tool \
+          --plugin postgres12 \
+          --ep postgresql \
+          --port 5432 \
+          --db temporal \
+          --user "$${POSTGRES_USER}" \
+          --password "$${POSTGRES_PASSWORD}" \
+          update-schema -d /etc/temporal/schema/postgresql/v12/temporal/versioned
+        
+        temporal-sql-tool \
+          --plugin postgres12 \
+          --ep postgresql \
+          --port 5432 \
+          --db temporal_visibility \
+          --user "$${POSTGRES_USER}" \
+          --password "$${POSTGRES_PASSWORD}" \
+          update-schema -d /etc/temporal/schema/postgresql/v12/visibility/versioned
+        
+        echo "✅ Schema initialization complete!"
+    networks:
+      - xians-community-edition
+    restart: "no"
+
+  # Namespace registration service (runs once after Temporal server starts)
+  temporal-namespace-setup:
+    container_name: temporal-namespace-setup
+    image: temporalio/admin-tools:${TEMPORAL_ADMIN_VERSION:-${TEMPORAL_VERSION}}
+    env_file:
+      - .env.local
+    entrypoint: []
+    labels:
+      - "com.docker.compose.type=init"
+      - "description=One-time namespace registration (will show as Exited - this is normal)"
+    command:
+      - /bin/sh
+      - -c
+      - |
+        echo "⏳ Waiting for Temporal server to be ready..."
+        until tctl --address temporal:7233 cluster health 2>/dev/null | grep -q "SERVING"; do
+          echo "  Temporal not ready yet, retrying..."
+          sleep 3
+        done
+        echo "✅ Temporal server is ready!"
+        
+        echo "🏷️  Checking if namespace '$${TEMPORAL_NAMESPACE}' exists..."
+        if tctl --address temporal:7233 --namespace "$${TEMPORAL_NAMESPACE}" namespace describe >/dev/null 2>&1; then
+          echo "✅ Namespace '$${TEMPORAL_NAMESPACE}' already exists"
+        else
+          echo "📝 Registering namespace '$${TEMPORAL_NAMESPACE}'..."
+          tctl --address temporal:7233 --namespace "$${TEMPORAL_NAMESPACE}" namespace register \
+            --retention "$${TEMPORAL_NAMESPACE_RETENTION_DAYS}d" \
+            --description "XiansAI Platform Workflows" \
+            --owner_email "platform@xiansai.io"
+          echo "✅ Namespace '$${TEMPORAL_NAMESPACE}' registered successfully!"
+        fi
+    depends_on:
+      temporal:
+        condition: service_started
+    networks:
+      - xians-community-edition
+    restart: "no"
+
   elasticsearch:
     container_name: temporal-elasticsearch
     image: elasticsearch:7.17.18
@@ -42,37 +146,51 @@ services:
     env_file:
       - .env.local
     environment:
+      # Database configuration
       - DB=postgres12
       - DB_PORT=5432
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PWD=${POSTGRES_PASSWORD}
       - POSTGRES_SEEDS=postgresql
-      - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development-es.yaml
+      # Elasticsearch configuration
       - ENABLE_ES=true
       - ES_SEEDS=elasticsearch
       - ES_VERSION=v7
-      - ES_VIS_INDEX=temporal_visibility_v1_dev
+      # Services to run (all-in-one)
+      - SERVICES=frontend,matching,history,worker
+      # Addresses
       - TEMPORAL_ADDRESS=temporal:7233
       - TEMPORAL_CLI_ADDRESS=temporal:7233
+      # TLS Configuration - Server certificates (enables encrypted connections)
+      - TEMPORAL_TLS_CERT=${TEMPORAL_SERVER_CERT}
+      - TEMPORAL_TLS_KEY=${TEMPORAL_SERVER_KEY}
+      # mTLS Configuration - Client authentication (mutual TLS)
+      - TEMPORAL_TLS_CA=${TEMPORAL_CA_CERT}
+      - TEMPORAL_TLS_REQUIRE_CLIENT_AUTH=true
     depends_on:
+      temporal-schema-setup:
+        condition: service_completed_successfully
       elasticsearch:
         condition: service_healthy
-    # This image runs ALL temporal services (frontend, matching, history, worker) in single process
-    image: temporalio/auto-setup:${TEMPORAL_VERSION}
+    # Production-ready Temporal server image
+    image: temporalio/server:${TEMPORAL_VERSION}
     networks:
       - xians-community-edition
     ports:
       - 7233:7233
     volumes:
-      - ./dynamicconfig:/etc/temporal/config/dynamicconfig
+      - ./certs:/etc/temporal/certs:ro
   # Removed temporal-admin-tools - not needed with auto-setup image
   # You can access admin tools by running: docker exec -it temporal tctl cluster health
   temporal-ui:
     container_name: temporal-ui
     depends_on:
       - temporal
+    env_file:
+      - .env.local
     environment:
       - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_DEFAULT_NAMESPACE=${TEMPORAL_NAMESPACE:-xiansai}
       - TEMPORAL_AUTH_ENABLED=true
       - TEMPORAL_AUTH_PROVIDER_URL=${AUTH_HOST}/realms/xiansai
       - TEMPORAL_AUTH_ISSUER_URL=${AUTH_HOST}/realms/xiansai
@@ -80,11 +198,17 @@ services:
       - TEMPORAL_AUTH_CLIENT_SECRET=${TEMPORAL_UI_CLIENT_SECRET}
       - TEMPORAL_AUTH_CALLBACK_URL=${TEMPORAL_HOST}/auth/sso/callback
       - TEMPORAL_AUTH_SCOPES=openid,profile,email
+      # mTLS Client Configuration - UI connects to Temporal server
+      - TEMPORAL_TLS_CA_CERT=${TEMPORAL_CA_CERT}        # CA to trust server
+      - TEMPORAL_TLS_CERT=${TEMPORAL_UI_CERT}           # Client certificate (CN: temporal-ui)
+      - TEMPORAL_TLS_KEY=${TEMPORAL_UI_KEY}             # Client private key
     image: temporalio/ui:${TEMPORAL_UI_VERSION}
     networks:
       - xians-community-edition
     ports:
       - 8080:8080
+    volumes:
+      - ./certs:/etc/temporal/certs:ro
 networks:
   xians-community-edition:
     external: true

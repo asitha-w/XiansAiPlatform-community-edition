@@ -130,22 +130,15 @@ else
 fi
 
 # Start Temporal services with environment configuration
+# Note: Schema initialization now handled by temporal-schema-setup service in docker-compose.yml
 echo "⚡ Starting Temporal services..."
 docker compose -p $COMPOSE_PROJECT_NAME -f temporal/docker-compose.yml --env-file temporal/.env.local up -d
 
-# Wait for Elasticsearch to be ready
-echo "⏳ Waiting for Elasticsearch to be ready..."
-sleep 30
-
-# Setup Elasticsearch for Temporal visibility
-echo "🔍 Setting up Elasticsearch for Temporal visibility..."
-./temporal/setup-elasticsearch.sh
-
-# Setup Temporal search attributes (asynchronous process)
-echo "🔧 Setting up Temporal search attributes..."
-echo "  Note: Search attributes setup may take time and run in background"
-./temporal/setup-search-attributes.sh
-
+echo ""
+echo "📝 Note: Elasticsearch and search attributes are auto-configured by Temporal"
+echo "   - Elasticsearch indices: Auto-created by Temporal server"
+echo "   - Default search attributes: Available out-of-the-box"
+echo "   - Custom search attributes: Can be added later via temporal/setup-search-attributes.sh"
 echo ""
 echo "✅ All services started successfully!"
 echo ""
