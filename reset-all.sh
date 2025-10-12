@@ -176,6 +176,21 @@ else
     echo "   ⚠️  scripts/delete-secrets.sh not found (skipping)"
 fi
 
+# Step 7: Clean up temporary certificates
+echo "🗑️  Removing temporary certificates..."
+if [ -d "./tmp/certs" ]; then
+    rm -rf ./tmp/certs
+    echo "   ✓ Removed ./tmp/certs/"
+else
+    echo "   • No temporary certificates found"
+fi
+
+# Also clean up any custom certificate directory if CERTS_DIR is set
+if [ -n "$CERTS_DIR" ] && [ -d "$CERTS_DIR" ]; then
+    echo "   ℹ️  Custom CERTS_DIR found: $CERTS_DIR"
+    echo "   • Not removing custom directory (manual cleanup required if needed)"
+fi
+
 echo ""
 echo "✅ XiansAi platform reset completed successfully!"
 echo ""

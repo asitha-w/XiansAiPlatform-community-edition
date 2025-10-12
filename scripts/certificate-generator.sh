@@ -6,6 +6,7 @@
 # Function to generate SSL certificate and return base64 encoded PFX
 generate_ssl_certificate() {
     local password="$1"
+    local output_dir="${2:-}"  # Optional: directory to save persistent CA files
     local temp_dir="./temp_cert_$$"
     mkdir -p "$temp_dir"
     
@@ -63,6 +64,15 @@ EOF
         # Verify the certificate has proper CA extensions
         echo "🔍 Verifying certificate extensions..." >&2
         openssl x509 -in "$temp_dir/rootCA.crt" -noout -text | grep -A5 "X509v3 Basic Constraints" >&2
+        
+        # Save to persistent location if output_dir is provided
+        if [ -n "$output_dir" ]; then
+            mkdir -p "$output_dir"
+            cp "$temp_dir/rootCA.crt" "$output_dir/ca.crt"
+            cp "$temp_dir/rootCA.key" "$output_dir/ca.key"
+            cp "$temp_dir/rootCA.pfx" "$output_dir/ca.pfx"
+            echo "✅ CA certificates saved to $output_dir/" >&2
+        fi
         
         cat "$temp_dir/rootCA.pfx" | base64 | tr -d '\n\r '
         rm -rf "$temp_dir"

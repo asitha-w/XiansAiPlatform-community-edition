@@ -184,10 +184,24 @@ TENANT_OIDC_SECRET_KEY=$(generate_base64_secret 32)
 echo "⏰ Generating Temporal UI client secret..."
 TEMPORAL_UI_CLIENT_SECRET=$(generate_alphanumeric 48)
 
+# Determine certificate storage location (cross-platform compatible)
+if [ -n "$CERTS_DIR" ]; then
+    # User specified custom location
+    CERT_STORAGE_DIR="$CERTS_DIR"
+    echo "📂 Using custom certificate directory: $CERT_STORAGE_DIR"
+else
+    # Use project-relative temp directory (self-contained, cleaned by reset-all.sh)
+    CERT_STORAGE_DIR="./tmp/certs"
+    echo "📂 Using project temp directory for certificates: $CERT_STORAGE_DIR"
+fi
+
+# Ensure certificate directory exists
+mkdir -p "$CERT_STORAGE_DIR"
+
 # Generate SSL certificate and password
 echo "📜 Generating SSL certificate..."
 CERT_PASSWORD=$(generate_alphanumeric 24)
-CERT_BASE64=$(generate_ssl_certificate "$CERT_PASSWORD")
+CERT_BASE64=$(generate_ssl_certificate "$CERT_PASSWORD" "$CERT_STORAGE_DIR")
 
 # Create .env.local files from .env.example templates (only for services that need them)
 echo "📝 Creating .env.local files from templates..."
@@ -223,6 +237,12 @@ if service_needs_secrets "temporal"; then
     update_env_file "temporal/.env.local" "TEMPORAL_UI_CLIENT_SECRET" "$TEMPORAL_UI_CLIENT_SECRET"
     update_env_file "temporal/.env.local" "AUTH_HOST" "$AUTH_HOST"
     update_env_file "temporal/.env.local" "TEMPORAL_HOST" "$TEMPORAL_HOST"
+    
+    echo "📝 Updating Temporal mTLS configuration..."
+    update_env_file "temporal/.env.local" "TEMPORAL_TLS_CA_CERT" "/etc/temporal/certs/ca.crt"
+    update_env_file "temporal/.env.local" "TEMPORAL_TLS_CA_KEY" "/etc/temporal/certs/ca.key"
+    update_env_file "temporal/.env.local" "TEMPORAL_TLS_CA_PASSWORD" "$CERT_PASSWORD"
+    update_env_file "temporal/.env.local" "TEMPORAL_CERTS_HOST_DIR" "$CERT_STORAGE_DIR"
 fi
 
 # Update Keycloak credentials (using same DB credentials)
@@ -245,6 +265,12 @@ if service_needs_secrets "server"; then
     echo "📝 Updating server secrets..."
     update_env_file "server/.env.local" "Certificates__AppServerPfxBase64" "$CERT_BASE64"
     update_env_file "server/.env.local" "Certificates__AppServerCertPassword" "$CERT_PASSWORD"
+    
+    # Extract and inject CA certificate for mTLS
+    if [ -f "$CERT_STORAGE_DIR/ca.crt" ]; then
+        CA_CERT_BASE64=$(base64 -w 0 "$CERT_STORAGE_DIR/ca.crt")
+        update_env_file "server/.env.local" "Certificates__ServerRootCACertBase64" "$CA_CERT_BASE64"
+    fi
     update_env_file "server/.env.local" "EncryptionKeys__BaseSecret" "$ENCRYPTION_BASE_SECRET"
     update_env_file "server/.env.local" "EncryptionKeys__UniqueSecrets__ConversationMessageKey" "$CONVERSATION_MESSAGE_KEY"
     update_env_file "server/.env.local" "EncryptionKeys__UniqueSecrets__TenantOidcSecretKey" "$TENANT_OIDC_SECRET_KEY"
