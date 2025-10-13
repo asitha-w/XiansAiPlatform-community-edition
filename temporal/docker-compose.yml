@@ -79,23 +79,40 @@ services:
       - -c
       - |
         echo "⏳ Waiting for Temporal server to be ready..."
-        until tctl --address temporal:7233 cluster health 2>/dev/null | grep -q "SERVING"; do
+        until tctl \
+          --address temporal:7233 \
+          --tls_cert_path ${TEMPORAL_UI_CERT} \
+          --tls_key_path ${TEMPORAL_UI_KEY} \
+          --tls_ca_path ${TEMPORAL_CA_CERT} \
+          cluster health 2>/dev/null | grep -q "SERVING"; do
           echo "  Temporal not ready yet, retrying..."
           sleep 3
         done
         echo "✅ Temporal server is ready!"
         
         echo "🏷️  Checking if namespace '$${TEMPORAL_NAMESPACE}' exists..."
-        if tctl --address temporal:7233 --namespace "$${TEMPORAL_NAMESPACE}" namespace describe >/dev/null 2>&1; then
+        if tctl \
+          --address temporal:7233 \
+          --tls_cert_path ${TEMPORAL_UI_CERT} \
+          --tls_key_path ${TEMPORAL_UI_KEY} \
+          --tls_ca_path ${TEMPORAL_CA_CERT} \
+          --namespace "$${TEMPORAL_NAMESPACE}" namespace describe >/dev/null 2>&1; then
           echo "✅ Namespace '$${TEMPORAL_NAMESPACE}' already exists"
         else
           echo "📝 Registering namespace '$${TEMPORAL_NAMESPACE}'..."
-          tctl --address temporal:7233 --namespace "$${TEMPORAL_NAMESPACE}" namespace register \
+          tctl \
+            --address temporal:7233 \
+            --tls_cert_path ${TEMPORAL_UI_CERT} \
+            --tls_key_path ${TEMPORAL_UI_KEY} \
+            --tls_ca_path ${TEMPORAL_CA_CERT} \
+            --namespace "$${TEMPORAL_NAMESPACE}" namespace register \
             --retention "$${TEMPORAL_NAMESPACE_RETENTION_DAYS}d" \
             --description "XiansAI Platform Workflows" \
             --owner_email "platform@xiansai.io"
           echo "✅ Namespace '$${TEMPORAL_NAMESPACE}' registered successfully!"
         fi
+    volumes:
+      - ./certs:/etc/temporal/certs:ro
     depends_on:
       temporal:
         condition: service_started
@@ -141,6 +158,7 @@ services:
 
   temporal:
     container_name: temporal
+    hostname: temporal
     external_links:
       - postgresql:postgresql
     env_file:
@@ -158,15 +176,24 @@ services:
       - ES_VERSION=v7
       # Services to run (all-in-one)
       - SERVICES=frontend,matching,history,worker
-      # Addresses
-      - TEMPORAL_ADDRESS=temporal:7233
-      - TEMPORAL_CLI_ADDRESS=temporal:7233
-      # TLS Configuration - Server certificates (enables encrypted connections)
-      - TEMPORAL_TLS_CERT=${TEMPORAL_SERVER_CERT}
-      - TEMPORAL_TLS_KEY=${TEMPORAL_SERVER_KEY}
-      # mTLS Configuration - Client authentication (mutual TLS)
-      - TEMPORAL_TLS_CA=${TEMPORAL_CA_CERT}
+      # TLS/mTLS Configuration (via custom config_template.yaml)
       - TEMPORAL_TLS_REQUIRE_CLIENT_AUTH=true
+      # Server certificates (for internode communication)
+      - TEMPORAL_TLS_SERVER_CERT=/etc/temporal/certs/temporal.crt
+      - TEMPORAL_TLS_SERVER_KEY=/etc/temporal/certs/temporal.key
+      - TEMPORAL_TLS_SERVER_CA_CERT=/etc/temporal/certs/ca.crt
+      # Frontend certificates (for external clients - SDK, tctl, UI)
+      - TEMPORAL_TLS_FRONTEND_CERT=/etc/temporal/certs/temporal.crt
+      - TEMPORAL_TLS_FRONTEND_KEY=/etc/temporal/certs/temporal.key
+      - TEMPORAL_TLS_CLIENT1_CA_CERT=/etc/temporal/certs/ca.crt
+      # TLS ServerName for internal clients (use hostname not IP)
+      - TEMPORAL_TLS_FRONTEND_SERVER_NAME=temporal
+      - TEMPORAL_TLS_INTERNODE_SERVER_NAME=temporal
+      # Internal client certificates for mTLS (custom template feature)
+      - TEMPORAL_TLS_INTERNODE_CLIENT_CERT=/etc/temporal/certs/temporal.crt
+      - TEMPORAL_TLS_INTERNODE_CLIENT_KEY=/etc/temporal/certs/temporal.key
+      - TEMPORAL_TLS_WORKER_CLIENT_CERT=/etc/temporal/certs/temporal.crt
+      - TEMPORAL_TLS_WORKER_CLIENT_KEY=/etc/temporal/certs/temporal.key
     depends_on:
       temporal-schema-setup:
         condition: service_completed_successfully
@@ -180,6 +207,8 @@ services:
       - 7233:7233
     volumes:
       - ./certs:/etc/temporal/certs:ro
+      - ./config/config_template.yaml:/etc/temporal/config/config_template.yaml:ro  # Custom template with mTLS support
+      - ./dynamicconfig:/etc/temporal/config/dynamicconfig  # Runtime config overrides
   # Removed temporal-admin-tools - not needed with auto-setup image
   # You can access admin tools by running: docker exec -it temporal tctl cluster health
   temporal-ui:

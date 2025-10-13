@@ -210,11 +210,11 @@ if service_needs_secrets "temporal"; then
     TEMPORAL_CERTS_DIR="./temporal/certs"
     mkdir -p "$TEMPORAL_CERTS_DIR"
     
-    # Generate Temporal server certificate (SAN: temporal, localhost)
-    generate_server_certificate "$GLOBAL_CA_DIR" "$TEMPORAL_CERTS_DIR" "temporal" "temporal" "localhost"
+    # Generate Temporal server certificate (dual-purpose: server + client auth)
+    generate_service_certificate "$GLOBAL_CA_DIR" "$TEMPORAL_CERTS_DIR" "temporal" "temporal" "localhost"
     
-    # Generate Temporal UI client certificate
-    generate_client_certificate "$GLOBAL_CA_DIR" "$TEMPORAL_CERTS_DIR" "temporal-ui" "temporal-ui"
+    # Generate Temporal UI certificate (dual-purpose for consistency)
+    generate_service_certificate "$GLOBAL_CA_DIR" "$TEMPORAL_CERTS_DIR" "temporal-ui" "temporal-ui"
     
     # Copy CA certificate to temporal directory (needed for client verification)
     cp "$GLOBAL_CA_DIR/ca.crt" "$TEMPORAL_CERTS_DIR/ca.crt"
