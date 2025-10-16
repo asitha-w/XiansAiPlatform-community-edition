@@ -36,6 +36,15 @@ for dir in "${DIRECTORIES[@]}"; do
     fi
 done
 
+# Also remove generated SDK client cert artifacts
+echo "🗑️  Removing generated certificate artifacts..."
+if [ -d "server/certs" ]; then
+    echo "  ❌ Deleting server/certs (SDK client certs)"
+    rm -rf server/certs
+else
+    echo "  ℹ️  server/certs not found (skipping)"
+fi
+
 # Summary
 if [ $deleted_count -eq 0 ]; then
     echo "✅ No .env.local files found to delete"

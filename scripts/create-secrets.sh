@@ -311,6 +311,18 @@ if service_needs_secrets "server"; then
     echo "📝 Updating server Keycloak URL..."
     update_env_file "server/.env.local" "Keycloak__AuthServerUrl" "$AUTH_HOST"
     update_env_file "server/.env.local" "Keycloak__ValidIssuer" "$AUTH_HOST/realms/xiansai"
+
+    echo "🔐 Generating SDK→Temporal client certificate and injecting base64 into server env..."
+    SERVER_CERTS_DIR="./server/certs"
+    mkdir -p "$SERVER_CERTS_DIR"
+    generate_service_certificate "$GLOBAL_CA_DIR" "$SERVER_CERTS_DIR" "sdk-client" "temporal" "localhost"
+    if [ -f "$SERVER_CERTS_DIR/sdk-client.crt" ] && [ -f "$SERVER_CERTS_DIR/sdk-client.key" ]; then
+        SDK_CLIENT_CERT_BASE64=$(base64 -w 0 "$SERVER_CERTS_DIR/sdk-client.crt")
+        SDK_CLIENT_KEY_BASE64=$(base64 -w 0 "$SERVER_CERTS_DIR/sdk-client.key")
+        update_env_file "server/.env.local" "Temporal__CertificateBase64" "$SDK_CLIENT_CERT_BASE64"
+        update_env_file "server/.env.local" "Temporal__PrivateKeyBase64" "$SDK_CLIENT_KEY_BASE64"
+        update_env_file "server/.env.local" "Temporal__ServerName" "temporal"
+    fi
 fi
 
 # Update MongoDB credentials
