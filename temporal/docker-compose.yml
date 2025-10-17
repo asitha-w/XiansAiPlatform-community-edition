@@ -235,6 +235,27 @@ services:
       - xians-community-edition
     restart: "no"
 
+  # Keycloak wait service (runs once to ensure Keycloak is ready)
+  temporal-keycloak-wait:
+    container_name: temporal-keycloak-wait
+    image: curlimages/curl:latest
+    labels:
+      - "com.docker.compose.type=init"
+      - "description=One-time Keycloak readiness check (will show as Exited - this is normal)"
+    command:
+      - /bin/sh
+      - -c
+      - |
+        echo "⏳ Waiting for Keycloak realm to be ready..."
+        until curl -f http://keycloak:9080/realms/xiansai/.well-known/openid-configuration; do
+          echo "  Keycloak not ready yet, retrying in 5 seconds..."
+          sleep 5
+        done
+        echo "✅ Keycloak realm is ready!"
+    networks:
+      - xians-community-edition
+    restart: "no"
+
   # Search attributes setup service (runs once after namespace is ready)
   temporal-search-attributes-setup:
     container_name: temporal-search-attributes-setup
@@ -426,7 +447,10 @@ services:
   temporal-ui:
     container_name: temporal-ui
     depends_on:
-      - temporal
+      temporal:
+        condition: service_started
+      temporal-keycloak-wait:
+        condition: service_completed_successfully
     env_file:
       - .env.local
     environment:
