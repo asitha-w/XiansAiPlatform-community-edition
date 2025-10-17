@@ -312,16 +312,26 @@ if service_needs_secrets "server"; then
     update_env_file "server/.env.local" "Keycloak__AuthServerUrl" "$AUTH_HOST"
     update_env_file "server/.env.local" "Keycloak__ValidIssuer" "$AUTH_HOST/realms/xiansai"
 
-    echo "🔐 Generating SDK→Temporal client certificate and injecting base64 into server env..."
+    echo "🔐 Generating SDK→Temporal client certificate with tenant/user info..."
     SERVER_CERTS_DIR="./server/certs"
     mkdir -p "$SERVER_CERTS_DIR"
-    generate_service_certificate "$GLOBAL_CA_DIR" "$SERVER_CERTS_DIR" "sdk-client" "temporal" "localhost"
+    
+    # Default tenant and user for SDK client certificate
+    # These can be overridden by setting environment variables
+    SDK_TENANT_ID="${SDK_TENANT_ID:-default}"
+    SDK_USER_ID="${SDK_USER_ID:-admin}"
+    
+    echo "   Using tenant: $SDK_TENANT_ID, user: $SDK_USER_ID"
+    generate_sdk_client_certificate "$GLOBAL_CA_DIR" "$SERVER_CERTS_DIR" "$SDK_TENANT_ID" "$SDK_USER_ID"
+    
     if [ -f "$SERVER_CERTS_DIR/sdk-client.crt" ] && [ -f "$SERVER_CERTS_DIR/sdk-client.key" ]; then
         SDK_CLIENT_CERT_BASE64=$(base64 -w 0 "$SERVER_CERTS_DIR/sdk-client.crt")
         SDK_CLIENT_KEY_BASE64=$(base64 -w 0 "$SERVER_CERTS_DIR/sdk-client.key")
         update_env_file "server/.env.local" "Temporal__CertificateBase64" "$SDK_CLIENT_CERT_BASE64"
         update_env_file "server/.env.local" "Temporal__PrivateKeyBase64" "$SDK_CLIENT_KEY_BASE64"
         update_env_file "server/.env.local" "Temporal__ServerName" "temporal"
+        echo "   ✅ SDK client certificate generated with proper X.500 DN structure"
+        echo "   📋 Certificate Subject: CN=XiansAi, OU=$SDK_USER_ID, O=$SDK_TENANT_ID"
     fi
 fi
 

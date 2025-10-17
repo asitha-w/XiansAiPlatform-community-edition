@@ -167,6 +167,96 @@ EOF
     fi
 }
 
+# Generate SDK client certificate with tenant/user information in X.500 DN
+# Usage: generate_sdk_client_certificate <ca_dir> <output_dir> <tenant_id> <user_id>
+generate_sdk_client_certificate() {
+    local ca_dir="$1"
+    local output_dir="$2"
+    local tenant_id="$3"
+    local user_id="$4"
+    
+    echo "🔐 Generating SDK client certificate for tenant: $tenant_id, user: $user_id" >&2
+    
+    local temp_dir="./temp_sdk_cert_$$"
+    mkdir -p "$temp_dir"
+    
+    # Read CA password if it exists
+    local ca_password=""
+    if [ -f "$ca_dir/ca.password" ]; then
+        ca_password=$(cat "$ca_dir/ca.password")
+    fi
+    
+    # SDK client config with proper X.500 DN structure
+    cat > "$temp_dir/sdk_client.conf" <<EOF
+[req]
+distinguished_name = req_distinguished_name
+req_extensions = v3_req
+prompt = no
+
+[req_distinguished_name]
+C = US
+ST = State
+L = City
+O = $tenant_id
+OU = $user_id
+CN = XiansAi
+
+[v3_req]
+basicConstraints = CA:FALSE
+keyUsage = nonRepudiation, digitalSignature, keyEncipherment
+extendedKeyUsage = clientAuth
+EOF
+    
+    # Generate client private key (no password)
+    openssl genrsa -out "$temp_dir/sdk_client.key" 2048 2>&1 >&2
+    
+    # Generate CSR
+    openssl req -new -key "$temp_dir/sdk_client.key" \
+        -out "$temp_dir/sdk_client.csr" \
+        -config "$temp_dir/sdk_client.conf" 2>&1 >&2
+    
+    # Sign with CA
+    if [ -n "$ca_password" ]; then
+        openssl x509 -req -in "$temp_dir/sdk_client.csr" \
+            -CA "$ca_dir/ca.crt" \
+            -CAkey "$ca_dir/ca.key" \
+            -CAcreateserial \
+            -out "$temp_dir/sdk_client.crt" \
+            -days 825 \
+            -sha256 \
+            -extensions v3_req \
+            -extfile "$temp_dir/sdk_client.conf" \
+            -passin pass:"$ca_password" 2>&1 >&2
+    else
+        openssl x509 -req -in "$temp_dir/sdk_client.csr" \
+            -CA "$ca_dir/ca.crt" \
+            -CAkey "$ca_dir/ca.key" \
+            -CAcreateserial \
+            -out "$temp_dir/sdk_client.crt" \
+            -days 825 \
+            -sha256 \
+            -extensions v3_req \
+            -extfile "$temp_dir/sdk_client.conf" 2>&1 >&2
+    fi
+    
+    if [ -f "$temp_dir/sdk_client.crt" ]; then
+        mkdir -p "$output_dir"
+        cp "$temp_dir/sdk_client.crt" "$output_dir/sdk-client.crt"
+        cp "$temp_dir/sdk_client.key" "$output_dir/sdk-client.key"
+        # Set permissions: readable by all (safe for Docker volumes, isolated from network)
+        chmod 644 "$output_dir/sdk-client.crt"
+        chmod 644 "$output_dir/sdk-client.key"
+        echo "✅ SDK client certificate generated: $output_dir/sdk-client.crt" >&2
+        echo "   Subject: CN=XiansAi, OU=$user_id, O=$tenant_id" >&2
+        rm -rf "$temp_dir"
+        return 0
+    else
+        echo "❌ Failed to generate SDK client certificate" >&2
+        rm -rf "$temp_dir"
+        return 1
+    fi
+}
+
 # Generate dual-purpose certificate (server + client authentication)
 # Suitable for services that act as both server and client (e.g., Temporal, XiansAI Server)
 # Usage: generate_service_certificate <ca_dir> <output_dir> <cert_name> <hostname1> [hostname2] [hostname3]
