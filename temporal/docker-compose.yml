@@ -2,7 +2,7 @@ services:
   # Schema initialization service (runs once, like K8s init container)
   temporal-schema-setup:
     container_name: temporal-schema-setup
-    image: temporalio/admin-tools:${TEMPORAL_ADMIN_VERSION:-${TEMPORAL_VERSION}}
+    image: temporalio/admin-tools:${TEMPORAL_ADMIN_VERSION:-1.28}
     external_links:
       - postgresql:postgresql
     env_file:
@@ -67,7 +67,7 @@ services:
   # Namespace registration service (runs once after Temporal server starts)
   temporal-namespace-setup:
     container_name: temporal-namespace-setup
-    image: temporalio/admin-tools:${TEMPORAL_ADMIN_VERSION:-${TEMPORAL_VERSION}}
+    image: temporalio/admin-tools:${TEMPORAL_ADMIN_VERSION:-1.28}
     env_file:
       - .env.local
     entrypoint: []
@@ -79,36 +79,35 @@ services:
       - -c
       - |
         echo "⏳ Waiting for Temporal server to be ready..."
-        until tctl \
+        until temporal operator cluster health \
           --address temporal:7233 \
-          --tls_cert_path ${TEMPORAL_UI_CERT} \
-          --tls_key_path ${TEMPORAL_UI_KEY} \
-          --tls_ca_path ${TEMPORAL_CA_CERT} \
-          cluster health 2>/dev/null | grep -q "SERVING"; do
+          --tls-cert-path ${TEMPORAL_UI_CERT} \
+          --tls-key-path ${TEMPORAL_UI_KEY} \
+          --tls-ca-path ${TEMPORAL_CA_CERT} 2>/dev/null | grep -q "SERVING"; do
           echo "  Temporal not ready yet, retrying..."
           sleep 3
         done
         echo "✅ Temporal server is ready!"
         
         echo "🏷️  Checking if namespace '$${TEMPORAL_NAMESPACE}' exists..."
-        if tctl \
+        if temporal operator namespace describe \
           --address temporal:7233 \
-          --tls_cert_path ${TEMPORAL_UI_CERT} \
-          --tls_key_path ${TEMPORAL_UI_KEY} \
-          --tls_ca_path ${TEMPORAL_CA_CERT} \
-          --namespace "$${TEMPORAL_NAMESPACE}" namespace describe >/dev/null 2>&1; then
+          --tls-cert-path ${TEMPORAL_UI_CERT} \
+          --tls-key-path ${TEMPORAL_UI_KEY} \
+          --tls-ca-path ${TEMPORAL_CA_CERT} \
+          --namespace "$${TEMPORAL_NAMESPACE}" >/dev/null 2>&1; then
           echo "✅ Namespace '$${TEMPORAL_NAMESPACE}' already exists"
         else
           echo "📝 Registering namespace '$${TEMPORAL_NAMESPACE}'..."
-          tctl \
+          temporal operator namespace create \
             --address temporal:7233 \
-            --tls_cert_path ${TEMPORAL_UI_CERT} \
-            --tls_key_path ${TEMPORAL_UI_KEY} \
-            --tls_ca_path ${TEMPORAL_CA_CERT} \
-            --namespace "$${TEMPORAL_NAMESPACE}" namespace register \
+            --tls-cert-path ${TEMPORAL_UI_CERT} \
+            --tls-key-path ${TEMPORAL_UI_KEY} \
+            --tls-ca-path ${TEMPORAL_CA_CERT} \
+            --namespace "$${TEMPORAL_NAMESPACE}" \
             --retention "$${TEMPORAL_NAMESPACE_RETENTION_DAYS}d" \
             --description "XiansAI Platform Workflows" \
-            --owner_email "platform@xiansai.io"
+            --email "platform@xiansai.io"
           echo "✅ Namespace '$${TEMPORAL_NAMESPACE}' registered successfully!"
         fi
     volumes:
@@ -116,6 +115,219 @@ services:
     depends_on:
       temporal:
         condition: service_started
+    networks:
+      - xians-community-edition
+    restart: "no"
+
+  # Elasticsearch setup service (runs once after Elasticsearch is ready)
+  temporal-elasticsearch-setup:
+    container_name: temporal-elasticsearch-setup
+    image: curlimages/curl:latest
+    labels:
+      - "com.docker.compose.type=init"
+      - "description=One-time Elasticsearch index setup (will show as Exited - this is normal)"
+    command:
+      - /bin/sh
+      - -c
+      - |
+        echo "⏳ Waiting for Elasticsearch to be ready..."
+        until curl -s "http://elasticsearch:9200/_cluster/health" > /dev/null; do
+          echo "  Elasticsearch not ready yet, retrying..."
+          sleep 3
+        done
+        echo "✅ Elasticsearch is ready!"
+        
+        echo "📊 Setting up Elasticsearch index and template for Temporal visibility..."
+        
+        # Create index template
+        echo "  Creating index template..."
+        curl -X PUT "http://elasticsearch:9200/_template/temporal_visibility_v1_template" \
+          -H 'Content-Type: application/json' \
+          -d '{
+            "index_patterns": ["temporal_visibility_v1_*"],
+            "settings": {
+              "index": {
+                "number_of_shards": 1,
+                "number_of_replicas": 0
+              }
+            },
+            "mappings": {
+              "properties": {
+                "VisibilityTaskKey": {
+                  "type": "keyword"
+                },
+                "RunId": {
+                  "type": "keyword"
+                },
+                "WorkflowId": {
+                  "type": "keyword"
+                },
+                "WorkflowType": {
+                  "type": "keyword"
+                },
+                "StartTime": {
+                  "type": "date",
+                  "format": "strict_date_optional_time||epoch_millis"
+                },
+                "ExecutionTime": {
+                  "type": "date",
+                  "format": "strict_date_optional_time||epoch_millis"
+                },
+                "CloseTime": {
+                  "type": "date",
+                  "format": "strict_date_optional_time||epoch_millis"
+                },
+                "ExecutionStatus": {
+                  "type": "keyword"
+                },
+                "TaskQueue": {
+                  "type": "keyword"
+                },
+                "HistoryLength": {
+                  "type": "long"
+                },
+                "Encoding": {
+                  "type": "keyword"
+                },
+                "KnownEncoding": {
+                  "type": "keyword"
+                },
+                "Memo": {
+                  "type": "object",
+                  "enabled": false
+                },
+                "SearchAttributes": {
+                  "type": "object",
+                  "dynamic": true
+                }
+              }
+            }
+          }'
+        
+        echo "  ✅ Index template created successfully!"
+        
+        # Create the index (if it doesn't exist)
+        echo "  Creating index: temporal_visibility_v1_dev"
+        response=$$(curl -s -X PUT "http://elasticsearch:9200/temporal_visibility_v1_dev" \
+          -H 'Content-Type: application/json' \
+          -d '{
+            "settings": {
+              "index": {
+                "number_of_shards": 1,
+                "number_of_replicas": 0
+              }
+            }
+          }')
+        
+        if echo "$$response" | grep -q "resource_already_exists_exception"; then
+          echo "  ✅ Index already exists (skipping creation)"
+        elif echo "$$response" | grep -q "acknowledged.*true"; then
+          echo "  ✅ Index created successfully!"
+        else
+          echo "  ⚠️  Index creation response: $$response"
+        fi
+        
+        echo "✅ Elasticsearch setup complete!"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - xians-community-edition
+    restart: "no"
+
+  # Search attributes setup service (runs once after namespace is ready)
+  temporal-search-attributes-setup:
+    container_name: temporal-search-attributes-setup
+    image: temporalio/admin-tools:${TEMPORAL_ADMIN_VERSION:-1.28}
+    env_file:
+      - .env.local
+    entrypoint: []
+    labels:
+      - "com.docker.compose.type=init"
+      - "description=One-time search attributes setup (will show as Exited - this is normal)"
+    command:
+      - /bin/sh
+      - -c
+      - |
+        echo "⏳ Waiting for Temporal server and namespace to be ready..."
+        until temporal operator namespace describe \
+          --address temporal:7233 \
+          --tls-cert-path ${TEMPORAL_UI_CERT} \
+          --tls-key-path ${TEMPORAL_UI_KEY} \
+          --tls-ca-path ${TEMPORAL_CA_CERT} \
+          --namespace "$${TEMPORAL_NAMESPACE}" >/dev/null 2>&1; do
+          echo "  Namespace not ready yet, retrying..."
+          sleep 3
+        done
+        echo "✅ Temporal namespace is ready!"
+        
+        echo "🏷️  Setting up XiansAi custom search attributes..."
+        
+        # Check existing search attributes
+        echo "  Checking existing search attributes..."
+        existing_attrs=$$(temporal operator cluster describe \
+          --address temporal:7233 \
+          --tls-cert-path $${TEMPORAL_UI_CERT} \
+          --tls-key-path $${TEMPORAL_UI_KEY} \
+          --tls-ca-path $${TEMPORAL_CA_CERT} 2>/dev/null | grep -A 20 "search_attributes" || echo "")
+        
+        # Add missing search attributes
+        if ! echo "$$existing_attrs" | grep -q "tenantId"; then
+          echo "  - Adding tenantId (Keyword)..."
+          temporal operator search-attribute create \
+            --name "tenantId" --type "Keyword" \
+            --address temporal:7233 \
+            --tls-cert-path ${TEMPORAL_UI_CERT} \
+            --tls-key-path ${TEMPORAL_UI_KEY} \
+            --tls-ca-path ${TEMPORAL_CA_CERT} 2>/dev/null || echo "    ⚠️  tenantId registration failed"
+        else
+          echo "  ✓ tenantId already exists"
+        fi
+        
+        if ! echo "$$existing_attrs" | grep -q "userId"; then
+          echo "  - Adding userId (Keyword)..."
+          temporal operator search-attribute create \
+            --name "userId" --type "Keyword" \
+            --address temporal:7233 \
+            --tls-cert-path ${TEMPORAL_UI_CERT} \
+            --tls-key-path ${TEMPORAL_UI_KEY} \
+            --tls-ca-path ${TEMPORAL_CA_CERT} 2>/dev/null || echo "    ⚠️  userId registration failed"
+        else
+          echo "  ✓ userId already exists"
+        fi
+        
+        if ! echo "$$existing_attrs" | grep -q "agent"; then
+          echo "  - Adding agent (Keyword)..."
+          temporal operator search-attribute create \
+            --name "agent" --type "Keyword" \
+            --address temporal:7233 \
+            --tls-cert-path ${TEMPORAL_UI_CERT} \
+            --tls-key-path ${TEMPORAL_UI_KEY} \
+            --tls-ca-path ${TEMPORAL_CA_CERT} 2>/dev/null || echo "    ⚠️  agent registration failed"
+        else
+          echo "  ✓ agent already exists"
+        fi
+        
+        if ! echo "$$existing_attrs" | grep -q "systemScoped"; then
+          echo "  - Adding systemScoped (Bool)..."
+          temporal operator search-attribute create \
+            --name "systemScoped" --type "Bool" \
+            --address temporal:7233 \
+            --tls-cert-path ${TEMPORAL_UI_CERT} \
+            --tls-key-path ${TEMPORAL_UI_KEY} \
+            --tls-ca-path ${TEMPORAL_CA_CERT} 2>/dev/null || echo "    ⚠️  systemScoped registration failed"
+        else
+          echo "  ✓ systemScoped already exists"
+        fi
+        
+        echo "✅ Search attributes setup complete!"
+    volumes:
+      - ./certs:/etc/temporal/certs:ro
+    depends_on:
+      temporal-namespace-setup:
+        condition: service_completed_successfully
+      temporal-elasticsearch-setup:
+        condition: service_completed_successfully
     networks:
       - xians-community-edition
     restart: "no"
@@ -182,7 +394,7 @@ services:
       - TEMPORAL_TLS_SERVER_CERT=/etc/temporal/certs/temporal.crt
       - TEMPORAL_TLS_SERVER_KEY=/etc/temporal/certs/temporal.key
       - TEMPORAL_TLS_SERVER_CA_CERT=/etc/temporal/certs/ca.crt
-      # Frontend certificates (for external clients - SDK, tctl, UI)
+      # Frontend certificates (for external clients - SDK, temporal CLI, UI)
       - TEMPORAL_TLS_FRONTEND_CERT=/etc/temporal/certs/temporal.crt
       - TEMPORAL_TLS_FRONTEND_KEY=/etc/temporal/certs/temporal.key
       - TEMPORAL_TLS_CLIENT1_CA_CERT=/etc/temporal/certs/ca.crt
@@ -210,7 +422,7 @@ services:
       - ./config/config_template.yaml:/etc/temporal/config/config_template.yaml:ro  # Custom template with mTLS support
       - ./dynamicconfig:/etc/temporal/config/dynamicconfig  # Runtime config overrides
   # Removed temporal-admin-tools - not needed with auto-setup image
-  # You can access admin tools by running: docker exec -it temporal tctl cluster health
+  # You can access admin tools by running: docker exec -it temporal temporal operator cluster health
   temporal-ui:
     container_name: temporal-ui
     depends_on:
